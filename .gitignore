@@ -1,0 +1,19 @@
+# Never publish device images, identity data, or raw diagnostic output.
+*.img
+*.apk
+*.msi
+*.log
+*.tar
+*.csv
+backups/
+diagnostics/
+private/
+unlock-keys.txt
+platform-tools/
+val-protocol/
+.venv/
+__pycache__/
+*.class
+build-update/
+build-cleanup/
+release/
