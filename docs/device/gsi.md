@@ -60,6 +60,8 @@ Tried on unit 2 on 2026-11-16 with the pinned `BP4A.251205.006` image, exactly a
 
 One script bug surfaced and is fixed: `gsi_tool status` reports partitions as installed the moment they're created, so the install step now waits for the installer's own `READY` status instead.
 
+**Capture the session before you leave it.** Two things exist only while the GSI runs: its boot log (which HALs registered, every SELinux denial, the `gpuservice` tombstones) and the vendor interface as the generic system negotiated it. `.\dev\Dump-DeviceInfo.ps1 -Label gsi-BP4A -Bugreport` records both, plus a full `adb bugreport`, into `work\device-info\` (private). On unit 2 that showed 17 `gpuservice` restarts in ten minutes, denials dominated by the vendor's `batt_health` domain, and the camera service registering only two devices. The drivers themselves are on the vendor partition and identical under stock, so dump those from stock, with root, when you need them.
+
 ## If it doesn't boot
 
 Three things are untested going in: whether the DSU installer on this firmware accepts an image it can't verify against Google's key (the device has no `/avb` key set, and the bootloader is unlocked, which is the condition DSU documents for unverified images); whether Magisk in `init_boot` is happy underneath a foreign system; and the MediaTek vendor interface itself. The order to investigate is the installer's logcat (`& $adb logcat -d | Select-String dynsystem`), then a boot with Magisk's modules disabled (safe mode: hold Volume Down during the GSI boot), then `gsi_tool install` with a raw image, which bypasses the installer app. None of that touches the installed system.

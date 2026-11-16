@@ -13,11 +13,19 @@ Two outputs:
   work\device-info\<timestamp>\summary.txt   a curated summary with identifiers deliberately
                                        left out; the source for docs/device/hardware.md.
 
+.PARAMETER Label
+Appended to the output folder name, e.g. -Label gsi-BP4A when dumping a GSI session.
+
+.PARAMETER Bugreport
+Also take a full `adb bugreport` (every dumpsys, all log buffers, kernel log, tombstones, VINTF;
+several minutes, tens of MB). The most complete record of a session; PRIVATE like the rest.
+
 .EXAMPLE
 .\dev\Dump-DeviceInfo.ps1
+.\dev\Dump-DeviceInfo.ps1 -Label gsi-BP4A -Bugreport     # while a GSI is running
 #>
 [CmdletBinding()]
-param()
+param([string]$Label, [switch]$Bugreport)
 $ErrorActionPreference = 'Stop'
 $Root = Split-Path -Parent $PSScriptRoot
 $Work = Join-Path $Root 'work'
@@ -26,7 +34,7 @@ if (-not (Test-Path $Adb)) { throw 'platform-tools missing. Run .\dev\Bootstrap-
 $devices = @(& $Adb devices | Select-Object -Skip 1 | Where-Object { $_ -match '\sdevice$' })
 if ($devices.Count -ne 1) { throw "Connect exactly one authorized device (found $($devices.Count))." }
 
-$Out = Join-Path $Work ('device-info\' + (Get-Date -Format 'yyyyMMdd-HHmmss'))
+$Out = Join-Path $Work ('device-info\' + (Get-Date -Format 'yyyyMMdd-HHmmss') + $(if ($Label) { "-$Label" }))
 New-Item -ItemType Directory -Force $Out | Out-Null
 
 function Shell([string]$Command) { (& $Adb shell $Command 2>&1) -join "`n" }
@@ -55,6 +63,20 @@ Save 'partitions-proc.txt'   (Root 'cat /proc/partitions')
 Save 'partitions-mapper.txt' (Root 'ls -l /dev/block/mapper')
 Save 'lshal.txt'             (Root 'lshal 2>/dev/null')
 Save 'mounts.txt'            (Shell 'cat /proc/mounts')
+# The vendor interface: what the vendor partition offers (its VINTF manifests) and what the running
+# system requires (its compatibility matrix). Different systems (stock, a GSI) negotiate the same
+# vendor manifest differently; these show how.
+Save 'vintf-vendor-manifest.txt'  (Shell 'for f in /vendor/etc/vintf/manifest.xml /vendor/etc/vintf/manifest/*.xml /odm/etc/vintf/manifest.xml /odm/etc/vintf/manifest/*.xml; do [ -f "$f" ] && echo "== $f" && cat "$f"; done 2>&1')
+Save 'vintf-system-matrix.txt'    (Shell 'for f in /system/etc/vintf/compatibility_matrix*.xml /system/etc/vintf/manifest.xml; do [ -f "$f" ] && echo "== $f" && cat "$f"; done 2>&1')
+Save 'kernel-modules.txt'         (Shell 'cat /proc/modules 2>&1')
+Save 'services.txt'               (Shell 'dumpsys -l 2>&1')
+Save 'vendor-hal-files.txt'       (Shell 'ls -lR /vendor/bin/hw /vendor/lib64/hw /vendor/etc/init /vendor/firmware 2>&1')
+Save 'logcat-all.txt'             ((& $Adb logcat -d -b all 2>&1) -join "`n")
+Save 'logcat-crash.txt'           ((& $Adb logcat -d -b crash 2>&1) -join "`n")
+if ($Bugreport) {
+    Write-Host 'Taking a full bugreport (several minutes) ...' -ForegroundColor Cyan
+    & $Adb bugreport (Join-Path $Out 'bugreport.zip') | Out-Null
+}
 
 # ---- partition table: by-name symlink -> block device -> size from /proc/partitions ------------
 $blocks = @{}
@@ -99,9 +121,13 @@ $slotB = @($physical | Where-Object { $_ -match '^\S+_b\s' }).Count
 $halNames = @(Rx 'lshal.txt' '(?m)^[A-Z ]+\s+[YN?]\s+((?:android|vendor|mediatek)[\w.]+(?:@[\d.]+)?(?:::\w+)?)' | Sort-Object -Unique)
 $halCount = $halNames.Count
 
+$crashers = @(Rx 'logcat-crash.txt' '(?m)>>> (\S+) <<<' | Group-Object | Sort-Object Count -Descending | ForEach-Object { "$($_.Name) x$($_.Count)" })
+$denials = @(Rx 'logcat-all.txt' 'avc:\s+denied\s+\{[^}]+\}\s+for\s+.*?scontext=u:r:(\w+)' | Group-Object | Sort-Object Count -Descending | Select-Object -First 8 | ForEach-Object { "$($_.Name) x$($_.Count)" })
 $summary = @"
 Device inventory (identifiers omitted). Raw dumps are beside this file and are private.
 
+Session          build $(Prop ro.build.display.id) ($(Prop ro.build.type)); root over adb: $HaveRoot; crashes since boot: $($crashers -join ', ')
+SELinux denials  $(if ($denials) { $denials -join ', ' } else { 'none in logcat' })
 Model            $(Prop ro.product.model)  (SKU $(Prop ro.boot.hardware.sku); product $(Prop ro.product.device) / bootloader $(Prop ro.boot.hardware))
 Android          $(Prop ro.build.version.release) (SDK $(Prop ro.build.version.sdk)), build $(Prop ro.build.id), patch $(Prop ro.build.version.security_patch)
 Fingerprint      $(Prop ro.build.fingerprint)
