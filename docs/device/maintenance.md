@@ -33,6 +33,8 @@ To bring back the carrier apps, the extra hidden apps, or the updater, disable t
 & $adb shell su -c 'touch /data/adb/modules/wifi_carrier_debloat/disable'   # 22 Verizon/TracFone packages
 & $adb shell su -c 'touch /data/adb/modules/wifi_extra_debloat/disable'     # 19 partner, telemetry, Moto extras
 & $adb shell su -c 'touch /data/adb/modules/wifi_ota_guard/disable'         # Motorola updater
+& $adb shell su -c 'touch /data/adb/modules/dev_debuggable/disable'         # back to ro.debuggable=0 (if installed)
+& $adb shell su -c 'touch /data/adb/modules/dev_adb_tcp/disable'            # ADB over USB only (if installed)
 & $adb reboot
 # if undoing the carrier module, also re-enable the device-lock controller:
 & $adb shell su -c 'pm default-state --user 0 com.android.devicelockcontroller'

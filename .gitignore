@@ -27,6 +27,17 @@ captures/
 screenshots/
 *.mp4
 *.mkv
+# Traces can contain app names, package lists and log lines; proprietary blobs pulled from
+# the device (vendor libraries, firmware, GSIs) must never be redistributed.
+traces/
+*.pftrace
+*.perfetto-trace
+blobs/
+extracted/
+*.so
+*-gsi*.img
+system*.img
+vendor*.img
 
 # --- Keys and secrets ----------------------------------------------------------
 *.pem

@@ -42,12 +42,30 @@ if ($env:ANDROID_HOME) {
 }
 $DevPath += Join-Path $DevTools 'jadx\bin'
 $DevPath += Join-Path $Work '.venv\Scripts'
+$DevPath += Join-Path $Work '.venv-frida\Scripts'   # frida, frida-ps, frida-trace
 $DevPath += Join-Path $env:ProgramFiles '7-Zip'   # 7-Zip's installer does not add itself to PATH
 $env:Path = (($DevPath | Where-Object { Test-Path $_ }) + $env:Path) -join ';'
 
 function global:apktool { & java -jar (Join-Path $DevTools 'apktool_3.0.3.jar') @args }
 function global:r8d8    { & java -cp (Join-Path $DevTools 'r8-8.3.37.jar') com.android.tools.r8.D8 @args }
 function global:docs    { & (Join-Path $PSScriptRoot '.venv-docs\Scripts\zensical.exe') serve -f (Join-Path $Repo 'zensical.toml') @args }
+# Connect ADB over Wi-Fi: reads the phone's Wi-Fi address over USB, then connects to port 5555
+# (listening from boot with the dev_adb_tcp module, or after `& $adb tcpip 5555`).
+function global:adbwifi {
+    $line = (& $adb shell ip -4 -o addr show wlan0 2>$null) -join ' '
+    if ($line -notmatch 'inet (\d+\.\d+\.\d+\.\d+)/') { Write-Warning 'Could not read the phone''s Wi-Fi address over USB (cable in, Wi-Fi on?).'; return }
+    & $adb connect "$($Matches[1]):5555"
+}
+# Start Frida's agent on the device as root (idempotent) so frida-ps / frida-trace work from this PC.
+function global:Start-Frida {
+    $bin = Join-Path $Work 'device-tools\frida-server'
+    if (-not (Test-Path $bin)) { Write-Warning 'frida-server not downloaded. Run .\dev\Bootstrap-DevEnv.ps1.'; return }
+    if ((& $adb shell su -c 'pgrep -x frida-server' 2>$null)) { Write-Host 'frida-server already running'; return }   # -x: exact name, so this check never matches itself
+    & $adb push $bin /data/local/tmp/frida-server | Out-Null
+    & $adb shell su -c 'chmod 755 /data/local/tmp/frida-server; nohup /data/local/tmp/frida-server >/dev/null 2>&1 &'
+    Start-Sleep 1
+    & frida-ps -U 2>&1 | Select-Object -First 3
+}
 
 # ---- status
 $Spec = Get-Content -Raw -LiteralPath (Join-Path $PSScriptRoot 'toolchain.json') | ConvertFrom-Json
@@ -77,4 +95,4 @@ Get-ToolVersion 'jadx'        { jadx --version }
 Get-ToolVersion 'gh'          { gh --version }
 if ($Problems) { $Problems | ForEach-Object { Write-Warning $_ }; Write-Warning 'Run .\dev\Bootstrap-DevEnv.ps1 to fix.' }
 else { Write-Host 'Device inputs: verified' -ForegroundColor Green }
-Write-Host 'Variables: $Work $adb $fb $Backup $py   Commands: docs, apktool, r8d8, .\dev\Build-Device.ps1, .\dev\Test-DevEnv.ps1'
+Write-Host 'Variables: $Work $adb $fb $Backup $py   Commands: docs, apktool, r8d8, adbwifi, Start-Frida, .\dev\Trace-Device.ps1, .\dev\Build-Device.ps1, .\dev\Test-DevEnv.ps1'

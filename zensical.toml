@@ -32,6 +32,8 @@ nav = [
     "device/index.md",
     { "Preparation walkthrough" = "device/walkthrough.md" },
     { "Maintaining the device" = "device/maintenance.md" },
+    { "Make it an engineering device" = "device/dev-setup.md" },
+    { "Hardware inventory" = "device/hardware.md" },
     { "Validation and limits" = "device/validation.md" },
   ] },
   { "Develop" = [
@@ -40,6 +42,8 @@ nav = [
     { "Build a system module" = "develop/magisk-modules.md" },
     { "Inspect app packages" = "develop/inspecting-apps.md" },
     { "Native code with the NDK" = "develop/native-code.md" },
+    { "Instrument with Frida" = "develop/instrumentation.md" },
+    { "Trace with Perfetto" = "develop/tracing.md" },
     { "Your first app in Android Studio" = "develop/android-studio.md" },
   ] },
   { "Reference" = [

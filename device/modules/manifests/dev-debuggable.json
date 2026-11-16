@@ -1,0 +1,10 @@
+{
+  "id": "dev_debuggable",
+  "name": "Development build properties",
+  "version": "1.0",
+  "versionCode": 1,
+  "description": "Sets ro.debuggable=1 at boot, as a userdebug build would: every app becomes debuggable and run-as works for all packages. Some apps refuse debuggable systems. Disable and reboot to undo.",
+  "scripts": {
+    "post-fs-data.sh": "dev_debuggable/post-fs-data.sh"
+  }
+}

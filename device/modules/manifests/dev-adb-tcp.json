@@ -1,0 +1,10 @@
+{
+  "id": "dev_adb_tcp",
+  "name": "ADB over Wi-Fi from boot",
+  "version": "1.0",
+  "versionCode": 1,
+  "description": "Makes adbd listen on TCP port 5555 from boot, so adb connect <phone-ip>:5555 works without a cable or pairing. Only PCs whose ADB key you have authorized can connect, but use it on trusted networks only. Disable and reboot for USB-only.",
+  "scripts": {
+    "post-fs-data.sh": "dev_adb_tcp/post-fs-data.sh"
+  }
+}

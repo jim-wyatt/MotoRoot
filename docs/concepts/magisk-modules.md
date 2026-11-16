@@ -69,6 +69,10 @@ This Wi-Fi development device doesn't need the preinstalled Verizon/Tracfone car
 
 The carrier module leaves a second layer of preinstalled software untouched: partner stubs (AT&T, Cricket, Facebook), Motorola's telemetry and support apps, Ready For desktop mode, visual voicemail and Digital Wellbeing. `wifi-extra-debloat.zip` hides 19 of those the same way; `manifests/wifi-extra-debloat.json` records each package's on-disk APK path and a one-line description of what it is.
 
+### Script modules
+
+Not every change is a file. Two optional modules in `device/modules/` carry no `system/` tree at all, only a `post-fs-data.sh` that sets a property before the rest of Android starts: `dev_debuggable` sets `ro.debuggable=1` so the device reports itself as an engineering build, and `dev_adb_tcp` makes `adbd` listen on Wi-Fi. The same builder packages them from the same kind of manifest; the manifest names the script instead of listing packages. [Make it an engineering device](../device/dev-setup.md) installs them.
+
 !!! info "`.replace` — the empty-overlay trick"
     All three modules use Magisk's documented convention: a special `.replace` marker in a module directory tells Magisk to overlay that whole path as empty, hiding whatever the system shipped there. It's the cleanest possible "remove without removing".
 

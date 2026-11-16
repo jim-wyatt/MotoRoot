@@ -4,8 +4,9 @@
 OtomDev/
 ├── device/              What goes to the device
 │   ├── helpers/           two tiny Java programs + their compiled .dex files
-│   ├── modules/           three module ZIPs, their manifests, and the builder
-│   │   ├── manifests/       one JSON per module: what it hides, and why
+│   ├── modules/           five module ZIPs, their manifests, and the builder
+│   │   ├── manifests/       one JSON per module: what it hides or runs, and why
+│   │   ├── scripts/         the post-fs-data.sh of the two development modules
 │   │   └── build_modules.py builds the ZIPs from the manifests
 │   └── scripts/           Prepare-MagiskImage.ps1: file-only, never flashes
 ├── dev/                 The development environment (PC side)
@@ -14,13 +15,17 @@ OtomDev/
 │   ├── Enter-DevShell.ps1     per-terminal setup (dot-source it)
 │   ├── Build-Device.ps1       rebuilds and compares the device artifacts
 │   ├── Test-DevEnv.ps1        the self-test
+│   ├── Trace-Device.ps1       records a Perfetto trace into work\traces
+│   ├── Dump-DeviceInfo.ps1    hardware inventory into work\device-info (private)
 │   └── .tools/ .cache/ build/ .venv-docs/    generated; git-ignored
 ├── docs/                These pages, including the full device procedure
 ├── work/                YOUR files. Git-ignored in full.
 │   ├── platform-tools/    adb and fastboot 37.0.1
 │   ├── *.apk, *.msi       the procedure's downloads
 │   ├── val-protocol/      bootloader patching tool, at its pinned commit
-│   ├── .venv/             Python for val-protocol
+│   ├── device-tools/      frida-server and the Termux APK, pinned
+│   ├── .venv/ .venv-frida/  Python for val-protocol; Frida's PC tools
+│   ├── traces/ device-info/ Perfetto traces and hardware dumps (private)
 │   └── private-backups/   your device's original images, made in Stage 3
 ├── .githooks/pre-commit The safety net
 ├── .github/workflows/   Builds and publishes this site
@@ -62,6 +67,10 @@ And these commands:
 | `r8d8 ...` | Google's D8 compiler: `.class` → `.dex` (the exact version the helpers were built with) |
 | `.\dev\Build-Device.ps1` | Rebuild the helpers and modules and compare with the committed copies |
 | `.\dev\Test-DevEnv.ps1` | Self-test everything |
+| `adbwifi` | Connect ADB to the phone over Wi-Fi ([engineering device](../device/dev-setup.md)) |
+| `Start-Frida` | Start Frida's agent on the device as root ([instrumentation](../develop/instrumentation.md)) |
+| `.\dev\Trace-Device.ps1` | Record a Perfetto system trace ([tracing](../develop/tracing.md)) |
+| `.\dev\Dump-DeviceInfo.ps1` | Dump the hardware inventory ([hardware](../device/hardware.md)) |
 
 ## Why pin everything?
 

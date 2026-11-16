@@ -8,7 +8,9 @@ Now the device is a development target, here's what you can actually build and l
 | [Build a system module](magisk-modules.md) | Changing system behavior reversibly with a [Magisk module](../concepts/magisk-modules.md) | ZIP, `module.prop`, `adb` |
 | [Inspect app packages](inspecting-apps.md) | What's inside an APK, and how to read one | `jadx`, `apktool`, `aapt2` |
 | [Native code with the NDK](native-code.md) | Compiling C/C++ for the device's ARM64 CPU | NDK, clang |
-| [Your first app in Android Studio](android-studio.md) | The normal app-development workflow | Android Studio, Gradle |
+| [Instrument with Frida](instrumentation.md) | Hooking and tracing any running process, Java or native | `frida`, `frida-trace` |
+| [Trace with Perfetto](tracing.md) | Reading what the whole device is doing on one timeline | `perfetto`, `simpleperf` |
+| [Your first app in Android Studio](android-studio.md) | The normal app-development workflow, and the hand-off to it | Android Studio, Gradle |
 
 ## The two ways code runs on Android
 

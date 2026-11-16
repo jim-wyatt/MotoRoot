@@ -37,10 +37,11 @@ Add `-AcceptAndroidSdkLicenses` only after reading Google's Android SDK terms. W
 | Device | Pinned platform-tools **37.0.1** (the tested version, first on PATH), scrcpy for mirroring and control |
 | Reverse engineering | jadx (DEX/APK decompiler), apktool (`apktool` function), 7-Zip |
 | Device inputs | DFRoot 4.7, KernelSU 3.3.1, Magisk 31.1, Test DPC QR, val-protocol at its pinned commit, all hash-checked; Motorola driver verified by signature and hash |
-| Python | `work\.venv` with val-protocol's requirements and pyasn1; `dev\.venv-docs` for the site |
+| Device tools | `work\device-tools\`: Frida server (hash-pinned, must match the PC `frida` version) and the Termux APK (hash-pinned against the release's checksums) |
+| Python | `work\.venv` with val-protocol's requirements and pyasn1; `work\.venv-frida` with `frida`/`frida-tools`; `dev\.venv-docs` for the site |
 | Safety | `.githooks/pre-commit` blocks device images, keys, logs, files over 1 MiB, the private working folders, and lines that look like IMEIs or serials |
 
-`Enter-DevShell.ps1` puts you at the repository root and sets `$Work`, `$adb`, `$fb`, `$Backup` and `$py`, which the walkthrough's commands use directly. Device-side files are referenced relative to the root (`.\device\...`).
+`Enter-DevShell.ps1` puts you at the repository root and sets `$Work`, `$adb`, `$fb`, `$Backup` and `$py`, which the walkthrough's commands use directly. Device-side files are referenced relative to the root (`.\device\...`). It also defines `adbwifi` (connect over Wi-Fi) and `Start-Frida`; `dev\Trace-Device.ps1` records a Perfetto trace and `dev\Dump-DeviceInfo.ps1` writes a hardware inventory to `work\device-info\` (private: it contains identifiers).
 
 ## Rules for phone work
 
@@ -60,7 +61,7 @@ Add `-AcceptAndroidSdkLicenses` only after reading Google's Android SDK terms. W
 
 ## The modules
 
-All three modules are generated from `device/modules/manifests/*.json` by `device/modules/build_modules.py`, which validates every overlay path and refuses anything outside `/product` and `/system_ext` app directories. To hide a different set of apps, add a manifest (or edit one): find each package's APK with `& $adb shell pm path <package>`, record its directory as `hidden_directory`, rebuild, and reinstall the module. Each ZIP carries its manifest as `manifest.json`, so a module found later is self-describing.
+All five modules are generated from `device/modules/manifests/*.json` by `device/modules/build_modules.py`. Two kinds: **overlay** modules list `packages` (the builder validates every path and refuses anything outside `/product` and `/system_ext` app directories), and **script** modules name Magisk lifecycle scripts under `device/modules/scripts/` (packed as LF, no BOM, mode 755 regardless of how git checked them out; the self-test verifies that). To hide a different set of apps, add a manifest: find each package's APK with `& $adb shell pm path <package>`, record its directory as `hidden_directory`, rebuild, and reinstall. Each ZIP carries its manifest as `manifest.json`, so a module found later is self-describing. The two development modules (`dev_debuggable`, `dev_adb_tcp`) are documented in `docs/device/dev-setup.md`.
 
 ## Legal
 

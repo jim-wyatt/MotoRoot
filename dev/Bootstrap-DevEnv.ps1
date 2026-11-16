@@ -231,9 +231,33 @@ if (-not $SkipInputs) {
     }
 }
 
+# ---------------------------------------------------------------- device tools (optional, work\device-tools)
+if (-not $SkipInputs) {
+    Write-Step 'Device tools (Frida server, Termux)'
+    $ToolDir = Join-Path $Work 'device-tools'
+    New-Item -ItemType Directory -Force -Path $ToolDir | Out-Null
+    foreach ($Dl in $Spec.deviceTools.downloads) {
+        $File = Join-Path $ToolDir $Dl.name
+        Get-PinnedFile $Dl.url $File 'SHA256' $Dl.sha256
+        if ($Dl.extract) {
+            # .xz archives: 7-Zip extracts the single inner file; rename it to the documented name.
+            $Extracted = Join-Path $ToolDir $Dl.extract
+            if (-not (Test-Path $Extracted)) {
+                $SevenZip = Join-Path $env:ProgramFiles '7-Zip\7z.exe'
+                if (-not (Test-Path $SevenZip)) { throw '7-Zip not found; re-run without -SkipWinget.' }
+                & $SevenZip e -y "-o$ToolDir" $File | Out-Null
+                if ($LASTEXITCODE -ne 0) { throw "7-Zip failed to extract $($Dl.name)" }
+                Move-Item (Join-Path $ToolDir ($Dl.name -replace '\.xz$', '')) $Extracted
+            }
+            Write-Ok "$($Dl.extract) extracted"
+        }
+    }
+}
+
 # ---------------------------------------------------------------- Python venvs
-# Two separate venvs: work\.venv runs val-protocol (bootloader patching) and is kept minimal;
-# dev\.venv-docs builds the documentation site. Never mix them.
+# Three separate venvs: work\.venv runs val-protocol (bootloader patching) and is kept minimal;
+# work\.venv-frida holds the Frida PC tools, pinned to the server version; dev\.venv-docs builds
+# the documentation site. Never mix them.
 function New-Venv([string]$Dir) {
     $VPy = Join-Path $Dir 'Scripts\python.exe'
     $Cfg = Join-Path $Dir 'pyvenv.cfg'
@@ -262,6 +286,13 @@ if (Test-Path $Req) {
     if ($LASTEXITCODE -ne 0) { throw 'pip install failed.' }
 }
 Write-Ok ((& $VenvPy --version) -as [string])
+
+Write-Step 'Python venv for Frida tools (work\.venv-frida)'
+$Fr = $Spec.deviceTools.frida
+$FridaPy = New-Venv (Join-Path $Work '.venv-frida')
+& $FridaPy -m pip install --quiet --disable-pip-version-check "frida==$($Fr.version)" "frida-tools==$($Fr.toolsVersion)"
+if ($LASTEXITCODE -ne 0) { throw 'pip install (frida) failed.' }
+Write-Ok ((& (Join-Path $Work '.venv-frida\Scripts\frida.exe') --version) -as [string])
 
 Write-Step 'Python venv for docs (dev\.venv-docs)'
 $DocsPy = New-Venv (Join-Path $PSScriptRoot '.venv-docs')

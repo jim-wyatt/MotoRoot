@@ -2,8 +2,8 @@
 
 The previous pages ran code the low-level way, to show how Android works underneath. This page uses the normal, polished path most app developers live in: **Android Studio**, the official IDE, which the bootstrap installed. You'll build an app and run it on your prepared device.
 
-!!! warning "Close the dev shell's phone work first"
-    Android Studio runs its **own** `adb` server, newer than the pinned 37.0.1. Two servers fighting over one device cause dropped connections. When you switch to Studio, stop the dev shell's server with `& $adb kill-server`, and don't run both against the device at once.
+!!! info "Two `adb` copies, one version"
+    Android Studio uses the `adb` in the SDK's `platform-tools`; the dev shell uses the pinned copy in `work\platform-tools`. Two *different* versions fighting over one device cause dropped connections, which is why the self-test checks that both are the same build (37.0.1 today). Keep them that way: if Studio's SDK Manager offers a platform-tools update, decline it until the pin in `dev/toolchain.json` moves too. Same version, no fight, and you can use either from anywhere.
 
 ## Create the project
 
@@ -48,6 +48,20 @@ That's the whole inner loop of app development: edit, Run, see it on the device.
 | NDK clang by hand | Gradle + CMake build your `.so` |
 
 Neither way is more "real" — they're the same machinery at different altitudes. Knowing the low-level path makes you better at the high-level one, because when Gradle or the runtime does something surprising, you know what's underneath.
+
+## Moving your projects to Android Studio
+
+This repository is the bootstrap, the reference and the documentation; your own apps belong in their own Studio projects. What the prepared device gives Studio that a retail phone wouldn't:
+
+| In Studio | Because |
+| --- | --- |
+| The device appears without a cable (`192.168.x.y:5555` in the device dropdown) | `adbwifi` from the dev shell, with the `dev_adb_tcp` module ([engineering device](../device/dev-setup.md)) |
+| **Run → Attach Debugger to Android Process** lists *every* process, not just your debuggable apps | `ro.debuggable=1` from the `dev_debuggable` module |
+| **Device Explorer** can read app data directories | same; `run-as` works for any package |
+| The CPU profiler's system trace is the same data as [Perfetto](tracing.md) | Studio drives `perfetto` on the device |
+| A `Terminal` tool window with `adb`, `frida`, `r8d8` on PATH | start Studio from a dev shell, or dot-source `Enter-DevShell.ps1` in Studio's terminal |
+
+Project settings that fit this device: `compileSdk` and `targetSdk` 36 (its Android 16), `minSdk` whatever your app needs, ABI `arm64-v8a` for anything native. The [hardware inventory](../device/hardware.md) has the screen, CPU and GPU details for performance work.
 
 ## Where to go next
 

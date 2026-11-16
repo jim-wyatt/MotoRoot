@@ -59,16 +59,34 @@ foreach ($Jar in $Spec.jars) {
 Check 'tools' 'apktool runs' { $v = apktool --version 2>&1; if ($LASTEXITCODE -eq 0) { "$v" } else { $false } }
 Check 'tools' 'jadx CLI pinned' { (Get-Content -Raw (Join-Path $PSScriptRoot '.tools\jadx\.pinned-sha256')).Trim() -eq ($Spec.archives | Where-Object extractTo -eq 'jadx').sha256 }
 Check 'tools' 'scrcpy + bundled adb = 37.0.1' { $d = Split-Path (Get-Command scrcpy).Source; ((& "$d\adb.exe" version)[1] -match '37\.0\.1') }
+# Android Studio uses the SDK's adb. If it ever differs from the pinned copy, the two servers fight over the device.
+Check 'tools' 'SDK platform-tools adb = pinned adb (no server fights with Studio)' { $sdkV = (& "$Sdk\platform-tools\adb.exe" version)[1]; $pinV = (& $adb version)[1]; if ($sdkV -eq $pinV) { "$sdkV" } else { throw "SDK ${sdkV} vs pinned ${pinV}: decline the platform-tools update in Studio, or move the pin" } }
 Check 'tools' 'gh CLI' { (gh --version | Select-Object -First 1) }
 Check 'tools' '7-Zip' { (Get-Command 7z -ErrorAction Stop).Source }
 Check 'tools' 'Android Studio' { Test-Path "$env:ProgramFiles\Android\Android Studio\bin\studio64.exe" }
 
 # ---------------- functional builds
-# Build-Device prints one Identical=True/False row per artifact: 2 helper DEX files + 3 module ZIPs.
+# Build-Device prints one Identical=True/False row per artifact: 2 helper DEX files + one ZIP per manifest.
 Check 'build' 'helpers + modules reproduce committed copies' {
+    $expected = 2 + @(Get-ChildItem (Join-Path $Root 'device\modules\manifests') -Filter *.json).Count
     $o = & (Join-Path $PSScriptRoot 'Build-Device.ps1') 6>&1 2>&1 | Out-String
     if ($o -match 'False') { throw "mismatch:`n$o" }
-    ([regex]::Matches($o, 'True')).Count -eq 5
+    ([regex]::Matches($o, 'True')).Count -eq $expected
+}
+Check 'build' 'module scripts are LF, no BOM, executable in the ZIPs' {
+    Add-Type -AssemblyName System.IO.Compression.FileSystem
+    foreach ($zipPath in Get-ChildItem (Join-Path $Root 'device\modules') -Filter *.zip) {
+        $zip = [IO.Compression.ZipFile]::OpenRead($zipPath.FullName)
+        try {
+            foreach ($e in $zip.Entries | Where-Object { $_.FullName -like '*.sh' }) {
+                $s = $e.Open(); $m = [IO.MemoryStream]::new(); $s.CopyTo($m); $s.Dispose(); $b = $m.ToArray()
+                if ($b.Length -ge 3 -and $b[0] -eq 0xEF -and $b[1] -eq 0xBB -and $b[2] -eq 0xBF) { throw "$($zipPath.Name):$($e.FullName) has a BOM" }
+                if ([Text.Encoding]::UTF8.GetString($b) -match "`r") { throw "$($zipPath.Name):$($e.FullName) has CR line endings" }
+                if ((($e.ExternalAttributes -shr 16) -band 73) -eq 0) { throw "$($zipPath.Name):$($e.FullName) is not executable" }   # 73 = octal 111: any execute bit
+            }
+        } finally { $zip.Dispose() }
+    }
+    $true
 }
 Check 'build' 'jadx decompiles UpdateHelper.dex' {
     & jadx --quiet -d (Join-Path $Tmp 'jadx') (Join-Path $Root 'device\helpers\UpdateHelper.dex') 2>&1 | Out-Null
@@ -109,11 +127,18 @@ Check 'inputs' 'val-protocol imports in work\.venv' { $o = & $py -c "import sys;
 Check 'inputs' 'Motorola driver installer signed + pinned' { $s = Get-AuthenticodeSignature (Join-Path $Work $Spec.inputs.motorolaDriver.name); $s.Status -eq 'Valid' -and (Sha256 (Join-Path $Work $Spec.inputs.motorolaDriver.name)) -eq $Spec.inputs.motorolaDriver.sha256 }
 Check 'inputs' 'Motorola driver installed' { $d = Get-ItemProperty HKLM:\Software\Microsoft\Windows\CurrentVersion\Uninstall\*, HKLM:\Software\WOW6432Node\Microsoft\Windows\CurrentVersion\Uninstall\* -ErrorAction SilentlyContinue | Where-Object DisplayName -match 'Motorola Mobile Drivers' | Select-Object -First 1; if ($d) { "$($d.DisplayName)" } else { $false } }
 
+# ---------------- device tools (work\device-tools, work\.venv-frida)
+foreach ($Dl in $Spec.deviceTools.downloads) { Check 'devtools' "$($Dl.name) pin" { (Sha256 (Join-Path $Work "device-tools\$($Dl.name)")) -eq $Dl.sha256 } }
+Check 'devtools' 'frida-server extracted' { Test-Path (Join-Path $Work 'device-tools\frida-server') }
+Check 'devtools' "frida-tools venv = server $($Spec.deviceTools.frida.version)" { $v = (& (Join-Path $Work '.venv-frida\Scripts\frida.exe') --version 2>&1) -as [string]; if ($v.Trim() -eq $Spec.deviceTools.frida.version) { $v.Trim() } else { throw "frida $v, server pin $($Spec.deviceTools.frida.version)" } }
+Check 'devtools' 'Trace-Device.ps1 parses' { $errs = $null; [System.Management.Automation.Language.Parser]::ParseFile((Join-Path $PSScriptRoot 'Trace-Device.ps1'), [ref]$null, [ref]$errs) | Out-Null; if ($errs) { throw ($errs | ForEach-Object Message) -join '; ' }; $true }
+
 # ---------------- git safety
 Check 'git' 'pre-commit hook active' { (git config core.hooksPath) -eq '.githooks' -and (Test-Path .githooks\pre-commit) }
 Check 'git' 'private paths ignored' {
     $paths = 'private-backups/lk_a.img', 'lk-analysis/x.txt', 'lk-patch-analysis/x.txt', 'magisk-patch-files/init_boot.img', 'unlock-keys.txt', 'dev/.tools/x', 'key.pem',
-             'release.jks', 'app/local.properties', 'dev/.venv-docs/x', 'site/index.html', 'app/build/x', 'work/anything.txt'
+             'release.jks', 'app/local.properties', 'dev/.venv-docs/x', 'site/index.html', 'app/build/x', 'work/anything.txt',
+             'work/traces/x.pftrace', 'traces/x.pftrace', 'blobs/vendor.so', 'extracted/x', 'x.pftrace', 'x.perfetto-trace'
     $ignored = @(git check-ignore $paths)
     if ($ignored.Count -ne $paths.Count) { throw "not ignored: $(($paths | Where-Object { $_ -notin $ignored }) -join ', ')" }
     $true

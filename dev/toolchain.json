@@ -46,6 +46,29 @@
       "purpose": "jadx command-line decompiler (the winget package is GUI-only)"
     }
   ],
+  "deviceTools": {
+    "_note": "Optional tools for the prepared device (docs/develop/instrumentation.md, docs/device/dev-setup.md). Downloaded into work/device-tools/, git-ignored. Bumping these is routine, unlike the inputs section.",
+    "downloads": [
+      {
+        "name": "frida-server-17.26.3-android-arm64.xz",
+        "url": "https://github.com/frida/frida/releases/download/17.26.3/frida-server-17.26.3-android-arm64.xz",
+        "sha256": "2c8de56238978b9b8a681f7cc84c113e84b7c8ff78ea0b6c55fa13646a777dc5",
+        "extract": "frida-server",
+        "purpose": "Frida agent that runs as root on the device; the PC-side frida-tools must be the same major.minor"
+      },
+      {
+        "name": "termux-app_v0.118.3+github-debug_universal.apk",
+        "url": "https://github.com/termux/termux-app/releases/download/v0.118.3/termux-app_v0.118.3+github-debug_universal.apk",
+        "sha256": "7600078440c3c34ef050bc009b00fc3215cb87ec4a449e01a696f74cf4249db2",
+        "purpose": "Termux terminal and package manager; with proot-distro it runs a Debian userland on the device (install by hand with adb install)"
+      }
+    ],
+    "frida": {
+      "version": "17.26.3",
+      "toolsVersion": "14.13.1",
+      "_note": "pip pins for work/.venv-frida: frida==version (must match the server above), frida-tools==toolsVersion"
+    }
+  },
   "inputs": {
     "_note": "The device procedure's exact tested inputs (docs/device/walkthrough.md, validation.md). Downloaded into work/ ($Work), which is git-ignored. Change these only when deliberately re-validating the procedure.",
     "platformTools": {
