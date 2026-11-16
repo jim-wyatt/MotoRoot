@@ -1,0 +1,133 @@
+<#
+.SYNOPSIS
+Verifies the dev environment end to end:   .\dev\Test-DevEnv.ps1
+
+.DESCRIPTION
+Checks pins and versions, and also exercises each tool: compiles and dexes the helpers,
+decompiles a DEX with jadx, cross-compiles a C program with the NDK and checks the binary,
+imports val-protocol, and confirms the git safety settings. It never talks to the phone and
+never starts an ADB server. Scratch output goes to dev\build\selftest (git-ignored).
+Exit code = number of failed checks.
+#>
+[CmdletBinding()]
+param()
+$ErrorActionPreference = 'Stop'
+$Root = Split-Path -Parent $PSScriptRoot
+. (Join-Path $PSScriptRoot 'Enter-DevShell.ps1') | Out-Null
+Set-Location $Root
+$Spec = Get-Content -Raw (Join-Path $PSScriptRoot 'toolchain.json') | ConvertFrom-Json
+$Tmp  = Join-Path $PSScriptRoot 'build\selftest'
+Remove-Item -Recurse -Force $Tmp -ErrorAction SilentlyContinue
+New-Item -ItemType Directory -Force $Tmp | Out-Null
+
+$Results = [System.Collections.Generic.List[object]]::new()
+function Check([string]$Area, [string]$Name, [scriptblock]$Test) {
+    try {
+        $r = & $Test
+        if ($r -is [array]) { $r = $r[-1] }
+        $ok = if ($r -is [bool]) { $r } else { [bool]$r }
+        $detail = if ($r -is [bool]) { '' } else { "$r" }
+        $status = if ($ok) { 'PASS' } else { 'FAIL' }
+    } catch { $status = 'FAIL'; $detail = $_.Exception.Message }
+    $Results.Add([pscustomobject]@{ Status = $status; Area = $Area; Check = $Name; Detail = $detail })
+}
+function Warn([string]$Area, [string]$Name, [string]$Detail) { $Results.Add([pscustomobject]@{ Status = 'WARN'; Area = $Area; Check = $Name; Detail = $Detail }) }
+function Sha256($p) { (Get-FileHash -LiteralPath $p -Algorithm SHA256).Hash.ToLower() }
+
+# ---------------- environment
+Check 'env' 'JAVA_HOME (user) -> JDK 21' { $j = [Environment]::GetEnvironmentVariable('JAVA_HOME','User'); (Test-Path "$j\bin\javac.exe") -and ((& "$j\bin\java.exe" -version 2>&1 | Select-Object -First 1) -match '"21\.') }
+Check 'env' 'ANDROID_HOME (user) exists' { Test-Path ([Environment]::GetEnvironmentVariable('ANDROID_HOME','User')) }
+
+# ---------------- Android SDK
+$Sdk = $env:ANDROID_HOME
+Check 'sdk' 'android.exe CLI' { (& "$Sdk\cmdline-tools\latest\bin\android.exe" --no-metrics --version 2>&1 | Select-Object -First 1) }
+Check 'sdk' 'platforms/android-36 android.jar' { Test-Path "$Sdk\platforms\android-36\android.jar" }
+Check 'sdk' 'build-tools 36.1.0 d8' { $v = & "$Sdk\build-tools\36.1.0\d8.bat" --version 2>&1 | Select-Object -First 1; if ($LASTEXITCODE -eq 0) { "$v" } else { $false } }
+Check 'sdk' 'build-tools 36.1.0 aapt2' { $v = & "$Sdk\build-tools\36.1.0\aapt2.exe" version 2>&1 | Select-Object -First 1; if ($LASTEXITCODE -eq 0) { "$v" } else { $false } }
+$NdkVer = ($Spec.androidSdk.packages | Where-Object { $_ -like 'ndk/*' }) -replace '^ndk/'
+Check 'sdk' "ndk $NdkVer" { Test-Path "$Sdk\ndk\$NdkVer\source.properties" }
+
+# ---------------- pinned tools
+foreach ($Jar in $Spec.jars) {
+    Check 'tools' $Jar.name {
+        $p = Join-Path $PSScriptRoot ".tools\$($Jar.name)"
+        if ($Jar.sha256) { (Sha256 $p) -eq $Jar.sha256 } else { (Get-FileHash $p -Algorithm SHA1).Hash.ToLower() -eq $Jar.sha1 }
+    }
+}
+Check 'tools' 'apktool runs' { $v = apktool --version 2>&1; if ($LASTEXITCODE -eq 0) { "$v" } else { $false } }
+Check 'tools' 'jadx CLI pinned' { (Get-Content -Raw (Join-Path $PSScriptRoot '.tools\jadx\.pinned-sha256')).Trim() -eq ($Spec.archives | Where-Object extractTo -eq 'jadx').sha256 }
+Check 'tools' 'scrcpy + bundled adb = 37.0.1' { $d = Split-Path (Get-Command scrcpy).Source; ((& "$d\adb.exe" version)[1] -match '37\.0\.1') }
+Check 'tools' 'gh CLI' { (gh --version | Select-Object -First 1) }
+Check 'tools' '7-Zip' { (Get-Command 7z -ErrorAction Stop).Source }
+Check 'tools' 'Android Studio' { Test-Path "$env:ProgramFiles\Android\Android Studio\bin\studio64.exe" }
+
+# ---------------- functional builds
+Check 'build' 'helpers + modules reproduce committed copies' {
+    $o = & (Join-Path $PSScriptRoot 'Build-Kit.ps1') 6>&1 2>&1 | Out-String
+    if ($o -match 'False') { throw "mismatch:`n$o" }
+    ([regex]::Matches($o, 'True')).Count -eq 4
+}
+Check 'build' 'jadx decompiles UpdateHelper.dex' {
+    & jadx --quiet -d (Join-Path $Tmp 'jadx') (Join-Path $Root 'helpers\UpdateHelper.dex') 2>&1 | Out-Null
+    $src = Get-ChildItem (Join-Path $Tmp 'jadx') -Recurse -Filter 'UpdateHelper.java' | Select-Object -First 1
+    $src -and ((Get-Content -Raw $src.FullName) -match 'class UpdateHelper')
+}
+Check 'build' 'NDK cross-compiles aarch64 Android 16 binary' {
+    $c = Join-Path $Tmp 'hello.c'; $bin = Join-Path $Tmp 'hello'
+    Set-Content -LiteralPath $c -Value '#include <stdio.h>
+int main(void) { puts("hello from XT2617V"); return 0; }'
+    $cc = "$Sdk\ndk\$NdkVer\toolchains\llvm\prebuilt\windows-x86_64\bin\aarch64-linux-android36-clang.cmd"
+    & $cc -O2 -o $bin $c 2>&1 | Out-Null
+    if ($LASTEXITCODE -ne 0) { throw 'clang failed' }
+    $b = [IO.File]::ReadAllBytes($bin)
+    # ELF magic, 64-bit, e_machine 0xB7 = AArch64
+    ($b[0] -eq 0x7F -and $b[1] -eq 0x45 -and $b[2] -eq 0x4C -and $b[3] -eq 0x46 -and $b[4] -eq 2 -and $b[18] -eq 0xB7)
+}
+Check 'build' 'javac against android-36 android.jar' {
+    $j = Join-Path $Tmp 'Probe.java'
+    Set-Content -LiteralPath $j -Value 'public class Probe { public static String v() { return android.os.Build.VERSION.RELEASE; } }'
+    & javac --release 8 -nowarn -Xlint:-options -cp "$Sdk\platforms\android-36\android.jar" -d (Join-Path $Tmp 'probe') $j 2>&1 | Out-Null
+    $LASTEXITCODE -eq 0
+}
+
+# ---------------- guide kit inputs
+Check 'kit' 'platform-tools 37.0.1 (adb + fastboot)' { ((& $adb version)[1] -match '^Version 37\.0\.1-') -and ((& $fb --version | Select-Object -First 1) -match '37\.0\.1') }
+Check 'kit' 'platform-tools.zip pin' { (Get-FileHash (Join-Path $Root 'platform-tools.zip') -Algorithm SHA1).Hash.ToLower() -eq $Spec.kit.platformTools.sha1 }
+foreach ($Apk in $Spec.kit.apks) { Check 'kit' $Apk.name { (Sha256 (Join-Path $Root $Apk.name)) -eq $Apk.sha256 } }
+Check 'kit' 'Test DPC QR' { (Sha256 (Join-Path $Root $Spec.kit.testDpcQr.name)) -eq $Spec.kit.testDpcQr.sha256 }
+Check 'kit' 'val-protocol pinned commit, clean tree' { ((git -C val-protocol rev-parse HEAD) -eq $Spec.kit.valProtocol.commit) -and -not (git -C val-protocol status --porcelain --untracked-files=no) }
+Check 'kit' 'val-protocol imports in .venv' { $o = & $py -c "import sys; sys.path.insert(0,'val-protocol'); import capstone, pyasn1, liblk, lk_static_analyzer, lk_auto_patch, lk_patch_partition, lk_repack_signed; print('ok')" 2>&1; "$o" -eq 'ok' }
+Check 'kit' 'Motorola driver installer signed + pinned' { $s = Get-AuthenticodeSignature (Join-Path $Root $Spec.kit.motorolaDriver.name); $s.Status -eq 'Valid' -and (Sha256 (Join-Path $Root $Spec.kit.motorolaDriver.name)) -eq $Spec.kit.motorolaDriver.sha256 }
+Check 'kit' 'Motorola driver installed' { $d = Get-ItemProperty HKLM:\Software\Microsoft\Windows\CurrentVersion\Uninstall\*, HKLM:\Software\WOW6432Node\Microsoft\Windows\CurrentVersion\Uninstall\* -ErrorAction SilentlyContinue | Where-Object DisplayName -match 'Motorola Mobile Drivers' | Select-Object -First 1; if ($d) { "$($d.DisplayName)" } else { $false } }
+
+# ---------------- git safety
+Check 'git' 'pre-commit hook active' { (git config core.hooksPath) -eq '.githooks' -and (Test-Path .githooks\pre-commit) }
+Check 'git' 'private paths ignored' {
+    $paths = 'private-backups/lk_a.img', 'lk-analysis/x.txt', 'lk-patch-analysis/x.txt', 'magisk-patch-files/init_boot.img', 'unlock-keys.txt', 'dev/.tools/x', 'key.pem'
+    $ignored = @(git check-ignore $paths)
+    if ($ignored.Count -ne $paths.Count) { throw "not ignored: $(($paths | Where-Object { $_ -notin $ignored }) -join ', ')" }
+    $true
+}
+Check 'git' 'upstream is fetch-only' { (git remote get-url --push upstream) -notmatch '^https?://|^git@' }
+Check 'git' 'commit email is GitHub no-reply' { (git config user.email) -match '@users\.noreply\.github\.com$' }
+try {
+    $v = gh repo view (git remote get-url origin) --json visibility --jq .visibility 2>$null
+    if ($LASTEXITCODE -eq 0) { Check 'git' 'origin is PRIVATE' { $v -eq 'PRIVATE' } } else { Warn 'git' 'origin visibility' 'gh could not reach GitHub' }
+} catch { Warn 'git' 'origin visibility' $_.Exception.Message }
+
+# ---------------- ADB hygiene (read-only: never starts a server)
+$adbProcs = Get-Process adb -ErrorAction SilentlyContinue
+if ($adbProcs) {
+    $paths = $adbProcs | ForEach-Object { $_.Path } | Sort-Object -Unique
+    $vers = $paths | ForEach-Object { (& $_ version)[1] } | Sort-Object -Unique
+    if (@($vers).Count -gt 1) { Warn 'adb' 'running ADB servers' "multiple versions running: $($vers -join '; ') - run & `$adb kill-server" }
+    else { Check 'adb' 'running ADB server version' { "$vers" -match '37\.0\.1' } }
+}
+if (Get-Process studio64 -ErrorAction SilentlyContinue) { Warn 'adb' 'Android Studio running' 'close it before phone work (its ADB server is newer)' }
+
+# ---------------- report
+$Results | Format-Table Status, Area, Check, Detail -AutoSize -Wrap | Out-String -Width 200 | Write-Host
+$Fail = @($Results | Where-Object Status -eq 'FAIL').Count
+$Warn = @($Results | Where-Object Status -eq 'WARN').Count
+Write-Host ("{0} checks: {1} passed, {2} failed, {3} warnings" -f $Results.Count, ($Results.Count - $Fail - $Warn), $Fail, $Warn) -ForegroundColor ($(if ($Fail) { 'Red' } else { 'Green' }))
+exit $Fail

@@ -15,6 +15,13 @@
       "problemMatcher": []
     },
     {
+      "label": "Self-test dev environment",
+      "type": "shell",
+      "command": "pwsh -NoProfile -ExecutionPolicy Bypass -File .\\dev\\Test-DevEnv.ps1",
+      "group": "test",
+      "problemMatcher": []
+    },
+    {
       "label": "Mirror phone (scrcpy)",
       "type": "shell",
       "command": "pwsh -NoProfile -ExecutionPolicy Bypass -Command \". .\\dev\\Enter-DevShell.ps1 | Out-Null; $env:ADB = $adb; scrcpy\"",

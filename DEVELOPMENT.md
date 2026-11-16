@@ -9,7 +9,10 @@ Set-ExecutionPolicy -Scope Process Bypass
 .\dev\Bootstrap-DevEnv.ps1 -AndroidStudio      # idempotent; re-run any time
 . .\dev\Enter-DevShell.ps1                      # in every new window
 .\dev\Build-Kit.ps1                             # rebuild helpers + modules, compare with committed copies
+.\dev\Test-DevEnv.ps1                           # end-to-end self-test (35 checks; exit code = failures)
 ```
+
+`Test-DevEnv.ps1` exercises every tool, not just its version. It compiles and dexes the helpers, decompiles with jadx, cross-compiles an aarch64 Android 16 binary with the NDK, imports val-protocol, re-verifies every kit pin, and checks the git safety settings (hook active, private paths ignored, upstream fetch-only, origin private). It never talks to the phone and never starts an ADB server.
 
 In VS Code, the default terminal profile **MotoRoot dev shell** dot-sources `Enter-DevShell.ps1` for you. The tasks in `.vscode/tasks.json` run the bootstrap, the rebuild (the default build task, Ctrl+Shift+B) and scrcpy.
 
