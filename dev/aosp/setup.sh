@@ -18,9 +18,11 @@ sudo apt-get update -qq
 sudo DEBIAN_FRONTEND=noninteractive apt-get install -y -qq \
   git-core gnupg flex bison build-essential zip curl zlib1g-dev libc6-dev-i386 \
   x11proto-core-dev libx11-dev lib32z1-dev libgl1-mesa-dev libxml2-utils xsltproc unzip \
-  fontconfig python3 python3-pip rsync ccache repo openjdk-21-jdk-headless \
+  fontconfig python3 python3-pip rsync ccache repo git-lfs openjdk-21-jdk-headless \
   >/dev/null
-echo "   repo:   $(repo --version 2>/dev/null | head -1 || echo 'installed')"
+git lfs install --skip-repo >/dev/null   # prebuilts use Git LFS; without it their checkout fails
+echo "   repo:   $(repo --version 2>/dev/null | head -1 || echo installed)"
+echo "   git-lfs: $(git lfs version 2>/dev/null || echo MISSING)"
 echo "   ccache: $(ccache --version | head -1)"
 echo "   java:   $(java -version 2>&1 | head -1)"
 

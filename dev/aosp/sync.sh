@@ -13,6 +13,10 @@ TAG="$(python3 -c 'import json,sys; print(json.load(open(sys.argv[1]))["deviceTo
 MANIFEST="https://android.googlesource.com/platform/manifest"
 JOBS="${JOBS:-$(( $(nproc) / 2 ))}"
 
+# Several prebuilts projects (bundletool, jdk8, bazel, tools) keep their files in Git LFS; without
+# git-lfs their checkout fails with "Cannot initialize work tree". setup.sh installs it.
+command -v git-lfs >/dev/null || { echo "git-lfs is not installed; run dev/aosp/setup.sh first" >&2; exit 1; }
+
 mkdir -p "$AOSP_DIR"; cd "$AOSP_DIR"
 if [ ! -d .repo ]; then
   echo "== repo init $TAG"
