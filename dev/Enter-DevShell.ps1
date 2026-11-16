@@ -71,7 +71,8 @@ function global:adbwifi {
 function global:Connect-Debian([switch]$Termux) {
     & $adb forward tcp:8022 tcp:8022 | Out-Null
     $target = if ($Termux) { 'bash -l' } else { 'proot-distro login debian' }
-    ssh -p 8022 -o StrictHostKeyChecking=accept-new -t localhost $target
+    # 127.0.0.1, not localhost: the adb forward listens on IPv4 only, and Windows may resolve localhost to ::1 first.
+    ssh -p 8022 -o StrictHostKeyChecking=accept-new -t 127.0.0.1 $target
     if ($LASTEXITCODE -eq 255) { Write-Warning 'Nothing answered on port 8022. In the Termux app, run: sshd   (first-time setup: docs, Make it an engineering device, Linux on the device).' }
 }
 # Start Frida's agent on the device as root (idempotent) so frida-ps / frida-trace work from this PC.
