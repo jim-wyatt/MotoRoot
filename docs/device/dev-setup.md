@@ -57,20 +57,35 @@ adbwifi                      # → connected to 192.168.x.y:5555
 
 Android 16 ships a built-in Linux Terminal (a Debian VM on the Android Virtualization Framework), but this SoC doesn't have the framework: no hypervisor properties, no `/dev/kvm`, no `com.android.virt` APEX, no Terminal app. The [hardware inventory](hardware.md) records the check.
 
-The route that works everywhere is **Termux**, a terminal and package manager that runs as an ordinary app, plus `proot-distro`, which runs a real Debian userland inside it with no root required. The bootstrap downloads the Termux APK from its GitHub release, pinned by hash (the Play Store build has lagged for years); install it, then set up Debian from inside Termux:
+The route that works everywhere is **Termux**, a terminal and package manager that runs as an ordinary app, plus `proot-distro`, which runs a real Debian userland inside it with no root required. The bootstrap downloads the Termux APK from its GitHub release, pinned by hash (the Play Store build has lagged for years). Install it, open it once (the first launch unpacks its base system), then set everything up from inside the app:
 
 ```powershell
 & $adb install "$Work\device-tools\termux-app_v0.118.3+github-debug_universal.apk"
+& $adb shell am start -n com.termux/.app.TermuxActivity
 ```
 
 ```sh
 pkg update && pkg upgrade -y
-pkg install -y proot-distro
+pkg install -y proot-distro openssh
 proot-distro install debian        # ~100 MB download
+passwd                             # a password for SSH logins (or add your key; below)
+sshd                               # Termux's SSH server, port 8022; rerun after a reboot
 proot-distro login debian          # a Debian shell; exit returns to Termux
 ```
 
-Inside Debian, `apt update && apt install -y build-essential python3 git` gives you a normal development box on the phone. `termux-setup-storage` grants Termux access to shared storage if you want it. Don't mix in Termux add-ons from the Play Store or F-Droid: they must match this GitHub build's signing key. With root, a full chroot (rather than proot) is possible and faster; it's a later project.
+Inside Debian, `apt update && apt install -y build-essential python3 git` gives you a normal development box on the phone. `termux-setup-storage` grants Termux access to shared storage if you want it. Don't mix in Termux add-ons from the Play Store or F-Droid: they must match this GitHub build's signing key.
+
+Termux deliberately refuses package operations from a root shell, and this project doesn't work around that: the setup above is typed in the app, and the PC side only forwards a port.
+
+### From the PC, over the cable
+
+Termux's `sshd` listens on port 8022. Forwarded through ADB, it is reachable as `localhost:8022` from the PC whatever network either side is on, so the dev shell's `Connect-Debian` opens an SSH session that lands straight in Debian (`Connect-Debian -Termux` stops at the Termux shell):
+
+```powershell
+Connect-Debian               # = adb forward tcp:8022 tcp:8022; ssh -p 8022 localhost 'proot-distro login debian'
+```
+
+The username doesn't matter to Termux's `sshd`; the password is the one from `passwd`. To log in with your key instead, put the PC's public key into Termux: `& $adb push "$env:USERPROFILE\.ssh\id_ed25519.pub" /sdcard/pc.pub`, then in Termux `termux-setup-storage` once, and `mkdir -p ~/.ssh && cat ~/storage/shared/pc.pub >> ~/.ssh/authorized_keys && chmod 700 ~/.ssh && chmod 600 ~/.ssh/authorized_keys`. `sshd` stops when Termux is closed or the phone reboots; run it again in the app (the Termux:Boot add-on from the same GitHub release can start it automatically). With root, a full chroot rather than proot is possible and faster; it's a later project.
 
 ## Instrumentation and tracing
 
