@@ -8,7 +8,7 @@ Once the device is prepared, the job is to keep that working state while you dev
 | --- | --- |
 | Install apps and tools from Google Play | Fine. Some apps refuse rooted/unlocked devices; that's their choice. |
 | Normal Play Store app updates | Fine — separate from firmware. |
-| Reboot / shut down | Fine. Root and all three modules survive normal reboots. |
+| Reboot / shut down | Fine. Root and every module survive normal reboots. |
 | Grant a new app root in Magisk | High-trust decision. Grant only to dev tools you trust; deny games and random apps. |
 | Enable/disable a system module | Fine and reversible — that's the point of [modules](../concepts/magisk-modules.md). |
 | Update the Magisk app | Usually fine, but it's your root manager — read its release notes, don't treat it like a game update. |
@@ -17,7 +17,7 @@ Once the device is prepared, the job is to keep that working state while you dev
 | Google Play *system* updates | Different from app updates; can touch system components. Untested here. |
 | **Relock the bootloader** | Don't, with modified LK/`init_boot`. A rejected boot chain can brick the device. |
 | **Change active slot / flash both slots** | Untested and hazardous. Slot B isn't a validated fallback. |
-| Factory reset | Erases `/data`, which holds your apps, Magisk's root grants **and the three modules** (`/data/adb/modules`). The prepared boot state may remain, but expect to re-grant Shell and reinstall the modules; the full setup isn't guaranteed. |
+| Factory reset | Erases `/data`, which holds your apps, Magisk's root grants **and every module** (`/data/adb/modules`). The prepared boot state may remain, but expect to re-grant Shell and reinstall the modules; the full setup isn't guaranteed. |
 
 The theme: **ordinary app-level use is fine; anything that writes the boot chain or firmware needs a plan and a backup.**
 

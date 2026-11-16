@@ -59,15 +59,15 @@ All run as **root**. A broken script can slow or stop boot, so test incrementall
 
 ## How the project generates its modules
 
-The project's three modules are built by one script, not hand-zipped — a good pattern once modules get repetitive. `device/modules/build_modules.py` reads every manifest in `device/modules/manifests/` (a module's `module.prop` fields plus the packages it hides, each with its on-disk directory), validates every path, and writes one ZIP per manifest. The build is deterministic, so the same manifest always gives the same bytes. To hide a different set of apps, add a manifest: find each package's APK with `& $adb shell pm path <package>`, record its directory as `hidden_directory`, and rebuild.
+The project's five modules are built by one script, not hand-zipped — a good pattern once modules get repetitive. `device/modules/build_modules.py` reads every manifest in `device/modules/manifests/` (a module's `module.prop` fields, plus either the packages it hides with their on-disk directories, or the lifecycle scripts it runs from `device/modules/scripts/`), validates everything, and writes one ZIP per manifest. The build is deterministic, so the same inputs always give the same bytes, and scripts are packed as LF, no BOM, mode 755 whatever Windows did to them on checkout. To hide a different set of apps, add a manifest: find each package's APK with `& $adb shell pm path <package>`, record its directory as `hidden_directory`, and rebuild. To run something at boot instead, point a manifest's `scripts` at a `post-fs-data.sh` or `service.sh`, as the two development modules do.
 
-Rebuild all three and verify them against the committed copies:
+Rebuild all five and verify them against the committed copies:
 
 ```powershell
 .\dev\Build-Device.ps1
 ```
 
-All three use the `.replace` convention — an empty overlay that *hides* a system directory rather than adding to it (see [the modules concept page](../concepts/magisk-modules.md#the-three-modules-in-this-project)). Reading `build_modules.py` is the fastest way to see how a real, parameterized module generator is structured.
+The three Wi-Fi modules use the `.replace` convention — an empty overlay that *hides* a system directory rather than adding to it — and the two development modules are pure lifecycle scripts (see [the modules concept page](../concepts/magisk-modules.md#the-five-modules-in-this-project)). Reading `build_modules.py` is the fastest way to see how a real, parameterized module generator is structured.
 
 !!! tip "Keep modules reversible and scoped"
     The whole value of a module on a dev device is that it's an experiment you can turn off. Resist editing the real system partition directly; a module that overlays is always the cleaner choice.

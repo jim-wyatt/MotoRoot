@@ -34,6 +34,15 @@ Every term the docs use, in plain language.
 **R8 / D8**
 : Google's compiler; D8 converts `.class` → **DEX**. Exposed as `r8d8` in the dev shell.
 
+**Frida**
+: Dynamic instrumentation: a server on the device (run as root by `Start-Frida`) lets the PC hook and trace any function in any process. [More](../develop/instrumentation.md).
+
+**Perfetto**
+: Android's built-in system tracer (`perfetto`, `traced`): CPU scheduling, memory, framework events and logs on one timeline, viewed at ui.perfetto.dev. Recorded here by `Trace-Device.ps1`. [More](../develop/tracing.md).
+
+**Termux / proot-distro**
+: A terminal and package manager that runs as an ordinary app; `proot-distro` runs a Debian userland inside it without root. The Linux route on this device, which has no virtualization framework. [More](../device/dev-setup.md#linux-on-the-device).
+
 ### How Android is built
 
 **Partition**
@@ -56,6 +65,12 @@ Every term the docs use, in plain language.
 
 **Bootloader lock**
 : Locked = runs only the signed factory build. Unlocked = runs images you provide (needed for a dev device). Switching erases the device.
+
+**Build type: `user` / `userdebug` / `eng`**
+: What `ro.build.type` reports. Retail devices are `user` builds; Google's engineers use `userdebug`, which tooling such as Perfetto's heap profilers checks before touching apps that aren't profileable. The `dev_debuggable` module makes this device report `userdebug`. [More](../device/dev-setup.md).
+
+**JDWP**
+: The Java debug protocol a debugger uses to attach to an app. ART enables it only for apps built debuggable; on this build, reporting a `userdebug` build does not extend that to other apps.
 
 **System image**
 : The read-only `system`/`vendor`/`product` partitions holding Android itself. Changed via [modules](../concepts/magisk-modules.md), not edited.

@@ -40,7 +40,7 @@ If you have never typed `adb`, compiled a line of Java for Android, or wondered 
 
     ---
 
-    A small program that drives Android's own system APIs, a system module, native code compiled for the device's CPU, and your first Studio app.
+    A small program that drives Android's own system APIs, a system module, native code compiled for the device's CPU, Frida hooks and Perfetto traces of anything running, and your first Studio app.
 
     [Develop](develop/index.md)
 

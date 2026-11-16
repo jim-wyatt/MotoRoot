@@ -55,6 +55,26 @@ Common failures and their fixes. If the [self-test](environment.md) passes but s
 ??? failure "Device won't boot after writing a prepared image"
     If Fastboot is reachable, restore your backup to that slot ([recovery](../device/maintenance.md#recovery)). If Fastboot won't start, there's no proven recovery for this model — this is the accepted risk of Stage 6.
 
+## Engineering device and tooling
+
+??? failure "`adb root` says `restarting adbd as root`, the device drops off ADB for a moment, and the shell is still `uid=2000`"
+    Expected on this build, and the reason the docs say not to run it: the shipped `adbd` is compiled to drop root, so the request makes it abort (one `adbd` crash in `logcat -b crash`) and restart as `shell`. The `dev_debuggable` module doesn't change this. Use `& $adb shell su -c '<command>'` for root.
+
+??? failure "`adbwifi` says the phone and the PC are on different networks"
+    They are, and a `connect` would only time out. Two routers, a guest Wi-Fi, or a wired PC on a different subnet from the Wi-Fi are the usual causes. Join the PC to the phone's Wi-Fi (or the phone to the PC's network) and run `adbwifi` again. The `dev_adb_tcp` module is working if `& $adb shell su -c 'ss -ltn | grep :5555'` shows the listener.
+
+??? failure "`perfetto` fails to read the config, or the trace is tiny and `logcat` says `not profileable`"
+    Two different things. A config under `/data/local/tmp` is refused by SELinux: it must live in `/data/misc/perfetto-configs/`, which `Trace-Device.ps1` does for you. `not profileable` means a heap profiler was pointed at an app that isn't yours on a device that reports a `user` build; install the `dev_debuggable` module ([engineering device](../device/dev-setup.md)), which reports `userdebug`, and it works.
+
+??? failure "`simpleperf record` fails with `Event type 'cpu-cycles' is not supported on the device`"
+    The MediaTek kernel exposes no perf events to it (`-e cpu-clock` fails the same way), so sampled CPU profiling isn't available on this device, in Android Studio either. Use Perfetto's system trace for scheduling and slices, and [Frida](../develop/instrumentation.md) for call-level timing.
+
+??? failure "`frida-ps` prints `Unable to start idund: idund did not start listening`"
+    Harmless. Recent `frida-tools` first try to auto-deploy their own helper over ADB, fail because the pinned `frida-server` already answers, and use it. If `frida-ps -U` lists nothing at all, run `Start-Frida`.
+
+??? failure "The device won't boot with a module enabled"
+    Hold **Volume Down** while it boots: Magisk's safe mode starts with every module disabled. Then `& $adb shell su -c 'touch /data/adb/modules/<id>/disable'` for the module you suspect and reboot normally. None of the project's modules has needed this on the two tested units.
+
 ## Docs site
 
 ??? failure "`zensical build --strict` fails on a nav entry"

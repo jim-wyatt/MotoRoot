@@ -27,6 +27,7 @@ Verify with `getprop` ([first ADB session](../start/first-adb-session.md#ask-the
 - Magisk persistent root, verified to survive reboots.
 - A Wi-Fi-only setup with the carrier, partner-stub, telemetry and auto-update apps reversibly hidden by three system modules.
 - Google Play available for installing your own tools.
+- Optionally, an engineering-build report (`userdebug`) for profiling any app, ADB over Wi-Fi, Frida and Perfetto set up, and a Debian userland in Termux.
 
 Stock Motorola Android is kept throughout — no custom ROM. This is a factory build with system access added, which is exactly what you want as a development baseline.
 
@@ -47,5 +48,7 @@ Stock Motorola Android is kept throughout — no custom ROM. This is a factory b
 | 6 | [Flash LK and unlock](walkthrough.md#stage-6-flash-lk-and-unlock) | **No — erases, can brick** |
 | 7 | [Re-setup and install persistent root](walkthrough.md#stage-7-re-setup-and-install-persistent-root) | Mostly |
 | 8 | [Configure the Wi-Fi dev device](walkthrough.md#stage-8-configure-the-wi-fi-dev-device) | Yes (modules) |
+
+After the walkthrough, two optional pages: [Make it an engineering device](dev-setup.md) (report a userdebug build so profilers can reach any app, ADB over Wi-Fi, a Linux userland via Termux) and the [hardware inventory](hardware.md), which records what the device is and how to re-generate the record on another unit.
 
 Start the [walkthrough](walkthrough.md).

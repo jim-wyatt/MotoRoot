@@ -38,6 +38,7 @@ One script installs and hash-verifies the full stack: JDK, Android SDK, NDK, pla
 - **Learn how Android really works** — partitions, A/B slots, the boot chain, the app sandbox, system modules.
 - **Prepare a development device** — unlock the bootloader and add managed system-level access (the capability an emulator has by default), fully documented and reversible where possible.
 - **Build things** — a program that drives Android's internal system APIs, a Magisk system module, native ARM64 code with the NDK, and a first app in Android Studio.
+- **Look inside a running system** — hook any process with Frida, trace the whole device with Perfetto, make the device report an engineering build so profilers reach any app, and run a Debian userland on it with Termux.
 
 ## Safety
 

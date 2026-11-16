@@ -30,6 +30,9 @@ None of these is redistributed here; the bootstrap downloads each from its publi
 | [scrcpy](https://github.com/Genymobile/scrcpy) | Genymobile |
 | [7-Zip](https://www.7-zip.org/) | Igor Pavlov |
 | [Motorola USB driver](https://en-us.support.motorola.com/app/usb-drivers) | Motorola Mobility |
+| [Frida](https://frida.re/) | Ole André Vadla Ravnås and contributors |
+| [Perfetto](https://perfetto.dev/) | Google (ships in Android) |
+| [Termux](https://termux.dev/) and `proot-distro` | the Termux project |
 
 ## This site
 
