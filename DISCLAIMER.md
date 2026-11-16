@@ -2,6 +2,12 @@
 
 **Read this before using anything in this repository.** By using the software, scripts, modules, documentation or instructions here (together, "the Project"), you accept the terms below. If you do not accept them, do not use the Project.
 
+## Purpose
+
+VedoTom is an **independent, non-commercial, educational project**. Its purpose is to teach how an Android device boots, how the platform is built and secured, and how a platform engineer studies, instruments and builds for a device they own, using one real phone as the worked example. It is published for learning and research by device owners.
+
+It is not a product or a service. It sells nothing, hosts no firmware or system images (modified or otherwise), and redistributes no software belonging to Motorola, Lenovo, Google, MediaTek, any carrier or any other vendor. Every such file is downloaded by you, from its publisher, under that publisher's terms; the Project records only the hashes of the versions it was tested with. The Project's own contributions are its documentation, its tooling scripts, two small helper programs and the module manifests, all under the [MIT License](LICENSE).
+
 ## No warranty
 
 The Project is provided **"as is"**, without warranty of any kind, express or implied, including but not limited to the warranties of merchantability, fitness for a particular purpose and non-infringement, as stated in the [MIT License](LICENSE). Nothing in the documentation is a promise that any step will work on your device, or will not harm it.
@@ -37,7 +43,7 @@ The Project downloads and uses software published by others, including Google, M
 
 ## No affiliation
 
-The Project is an independent, personal engineering project. It is not affiliated with, endorsed by, sponsored by or supported by Motorola Mobility LLC, Lenovo, Google LLC, Verizon, TracFone Wireless, Straight Talk, Walmart, MediaTek, or any carrier, manufacturer, retailer or software author named in it. All product names, logos and brands are the property of their respective owners and are used for identification only.
+The Project is an independent, non-commercial, educational engineering project by a private individual. It is not affiliated with, endorsed by, sponsored by or supported by Motorola Mobility LLC, Lenovo, Google LLC, Verizon, TracFone Wireless, Straight Talk, Walmart, MediaTek, or any carrier, manufacturer, retailer or software author named in it. All product names, logos and brands are the property of their respective owners and are used for identification only.
 
 ## Not professional advice
 

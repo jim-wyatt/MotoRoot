@@ -33,7 +33,7 @@ ccache -M 50G >/dev/null
 if ! grep -q 'USE_CCACHE=1' "$HOME/.profile" 2>/dev/null; then
   cat >> "$HOME/.profile" <<'PROFILE'
 
-# AOSP builds (OtomDev dev/aosp/setup.sh)
+# AOSP builds (VedoTom dev/aosp/setup.sh)
 export USE_CCACHE=1
 export CCACHE_EXEC=/usr/bin/ccache
 export CCACHE_DIR="$HOME/.ccache-aosp"
@@ -41,8 +41,8 @@ PROFILE
 fi
 
 echo "== git identity (repo refuses to sync without one)"
-git config --global user.name  >/dev/null 2>&1 || git config --global user.name  "OtomDev builder"
-git config --global user.email >/dev/null 2>&1 || git config --global user.email "builder@otomdev.invalid"
+git config --global user.name  >/dev/null 2>&1 || git config --global user.name  "VedoTom builder"
+git config --global user.email >/dev/null 2>&1 || git config --global user.email "builder@vedotom.invalid"
 git config --global color.ui auto
 
 mkdir -p "$AOSP_DIR"

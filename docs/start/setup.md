@@ -4,13 +4,13 @@ One script installs everything. It is safe to run more than once: each step chec
 
 ## 1. Get the repository
 
-If you don't have Git yet, download the repository as a ZIP from GitHub and extract it to a folder on a **local drive** (not a network share or a WSL path; Python virtual environments break on those). The conventional location is `C:\Users\<you>\OtomDev`.
+If you don't have Git yet, download the repository as a ZIP from GitHub and extract it to a folder on a **local drive** (not a network share or a WSL path; Python virtual environments break on those). The conventional location is `C:\Users\<you>\VedoTom`.
 
 If you do have Git:
 
 ```powershell
-git clone https://github.com/jim-wyatt/OtomDev.git $env:USERPROFILE\OtomDev
-cd $env:USERPROFILE\OtomDev
+git clone https://github.com/jim-wyatt/VedoTom.git $env:USERPROFILE\VedoTom
+cd $env:USERPROFILE\VedoTom
 ```
 
 ## 2. Download the Motorola USB driver
@@ -18,7 +18,7 @@ cd $env:USERPROFILE\OtomDev
 This is the one download the script can't do for you, because Motorola's site has no stable direct link. Go to [Motorola's USB driver page](https://en-us.support.motorola.com/app/usb-drivers), download the **64-bit Windows** installer, and save it as:
 
 ```text
-OtomDev\work\Motorola_Mobile_Drivers_64bit.msi
+VedoTom\work\Motorola_Mobile_Drivers_64bit.msi
 ```
 
 Create the `work` folder if it doesn't exist. The script checks that the file is genuinely signed by Motorola Mobility before it trusts it.
@@ -69,7 +69,7 @@ From now on, every terminal you use for this project starts with one line:
 It prints a status block like this:
 
 ```text
-OtomDev dev shell
+VedoTom dev shell
 adb (pinned)   Version 37.0.1-15733141
 java           openjdk version "21.0.13.0.2" 2026-10-22 LTS
 android cli    1.1.16919734
@@ -83,7 +83,7 @@ Device inputs: verified
 Variables: $Work $adb $fb $Backup $py   Commands: docs, apktool, r8d8, ...
 ```
 
-If you use **VS Code**, open the repository folder and a new terminal (++ctrl+shift+grave++) does this automatically; the project configures a "OtomDev dev shell" terminal profile.
+If you use **VS Code**, open the repository folder and a new terminal (++ctrl+shift+grave++) does this automatically; the project configures a "VedoTom dev shell" terminal profile.
 
 ## 5. Prove it works
 

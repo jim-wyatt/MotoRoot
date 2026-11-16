@@ -4,7 +4,7 @@
 
 The procedure in [Prepare the device](../device/index.md), the helper programs in `device/helpers/`, the `wifi-ota-guard` and `wifi-carrier-debloat` modules, and the Magisk image preparation script are derived from the **Moto G Power 2026 Straight Talk WiFi and persistent root guide** by **[parsimo2010](https://github.com/parsimo2010/moto-g-power-2026-straight-talk-wifi-root-guide)**, who worked out and tested the procedure on the first unit on 2026-11-14 and published it under the MIT license. This project imported that guide at commit `9526ee08`, carried the procedure out on a second unit, and then restructured the material: the guide's commands and checkpoints became the [walkthrough](../device/walkthrough.md), its tested-device table and validation notes became the [validation page](../device/validation.md), its helpers and modules were documented and given a single manifest-driven builder, and a third module was added.
 
-The original license text, and exactly which parts it covers, are in [`NOTICE.md`](https://github.com/jim-wyatt/OtomDev/blob/main/NOTICE.md). The project as a whole is under the [MIT License](https://github.com/jim-wyatt/OtomDev/blob/main/LICENSE), and its use is subject to the [disclaimer](disclaimer.md).
+The original license text, and exactly which parts it covers, are in [`NOTICE.md`](https://github.com/jim-wyatt/VedoTom/blob/main/NOTICE.md). The project as a whole is under the [MIT License](https://github.com/jim-wyatt/VedoTom/blob/main/LICENSE), and its use is subject to the [disclaimer](disclaimer.md).
 
 ## Software the procedure uses
 

@@ -1,7 +1,7 @@
 # Tour the repository
 
 ```text
-OtomDev/
+VedoTom/
 ├── device/              What goes to the device
 │   ├── helpers/           two tiny Java programs + their compiled .dex files
 │   ├── modules/           five module ZIPs, their manifests, and the builder

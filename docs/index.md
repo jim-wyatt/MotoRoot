@@ -1,6 +1,8 @@
-# OtomDev
+# VedoTom
 
 **A complete Android platform-development environment, built around one real device.**
+
+**VedoTom is an independent, non-commercial, educational project.** It exists to teach how Android works on real hardware. It is not affiliated with Motorola, Lenovo, Google, MediaTek or any carrier, and it redistributes none of their software: everything vendor-made is downloaded by you, from its publisher, under its terms. The full statement is in the [disclaimer](reference/disclaimer.md).
 
 Most Android learning happens on an emulator. Emulators are great, but they hide half of what makes a real device interesting: they boot differently, they already give you a root shell, and they never show you how a shipping phone is actually assembled from partitions, a boot chain, and a vendor's system image.
 
@@ -63,7 +65,7 @@ This is standard platform-development practice on hardware you own. It is not a 
 ## How the repository is organized
 
 ```text
-OtomDev/
+VedoTom/
 ├── device/   Helper programs, three reversible modules, the Magisk prep script
 ├── dev/      One script installs and verifies every tool, pinned by hash
 ├── docs/     These pages, including the full device-preparation procedure

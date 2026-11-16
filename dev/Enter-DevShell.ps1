@@ -106,7 +106,7 @@ function Get-ToolVersion($Label, [scriptblock]$Cmd) {
     try { $v = (& $Cmd 2>&1 | Select-Object -First 1) -as [string] } catch { $v = 'not found' }
     '{0,-14} {1}' -f $Label, $v.Trim()
 }
-Write-Host 'OtomDev dev shell' -ForegroundColor Cyan
+Write-Host 'VedoTom dev shell' -ForegroundColor Cyan
 Get-ToolVersion 'adb (pinned)' { (& $adb version)[1] }
 Get-ToolVersion 'java'        { java -version }
 Get-ToolVersion 'android cli' { android --no-metrics --version }

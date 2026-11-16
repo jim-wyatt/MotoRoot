@@ -1,12 +1,12 @@
 {
   "python.defaultInterpreterPath": "${workspaceFolder}/work/.venv/Scripts/python.exe",
   "terminal.integrated.profiles.windows": {
-    "OtomDev dev shell": {
+    "VedoTom dev shell": {
       "source": "PowerShell",
       "args": ["-NoExit", "-ExecutionPolicy", "Bypass", "-Command", ". .\\dev\\Enter-DevShell.ps1"]
     }
   },
-  "terminal.integrated.defaultProfile.windows": "OtomDev dev shell",
+  "terminal.integrated.defaultProfile.windows": "VedoTom dev shell",
   "files.exclude": {
     "**/__pycache__": true,
     "dev/.cache": true,

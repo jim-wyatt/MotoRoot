@@ -5,7 +5,7 @@ How this repository is organized for safety, and the commands you'll use day to 
 ## The layout, and why
 
 ```text
-OtomDev/
+VedoTom/
 ├── device/  what goes to the device: helpers, modules + manifests + builder, the Magisk prep script
 ├── dev/     the PC side: bootstrap, dev shell, self-test, artifact rebuild
 ├── docs/    this site, including the full device procedure

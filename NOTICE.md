@@ -1,6 +1,6 @@
 # Third-party notices
 
-OtomDev is licensed under the [MIT License](LICENSE). It incorporates and builds on the work listed here. Nothing in this file changes those works' licenses; it records them.
+VedoTom is licensed under the [MIT License](LICENSE). It incorporates and builds on the work listed here. Nothing in this file changes those works' licenses; it records them.
 
 ## Device-preparation procedure, helpers and modules (parsimo2010, MIT)
 
