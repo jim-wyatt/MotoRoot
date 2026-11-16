@@ -71,6 +71,21 @@ Both runs retained stock Motorola Android: no custom ROM, no cellular network un
 | Magisk never showed the Grant prompt; `su` from ADB was denied instantly (unit 2) | Motorola's background freezer was suspending the Magisk app. Granting Shell manually from the Superuser tab (**+**) stored the policy |
 | `pm uninstall --user 0` refused two packages as "non-disable" (unit 2) | Left alone deliberately (`com.amazon.appmanager` ships disabled; `com.motorola.ccc.devicemanagement` is protected) rather than forced through an overlay |
 
+## Engineering-device tooling (unit 2, 2026-11-16)
+
+Added after the preparation runs, all on unit 2, all reversible, as described in [Make it an engineering device](dev-setup.md):
+
+| Item | Result |
+| --- | --- |
+| `dev_debuggable` module (`ro.debuggable=1`, `ro.build.type=userdebug`) | Installed; clean boot, no crashes, Play Store and launcher unaffected. Perfetto Java heap dump of Settings, a non-debuggable app: refused on stock (`not profileable` in logcat), a 24 MB dump with the module. With `ro.debuggable=1` alone it was still refused; `ro.build.type` is the property Perfetto checks. Not changed by either property: no JDWP for non-debuggable apps (only `adbd` on `@jdwp-control`), `run-as` still per-app, and `adb root` makes `adbd` abort (SIGABRT) and restart as `shell`. |
+| `dev_adb_tcp` module | Installed; `adbd` listening on `*:5555` after boot. A Wi-Fi connection from the PC was not exercised: the PC and phone sat on different subnets, which `adbwifi` now detects and reports. |
+| Termux 0.118.3 (GitHub build, hash-pinned) | Installed over ADB; Debian via `proot-distro` works. |
+| Frida 17.26.3 | `Start-Frida` pushes and starts the server; `frida-ps -Ua` lists the running apps. |
+| Perfetto | `Trace-Device.ps1` records and pulls traces. The config file must live in `/data/misc/perfetto-configs/`; `/data/local/tmp` is refused by SELinux. |
+| simpleperf | Unusable on this device: no perf events (`cpu-cycles` and `cpu-clock` both "not supported on the device"). |
+| Android Virtualization Framework | Absent: no `ro.boot.hypervisor.*`, no `/dev/kvm`, no `com.android.virt` APEX, no Terminal app. |
+| SDK `adb` vs pinned `adb` | Both 37.0.1-15733141, so Android Studio and the dev shell share one server; the self-test enforces equality. |
+
 ## About the committed artifacts
 
 The helper DEX files and the module ZIPs in `device/` are rebuilt by this project from the sources beside them, and `.\dev\Build-Device.ps1` verifies that they reproduce. Relative to the files that ran on unit 1:

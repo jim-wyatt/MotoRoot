@@ -4,11 +4,11 @@ The [walkthrough](walkthrough.md) ends with a rooted retail build. Google's own 
 
 ## The two development modules
 
-Both are [script modules](../concepts/magisk-modules.md#script-modules): a `post-fs-data.sh` that sets one system property early in boot, before `zygote` and `adbd` start. They live in `device/modules/` next to the three Wi-Fi modules and are built the same way.
+Both are [script modules](../concepts/magisk-modules.md#script-modules): a `post-fs-data.sh` that sets system properties early in boot, before `zygote`, `system_server` and `adbd` start. They live in `device/modules/` next to the three Wi-Fi modules and are built the same way. Every claim in this table was checked on unit 2; the [validation page](validation.md#engineering-device-tooling-unit-2-2026-11-16) has the measurements.
 
 | Module | Sets | What you get | Mind |
 | --- | --- | --- | --- |
-| `dev_debuggable` | `ro.debuggable=1` | Every app is debuggable: Android Studio can attach to any process, `run-as <package>` works for every package, `am set-debug-app` accepts anything, profilers and Frida treat the device as an engineering build | A few apps refuse to run on debuggable systems. `adb root` still does **not** work: the shipped `adbd` is compiled to drop root on a user build, and this module doesn't replace it. Use `su -c`. |
+| `dev_debuggable` | `ro.debuggable=1` and `ro.build.type=userdebug` | The system reports itself as an engineering build. Verified effect: Perfetto's heap profilers (Java heap dumps, native `heapprofd`) and other tooling that checks the build type can target **any** app, not only profileable ones; on stock they refuse with `not profileable`. Tools that gate on `ro.debuggable` behave as on a userdebug build. | Some apps refuse to run on a debuggable or userdebug system. Verified **not** to change on Android 16: the debugger still attaches only to debuggable apps (no JDWP for the rest), `run-as` still checks the app's own flag, and `adb root` still fails (it makes `adbd` abort and restart as `shell`; don't run it). Use `su -c`. |
 | `dev_adb_tcp` | `service.adb.tcp.port=5555` | `adbd` listens on TCP from boot, so `adb connect <phone-ip>:5555` works with no cable and no pairing dialog | Only PCs whose ADB key you've approved on the phone get a shell, but the port is reachable by anyone on the network. Keep it disabled on networks you don't control. |
 
 Install both (or either) from the repository root, then reboot:
@@ -25,9 +25,18 @@ After the reboot, verify:
 
 ```powershell
 & $adb shell getprop ro.debuggable               # 1
+& $adb shell getprop ro.build.type               # userdebug
 & $adb shell getprop service.adb.tcp.port        # 5555
-& $adb shell run-as com.android.vending id       # works on any package now; it would refuse on stock
-& $adb root                                      # still "adbd cannot run as root in production builds": expected
+& $adb shell su -c 'ss -ltn | grep :5555'        # adbd listening on TCP
+```
+
+The proof that the userdebug report does something useful is a heap dump of an app that isn't yours, which stock refuses:
+
+```powershell
+'buffers: { size_kb: 32768 }
+data_sources: { config { name: "android.java_hprof" java_hprof_config { process_cmdline: "com.android.settings" } } }
+duration_ms: 3000' | Set-Content "$Work\traces\hprof.pbtxt" -Encoding ascii
+.\dev\Trace-Device.ps1 -Config "$Work\traces\hprof.pbtxt" -Name settings-heap   # ~25 MB trace; open it at ui.perfetto.dev
 ```
 
 !!! note "If the device won't boot with a module enabled"
@@ -42,7 +51,7 @@ adbwifi                      # → connected to 192.168.x.y:5555
 & $adb devices -l            # the phone now appears twice: USB and TCP; unplug and the TCP one stays
 ```
 
-Android Studio lists the TCP device like any other. If you'd rather not run the module, Android's own path is **Developer options → Wireless debugging → Pair device with pairing code** and `adb pair`, which has to be repeated after each reboot; or `& $adb tcpip 5555` over USB, which lasts until the next reboot.
+`adbwifi` first checks that the PC has an address on the phone's network and says so if not; two routers, a guest Wi-Fi, or a wired PC on a different subnet from the Wi-Fi are the usual reasons a connect would otherwise just time out. Android Studio lists the TCP device like any other. If you'd rather not run the module, Android's own path is **Developer options → Wireless debugging → Pair device with pairing code** and `adb pair`, which has to be repeated after each reboot; or `& $adb tcpip 5555` over USB, which lasts until the next reboot.
 
 ## Linux on the device
 

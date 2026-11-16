@@ -31,21 +31,17 @@ The [Perfetto UI docs](https://perfetto.dev/docs/visualization/perfetto-ui) expl
 
 Pass `-Config myconfig.pbtxt` to record exactly what you want: more `ftrace_events`, `heapprofd` for native allocations, `android.java_hprof` for Java heap snapshots, or longer `duration_ms`. The [config reference](https://perfetto.dev/docs/concepts/config) and the **Record new trace** page of the UI (which generates text configs) cover the options. Traces land in `work\traces\`, which is git-ignored: they contain package lists and log lines, so they stay private.
 
-## CPU profiling one process: simpleperf
+## Profiling other apps, and the simpleperf gap
 
-For "where in *my* code is the time going", the NDK's `simpleperf` samples a single process with symbols:
+Perfetto's heap profilers (`android.java_hprof` for Java heap dumps, `heapprofd` for native allocations) only touch apps that are *profileable* or *debuggable*, unless the build itself is a `userdebug` build. On this device the [`dev_debuggable` module](../device/dev-setup.md) makes the system report exactly that, and with it a heap dump of any app works; without it, logcat shows `not profileable` and the trace is empty. Your own debug builds are profileable regardless.
 
-```powershell
-& $adb shell simpleperf record -p (& $adb shell pidof com.example.myapp) --duration 10 -o /data/local/tmp/perf.data
-& $adb pull /data/local/tmp/perf.data "$Work\traces\perf.data"
-```
-
-Android Studio's CPU profiler wraps the same tool with a UI, which is where you'll normally use it once your projects live there.
+`simpleperf`, the NDK's sampling CPU profiler, is **not usable on this device**: the MediaTek kernel exposes no perf events to it (`simpleperf record` fails with "Event type 'cpu-cycles' is not supported on the device", and `-e cpu-clock` fails the same way). That also limits Android Studio's sampled CPU profiler, which is simpleperf underneath; Perfetto's system trace and Studio's system-trace mode work fine, because they use ftrace, not perf counters.
 
 | You want | Tool |
 | --- | --- |
-| The whole device on one timeline: scheduling, memory, framework events, logs | Perfetto (`Trace-Device.ps1`) |
-| Hot functions in one process | simpleperf, or Studio's CPU profiler |
+| The whole device on one timeline: scheduling, memory, framework events, logs | Perfetto (`Trace-Device.ps1`), or Studio's system trace |
+| Memory: Java heap dump or native allocations of any app | Perfetto `android.java_hprof` / `heapprofd` (with the userdebug module for apps that aren't yours) |
+| Hot functions by CPU sampling | not available on this device (no perf events); use trace slices and Frida timing instead |
 | What a process is *doing*, call by call | [Frida](instrumentation.md) |
 
 Next: [Your first app in Android Studio](android-studio.md).

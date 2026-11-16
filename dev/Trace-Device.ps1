@@ -82,7 +82,8 @@ $LocalConfig = Join-Path $LocalDir "$Name.pbtxt"
 Set-Content -LiteralPath $LocalConfig -Value $ConfigText -Encoding ascii -NoNewline
 & $Adb push $LocalConfig $RemoteConfig | Out-Null
 if ($LASTEXITCODE -ne 0) { throw 'config push failed' }
-Write-Host "Recording $Seconds s to $Remote ... reproduce what you want to see on the phone now." -ForegroundColor Cyan
+$Length = if ($Config) { 'for the duration in the config' } else { "for $Seconds s" }
+Write-Host "Recording $Length to $Remote ... reproduce what you want to see on the phone now." -ForegroundColor Cyan
 & $Adb shell perfetto --txt -c $RemoteConfig -o $Remote
 if ($LASTEXITCODE -ne 0) { throw 'perfetto failed on the device (is persist.traced.enable=1?).' }
 & $Adb shell rm -f $RemoteConfig | Out-Null

@@ -1,18 +1,22 @@
 #!/system/bin/sh
-# dev_debuggable: make the running system report itself as a debuggable build.
+# dev_debuggable: make the running system report itself as a userdebug (engineering) build.
 #
-# ro.debuggable=1 is what userdebug and eng builds set. With it, ART lets a debugger attach to
-# any app (not only those with android:debuggable="true"), `run-as <package>` works for every
-# package, `am set-debug-app` accepts any app, and tools that gate on the property (profilers,
-# Frida's spawn gating, Android Studio's "attach to process") behave as on an engineering build.
+# Two properties, set at post-fs-data before zygote, system_server and adbd start:
+#   ro.debuggable=1          what userdebug and eng builds set; tools that gate on it treat the
+#                            device as debuggable.
+#   ro.build.type=userdebug  what Perfetto's heap profilers (and other tooling) actually check
+#                            before touching an app that is not itself profileable. Verified on
+#                            this device: with it, Perfetto takes a Java heap dump of any app;
+#                            with ro.debuggable alone it refuses ("not profileable").
 #
-# It does NOT make `adb root` work on a user build: the shipped adbd is compiled to drop root
-# unconditionally, and this module does not replace adbd. Use `su -c` for root commands.
+# Not changed on this build (Android 16, tested): `run-as <package>` still checks the app's own
+# debuggable flag, and `adb root` still does not work (the shipped adbd is compiled to drop
+# root; asking makes it abort and restart as shell), so use `su -c` for root commands. Some
+# apps refuse to run on a build that reports itself as debuggable or userdebug; disable the
+# module and reboot to return to the stock values (0 / user).
 #
-# resetprop -n sets the property without firing init's property triggers, so nothing else in
-# init reacts to the change. This runs at post-fs-data, before zygote and adbd start, so both
-# read the new value. Disable the module and reboot to return to the stock value (0).
-#
-# If the device ever fails to boot with this enabled, hold Volume Down during boot: Magisk's
-# safe mode starts with every module disabled.
+# resetprop -n sets the properties without firing init's property triggers, so nothing else in
+# init reacts. If the device ever fails to boot with this enabled, hold Volume Down during
+# boot: Magisk's safe mode starts with every module disabled.
 resetprop -n ro.debuggable 1
+resetprop -n ro.build.type userdebug

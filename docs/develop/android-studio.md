@@ -56,8 +56,7 @@ This repository is the bootstrap, the reference and the documentation; your own 
 | In Studio | Because |
 | --- | --- |
 | The device appears without a cable (`192.168.x.y:5555` in the device dropdown) | `adbwifi` from the dev shell, with the `dev_adb_tcp` module ([engineering device](../device/dev-setup.md)) |
-| **Run → Attach Debugger to Android Process** lists *every* process, not just your debuggable apps | `ro.debuggable=1` from the `dev_debuggable` module |
-| **Device Explorer** can read app data directories | same; `run-as` works for any package |
+| The profilers' heap dumps, and Perfetto heap profiling, work on apps that aren't yours | the `dev_debuggable` module makes the device report a userdebug build ([engineering device](../device/dev-setup.md)); attaching the *debugger* still needs a debuggable app |
 | The CPU profiler's system trace is the same data as [Perfetto](tracing.md) | Studio drives `perfetto` on the device |
 | A `Terminal` tool window with `adb`, `frida`, `r8d8` on PATH | start Studio from a dev shell, or dot-source `Enter-DevShell.ps1` in Studio's terminal |
 

@@ -53,8 +53,16 @@ function global:docs    { & (Join-Path $PSScriptRoot '.venv-docs\Scripts\zensica
 # (listening from boot with the dev_adb_tcp module, or after `& $adb tcpip 5555`).
 function global:adbwifi {
     $line = (& $adb shell ip -4 -o addr show wlan0 2>$null) -join ' '
-    if ($line -notmatch 'inet (\d+\.\d+\.\d+\.\d+)/') { Write-Warning 'Could not read the phone''s Wi-Fi address over USB (cable in, Wi-Fi on?).'; return }
-    & $adb connect "$($Matches[1]):5555"
+    if ($line -notmatch 'inet (\d+\.\d+\.\d+\.\d+)/(\d+)') { Write-Warning 'Could not read the phone''s Wi-Fi address over USB (cable in, Wi-Fi on?).'; return }
+    $phone = $Matches[1]; $prefix = [int]$Matches[2]
+    # The PC must be on the phone's network. A different subnet (two routers, guest Wi-Fi, wired vs wireless)
+    # is the usual reason for a silent timeout, so say so instead of waiting on it.
+    $mask = [uint32]([math]::Pow(2, 32) - [math]::Pow(2, 32 - $prefix))
+    $toInt = { param($ip) $b = ([IPAddress]$ip).GetAddressBytes(); [Array]::Reverse($b); [BitConverter]::ToUInt32($b, 0) }
+    $pcAddrs = @(Get-NetIPAddress -AddressFamily IPv4 -ErrorAction SilentlyContinue | Where-Object { $_.IPAddress -notlike '127.*' -and $_.IPAddress -notlike '169.254.*' } | ForEach-Object IPAddress)
+    $same = @($pcAddrs | Where-Object { ((& $toInt $_) -band $mask) -eq ((& $toInt $phone) -band $mask) })
+    if (-not $same) { Write-Warning "The phone is on $phone/$prefix but this PC's addresses are $($pcAddrs -join ', '): different networks. Join the PC to the phone's Wi-Fi (or the phone to the PC's) and retry."; return }
+    & $adb connect "${phone}:5555"
 }
 # Start Frida's agent on the device as root (idempotent) so frida-ps / frida-trace work from this PC.
 function global:Start-Frida {
