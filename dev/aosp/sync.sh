@@ -27,3 +27,5 @@ fi
 echo "== repo sync ($JOBS jobs) started $(date)"
 repo sync -c -j"$JOBS" --no-tags --no-clone-bundle --optimized-fetch --prune
 echo "== sync complete $(date)   size: $(du -sh "$AOSP_DIR" | cut -f1)"
+# A sync that was interrupted during checkout leaves projects repo no longer looks at; see verify-tree.sh.
+bash "$HERE/verify-tree.sh"
