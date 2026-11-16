@@ -6,7 +6,9 @@
 # hours and all cores; later builds are incremental. On success the system image is copied to
 # work/device-tools/gsi/own/ on the Windows side, where Install-Gsi.ps1 -Image can boot it
 # through DSU exactly like Google's image.
-set -euo pipefail
+# No `set -e`/`set -u`: AOSP's envsetup.sh and lunch are not written for strict mode (they read
+# unset variables and return non-zero on the way to success). Failures are checked explicitly.
+set -o pipefail
 
 HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPO_ROOT="$(cd "$HERE/../.." && pwd)"
@@ -20,10 +22,11 @@ cd "$AOSP_DIR"
 source build/envsetup.sh
 export USE_CCACHE=1 CCACHE_EXEC=/usr/bin/ccache CCACHE_DIR="$HOME/.ccache-aosp"
 echo "== lunch $LUNCH"
-lunch "$LUNCH"
+lunch "$LUNCH" || { echo "lunch failed; run 'lunch' in $AOSP_DIR to list this tag's targets and fix deviceTools.aosp.lunch" >&2; exit 1; }
 echo "== build started $(date)"
-m -j"$(nproc)"
+m -j"$(nproc)" || { echo "build failed" >&2; exit 1; }
 PRODUCT_OUT="$(get_build_var PRODUCT_OUT)"
+[ -f "$PRODUCT_OUT/system.img" ] || { echo "no system.img in $PRODUCT_OUT" >&2; exit 1; }
 echo "== build finished $(date)"
 mkdir -p "$OUT_DIR"
 cp "$PRODUCT_OUT/system.img" "$OUT_DIR/system.img"
