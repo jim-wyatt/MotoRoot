@@ -3,12 +3,12 @@
 # Published by .github/workflows/docs.yml to GitHub Pages on every push to main.
 
 [project]
-site_name = "MotoRoot"
+site_name = "OtomDev"
 site_description = "An Android platform development environment built around a Moto G Power 2026 (XT2617V) development device"
-site_url = "https://jim-wyatt.github.io/MotoDev/"
+site_url = "https://jim-wyatt.github.io/OtomDev/"
 copyright = "Original guide &copy; 2026 parsimo2010 (MIT). Docs and dev environment for this fork."
-repo_url = "https://github.com/jim-wyatt/MotoDev"
-repo_name = "jim-wyatt/MotoDev"
+repo_url = "https://github.com/jim-wyatt/OtomDev"
+repo_name = "jim-wyatt/OtomDev"
 edit_uri = "edit/main/docs/"
 
 nav = [

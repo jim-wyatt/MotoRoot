@@ -1,18 +1,18 @@
-# MotoRoot
+# OtomDev
 
 **An Android platform-development environment, built around a real device.**
 
-MotoRoot sets up a complete, reproducible Windows toolchain for Android development and turns a **Moto G Power 2026 (XT2617V)** into a full development device — one you can read, instrument, and build on at the system level, the way a platform engineer works with an AOSP engineering build.
+OtomDev sets up a complete, reproducible Windows toolchain for Android development and turns a **Moto G Power 2026 (XT2617V)** into a full development device — one you can read, instrument, and build on at the system level, the way a platform engineer works with an AOSP engineering build.
 
 It's aimed at people learning Android development from the ground up: the docs assume **no prior Android experience** and explain `adb`, the build pipeline, how a device boots, and the platform's security model as they go.
 
-📖 **[Read the documentation](https://jim-wyatt.github.io/MotoDev/)**
+📖 **[Read the documentation](https://jim-wyatt.github.io/OtomDev/)**
 
 ## Quick start
 
 ```powershell
-git clone https://github.com/jim-wyatt/MotoDev.git $env:USERPROFILE\MotoRoot
-cd $env:USERPROFILE\MotoRoot
+git clone https://github.com/jim-wyatt/OtomDev.git $env:USERPROFILE\OtomDev
+cd $env:USERPROFILE\OtomDev
 # Download the Motorola USB driver into work\ (see docs: Getting started)
 Set-ExecutionPolicy -Scope Process Bypass
 .\dev\Bootstrap-DevEnv.ps1 -AndroidStudio -AcceptAndroidSdkLicenses   # installs & verifies the whole toolchain
@@ -39,10 +39,10 @@ One script installs and hash-verifies the full stack: JDK, Android SDK, NDK, pla
 
 ## Safety
 
-This project works with real hardware you own. Unlocking a bootloader **erases the device**, and the low-level preparation on this model can, in the worst case, leave it unbootable. It was validated on one unit and one firmware build. Read the [internals](https://jim-wyatt.github.io/MotoDev/concepts/) and the [walkthrough](https://jim-wyatt.github.io/MotoDev/device/walkthrough/) before touching the device.
+This project works with real hardware you own. Unlocking a bootloader **erases the device**, and the low-level preparation on this model can, in the worst case, leave it unbootable. It was validated on one unit and one firmware build. Read the [internals](https://jim-wyatt.github.io/OtomDev/concepts/) and the [walkthrough](https://jim-wyatt.github.io/OtomDev/device/walkthrough/) before touching the device.
 
 Device backups and identifiers are private; a [git pre-commit hook](.githooks/pre-commit) and `.gitignore` keep them out of version control automatically.
 
 ## Credits
 
-Device-preparation procedure © parsimo2010 (MIT). Development environment and documentation built around it. Full attributions in the [credits](https://jim-wyatt.github.io/MotoDev/reference/credits/).
+Device-preparation procedure © parsimo2010 (MIT). Development environment and documentation built around it. Full attributions in the [credits](https://jim-wyatt.github.io/OtomDev/reference/credits/).

@@ -14,7 +14,7 @@ Set-ExecutionPolicy -Scope Process Bypass
 
 `Test-DevEnv.ps1` exercises every tool, not just its version. It compiles and dexes the helpers, decompiles with jadx, cross-compiles an aarch64 Android 16 binary with the NDK, imports val-protocol, re-verifies every kit pin, and checks the git safety settings (hook active, private paths ignored, upstream fetch-only, origin private). It never talks to the phone and never starts an ADB server.
 
-In VS Code, the default terminal profile **MotoRoot dev shell** dot-sources `Enter-DevShell.ps1` for you. The tasks in `.vscode/tasks.json` run the bootstrap, the rebuild (the default build task, Ctrl+Shift+B) and scrcpy.
+In VS Code, the default terminal profile **OtomDev dev shell** dot-sources `Enter-DevShell.ps1` for you. The tasks in `.vscode/tasks.json` run the bootstrap, the rebuild (the default build task, Ctrl+Shift+B) and scrcpy.
 
 Add `-AcceptAndroidSdkLicenses` only after reading Google's Android SDK terms. Without it, the script asks you to accept them interactively.
 

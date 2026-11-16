@@ -1,4 +1,4 @@
-# MotoRoot
+# OtomDev
 
 **A complete Android platform-development environment, built around one real device.**
 
@@ -63,7 +63,7 @@ This is standard platform-development practice on hardware you own. It is not a 
 ## How the repository is organized
 
 ```text
-MotoRoot/
+OtomDev/
 ├── kit/      The tested device-preparation procedure (by parsimo2010): the source of truth
 ├── dev/      The development environment: one script installs every tool, pinned and verified
 ├── docs/     These pages

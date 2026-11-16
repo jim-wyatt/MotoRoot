@@ -5,7 +5,7 @@ How this repository is organized for safety, and the commands you'll use day to 
 ## The layout, and why
 
 ```text
-MotoRoot/
+OtomDev/
 ├── kit/     upstream procedure — read-only reference, verified against its own checksums
 ├── dev/     the dev environment
 ├── docs/    this site

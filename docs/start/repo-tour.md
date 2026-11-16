@@ -1,7 +1,7 @@
 # Tour the repository
 
 ```text
-MotoRoot/
+OtomDev/
 ├── kit/                 The tested procedure, unchanged
 │   ├── GUIDE.md           the step-by-step phone procedure (the source of truth)
 │   ├── README.md          exact tested phone, build and results

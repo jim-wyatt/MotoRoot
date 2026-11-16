@@ -1,4 +1,4 @@
-# MotoRoot .gitignore
+# OtomDev .gitignore
 # Rule 1 of this repo: never commit device images, identifiers, keys, or raw logs.
 # .githooks/pre-commit enforces the same rules at commit time (dev/Bootstrap-DevEnv.ps1 enables it).
 

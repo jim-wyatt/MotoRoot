@@ -19,7 +19,7 @@ The low-level stages are **firmware-specific**. They were validated on one unit 
 | Kernel | `5.15.180-android13-8-...-ab14563692` |
 | Active slot | `a` |
 
-Verify with `getprop` ([first ADB session](../start/first-adb-session.md#ask-the-phone-about-itself)) before you start. The authoritative table is in [`kit/README.md`](https://github.com/jim-wyatt/MotoDev/blob/main/kit/README.md).
+Verify with `getprop` ([first ADB session](../start/first-adb-session.md#ask-the-phone-about-itself)) before you start. The authoritative table is in [`kit/README.md`](https://github.com/jim-wyatt/OtomDev/blob/main/kit/README.md).
 
 ## What you'll end up with
 
