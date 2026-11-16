@@ -59,12 +59,12 @@ All run as **root**. A broken script can slow or stop boot, so test incrementall
 
 ## How the project generates its modules
 
-The project's modules are built by Python scripts, not hand-zipped — a good pattern once modules get repetitive. `kit/scripts/build_modules.py` reads `kit/carrier-debloat-manifest.json` (the 22 carrier packages and their directories) and writes the kit's two module ZIPs, validating every path as it goes. This fork's `dev/modules/build_extra_module.py` does the same for `wifi-extra-debloat-manifest.json`, and is the one to copy if you want to hide a different set of apps: find each package's APK with `& $adb shell pm path <package>`, add an entry with its directory, change the expected count, and rebuild.
+The project's three modules are built by one script, not hand-zipped — a good pattern once modules get repetitive. `device/modules/build_modules.py` reads every manifest in `device/modules/manifests/` (a module's `module.prop` fields plus the packages it hides, each with its on-disk directory), validates every path, and writes one ZIP per manifest. The build is deterministic, so the same manifest always gives the same bytes. To hide a different set of apps, add a manifest: find each package's APK with `& $adb shell pm path <package>`, record its directory as `hidden_directory`, and rebuild.
 
 Rebuild all three and verify them against the committed copies:
 
 ```powershell
-.\dev\Build-Kit.ps1
+.\dev\Build-Device.ps1
 ```
 
 All three use the `.replace` convention — an empty overlay that *hides* a system directory rather than adding to it (see [the modules concept page](../concepts/magisk-modules.md#the-three-modules-in-this-project)). Reading `build_modules.py` is the fastest way to see how a real, parameterized module generator is structured.

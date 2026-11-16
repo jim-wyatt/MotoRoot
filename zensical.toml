@@ -6,7 +6,7 @@
 site_name = "OtomDev"
 site_description = "An Android platform development environment built around a Moto G Power 2026 (XT2617V) development device"
 site_url = "https://jim-wyatt.github.io/OtomDev/"
-copyright = "Original guide &copy; 2026 parsimo2010 (MIT). Docs and dev environment for this fork."
+copyright = "&copy; 2026 Jim Wyatt, MIT. Device procedure derived from parsimo2010's guide (MIT). Use is subject to the <a href='https://jim-wyatt.github.io/OtomDev/reference/disclaimer/'>disclaimer</a>."
 repo_url = "https://github.com/jim-wyatt/OtomDev"
 repo_name = "jim-wyatt/OtomDev"
 edit_uri = "edit/main/docs/"
@@ -32,6 +32,7 @@ nav = [
     "device/index.md",
     { "Preparation walkthrough" = "device/walkthrough.md" },
     { "Maintaining the device" = "device/maintenance.md" },
+    { "Validation and limits" = "device/validation.md" },
   ] },
   { "Develop" = [
     "develop/index.md",
@@ -48,6 +49,7 @@ nav = [
     { "Troubleshooting" = "reference/troubleshooting.md" },
     { "Glossary" = "reference/glossary.md" },
     { "Credits and sources" = "reference/credits.md" },
+    { "Disclaimer" = "reference/disclaimer.md" },
   ] },
 ]
 

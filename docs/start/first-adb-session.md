@@ -42,7 +42,7 @@ The second column is the state. You want exactly one line, and it must say **`de
 | (nothing) | Windows doesn't see the phone. Check the cable is a data cable; try another port. |
 
 !!! tip "The `&` and `$adb`"
-    `$adb` holds the full path to the pinned `adb.exe`. In PowerShell, running a command from a variable needs the call operator `&` in front. That's all `& $adb` means. The guide uses this form everywhere so that you always run the *tested* version, not some other `adb` that happens to be on your PATH.
+    `$adb` holds the full path to the pinned `adb.exe`. In PowerShell, running a command from a variable needs the call operator `&` in front. That's all `& $adb` means. The walkthrough uses this form everywhere so that you always run the *tested* version, not some other `adb` that happens to be on your PATH.
 
 ## Ask the phone about itself
 
@@ -58,7 +58,7 @@ Android exposes hundreds of **system properties**: read-only key/value pairs set
 
 `adb shell <command>` runs one command on the phone and prints its output. You should see something like `moto g power 2026`, `16`, a long fingerprint string, a date, and `_a`.
 
-These exact values are what the preparation procedure checks before any low-level step. The [tested phone table](../device/index.md#the-exact-tested-device) lists what they must be.
+These exact values are what the preparation procedure checks before any low-level step. The [tested device table](../device/validation.md#the-exact-tested-device) lists what they must be.
 
 ## Open an interactive shell
 
@@ -116,7 +116,7 @@ Not required, but good hygiene before you plug the phone into another program (A
 
 - `adb devices` tells you whether you can talk to the phone, and the state column tells you what's wrong when you can't.
 - `adb shell` runs commands on the phone as the limited `shell` user.
-- `getprop` reads system properties; the guide uses them to verify the phone before anything risky.
+- `getprop` reads system properties; the walkthrough uses them to verify the phone before anything risky.
 - `logcat` is the system log.
 - `scrcpy` mirrors the screen.
 

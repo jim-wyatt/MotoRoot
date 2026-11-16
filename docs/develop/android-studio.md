@@ -3,7 +3,7 @@
 The previous pages ran code the low-level way, to show how Android works underneath. This page uses the normal, polished path most app developers live in: **Android Studio**, the official IDE, which the bootstrap installed. You'll build an app and run it on your prepared device.
 
 !!! warning "Close the dev shell's phone work first"
-    Android Studio runs its **own** `adb` server, newer than the kit's pinned 37.0.1. Two servers fighting over one device cause dropped connections. When you switch to Studio, stop the dev shell's server with `& $adb kill-server`, and don't run both against the device at once.
+    Android Studio runs its **own** `adb` server, newer than the pinned 37.0.1. Two servers fighting over one device cause dropped connections. When you switch to Studio, stop the dev shell's server with `& $adb kill-server`, and don't run both against the device at once.
 
 ## Create the project
 

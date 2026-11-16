@@ -1,6 +1,6 @@
 # Android internals
 
-The preparation procedure in `kit/GUIDE.md` is written for someone who already knows what a partition is, why slot A matters, and what "LK" stands for. These pages fill in that background, so that when you run a command you know what it is doing and what would happen if it went wrong. They're also just a good tour of how Android is built, useful well beyond this one device.
+The [preparation walkthrough](../device/walkthrough.md) assumes you already know what a partition is, why slot A matters, and what "LK" stands for. These pages fill in that background, so that when you run a command you know what it is doing and what would happen if it went wrong. They're also just a good tour of how Android is built, useful well beyond this one device.
 
 Read them in order the first time; each builds on the one before.
 

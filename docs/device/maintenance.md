@@ -38,7 +38,7 @@ To bring back the carrier apps, the extra hidden apps, or the updater, disable t
 & $adb shell su -c 'pm default-state --user 0 com.android.devicelockcontroller'
 ```
 
-The same toggles are in the Magisk app under **Modules**. Nothing was deleted from the firmware; disabling the overlay is all it takes. To bring back one app without disabling a whole module, edit its manifest, rebuild the ZIP with `.\dev\Build-Kit.ps1 -Promote`, and reinstall it.
+The same toggles are in the Magisk app under **Modules**. Nothing was deleted from the firmware; disabling the overlay is all it takes. To bring back one app without disabling a whole module, remove it from the module's manifest in `device/modules/manifests/`, rebuild the ZIP with `.\dev\Build-Device.ps1 -Promote`, and reinstall it.
 
 ## Recovery
 

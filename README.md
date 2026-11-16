@@ -8,6 +8,8 @@ It's aimed at people learning Android development from the ground up: the docs a
 
 📖 **[Read the documentation](https://jim-wyatt.github.io/OtomDev/)**
 
+> **Before you touch a device, read [DISCLAIMER.md](DISCLAIMER.md).** This project modifies real hardware. It can erase a device, void its warranty, and in the worst case leave it unbootable with no known recovery. Use it only on a device you own outright, at your own risk, and in compliance with the laws and agreements that apply to you.
+
 ## Quick start
 
 ```powershell
@@ -17,7 +19,7 @@ cd $env:USERPROFILE\OtomDev
 Set-ExecutionPolicy -Scope Process Bypass
 .\dev\Bootstrap-DevEnv.ps1 -AndroidStudio -AcceptAndroidSdkLicenses   # installs & verifies the whole toolchain
 . .\dev\Enter-DevShell.ps1                                            # in every new terminal
-.\dev\Test-DevEnv.ps1                                                 # 36-check self-test
+.\dev\Test-DevEnv.ps1                                                 # self-test: exercises every tool, exit code = failures
 ```
 
 One script installs and hash-verifies the full stack: JDK, Android SDK, NDK, platform-tools, Android Studio, jadx, apktool, scrcpy, and the device-preparation inputs. Everything is pinned in [`dev/toolchain.json`](dev/toolchain.json).
@@ -26,9 +28,9 @@ One script installs and hash-verifies the full stack: JDK, Android SDK, NDK, pla
 
 | Folder | What it is |
 | --- | --- |
-| [`kit/`](kit/) | The tested device-preparation procedure by **[parsimo2010](https://github.com/parsimo2010/moto-g-power-2026-straight-talk-wifi-root-guide)**, included unchanged (MIT). See [`kit/UPSTREAM.md`](kit/UPSTREAM.md). |
-| [`dev/`](dev/) | The development environment: bootstrap, per-shell setup, self-test, build scripts, and this fork's own [`wifi-extra-debloat`](dev/modules/) system module. |
-| [`docs/`](docs/) | The documentation site ([Zensical](https://zensical.org/)), published to GitHub Pages. |
+| [`device/`](device/) | What goes to the device: two helper programs, three reversible Magisk modules with the manifests and builder that generate them, and the Magisk image preparation script. |
+| [`dev/`](dev/) | The PC side: bootstrap, per-shell setup, self-test, and the artifact rebuild. |
+| [`docs/`](docs/) | The documentation site ([Zensical](https://zensical.org/)), published to GitHub Pages. The full device procedure lives here. |
 | `work/` | Your downloads, backups, and build outputs. **Git-ignored in full.** |
 
 ## What you can do with it
@@ -39,10 +41,10 @@ One script installs and hash-verifies the full stack: JDK, Android SDK, NDK, pla
 
 ## Safety
 
-This project works with real hardware you own. Unlocking a bootloader **erases the device**, and the low-level preparation on this model can, in the worst case, leave it unbootable. It was validated on one unit and one firmware build. Read the [internals](https://jim-wyatt.github.io/OtomDev/concepts/) and the [walkthrough](https://jim-wyatt.github.io/OtomDev/device/walkthrough/) before touching the device.
+This project works with real hardware you own. Unlocking a bootloader **erases the device**, and the low-level preparation on this model can, in the worst case, leave it unbootable. The procedure has been carried out on two units of one firmware build; what that does and doesn't establish is on the [validation page](https://jim-wyatt.github.io/OtomDev/device/validation/). Read the [internals](https://jim-wyatt.github.io/OtomDev/concepts/) and the [walkthrough](https://jim-wyatt.github.io/OtomDev/device/walkthrough/) before touching the device.
 
 Device backups and identifiers are private; a [git pre-commit hook](.githooks/pre-commit) and `.gitignore` keep them out of version control automatically.
 
-## Credits
+## License and credits
 
-Device-preparation procedure © parsimo2010 (MIT). Development environment and documentation built around it. Full attributions in the [credits](https://jim-wyatt.github.io/OtomDev/reference/credits/).
+OtomDev is released under the [MIT License](LICENSE). The device-preparation procedure, the helper programs and the first two modules are derived from the guide by [parsimo2010](https://github.com/parsimo2010/moto-g-power-2026-straight-talk-wifi-root-guide) (MIT); the original notice and the exact scope are in [NOTICE.md](NOTICE.md), and full attributions are in the [credits](https://jim-wyatt.github.io/OtomDev/reference/credits/). The project is not affiliated with Motorola, Lenovo, Google, any carrier or retailer, or the authors of the software it downloads.

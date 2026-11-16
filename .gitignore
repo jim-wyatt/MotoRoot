@@ -2,7 +2,7 @@
 # Rule 1 of this repo: never commit device images, identifiers, keys, or raw logs.
 # .githooks/pre-commit enforces the same rules at commit time (dev/Bootstrap-DevEnv.ps1 enables it).
 
-# --- work/: GUIDE.md's $Work folder ---------------------------------------------
+# --- work/: the walkthrough's $Work folder --------------------------------------
 # Downloads, venv, and everything the phone procedure creates, including
 # work/private-backups (your phone's original images). Never committed.
 work/
@@ -40,7 +40,7 @@ keystore.properties
 .env
 .env.*
 
-# --- Third-party binaries and kit inputs (downloaded and hash-pinned, never committed)
+# --- Third-party binaries and device inputs (downloaded and hash-pinned, never committed)
 *.apk
 *.aab
 *.msi

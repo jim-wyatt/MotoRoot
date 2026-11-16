@@ -1,112 +1,31 @@
-[
-  {
-    "package": "com.motorola.setupwizard.phoneservice",
-    "apk": "/product/priv-app/VzwPhoneService/VzwPhoneService.apk",
-    "hidden_directory": "/product/priv-app/VzwPhoneService"
-  },
-  {
-    "package": "com.mediatek.rsu.tfn",
-    "apk": "/system_ext/app/TfnRemoteSimlockService/TfnRemoteSimlockService.apk",
-    "hidden_directory": "/system_ext/app/TfnRemoteSimlockService"
-  },
-  {
-    "package": "com.verizon.remoteSimlock",
-    "apk": "/system_ext/app/VZWRemoteSimlockService/VZWRemoteSimlockService.apk",
-    "hidden_directory": "/system_ext/app/VZWRemoteSimlockService"
-  },
-  {
-    "package": "com.motorola.tracfone.setup",
-    "apk": "/product/priv-app/TracfoneSetup/TracfoneSetup.apk",
-    "hidden_directory": "/product/priv-app/TracfoneSetup"
-  },
-  {
-    "package": "com.motorola.vzw.cloudsetup",
-    "apk": "/product/priv-app/CloudSetup/CloudSetup.apk",
-    "hidden_directory": "/product/priv-app/CloudSetup"
-  },
-  {
-    "package": "com.motorola.setupwizard.devicesetup",
-    "apk": "/product/priv-app/VzwDeviceSetup/VzwDeviceSetup.apk",
-    "hidden_directory": "/product/priv-app/VzwDeviceSetup"
-  },
-  {
-    "package": "com.motorola.omadm.vzw",
-    "apk": "/product/priv-app/VzwDM/VzwDM.apk",
-    "hidden_directory": "/product/priv-app/VzwDM"
-  },
-  {
-    "package": "com.motorola.vzw.pco.extensions.pcoreceiver",
-    "apk": "/product/priv-app/vzwPcoExt/vzwPcoExt.apk",
-    "hidden_directory": "/product/priv-app/vzwPcoExt"
-  },
-  {
-    "package": "com.motorola.paks.notification",
-    "apk": "/system_ext/priv-app/PaksFinanceNotification/PaksFinanceNotification.apk",
-    "hidden_directory": "/system_ext/priv-app/PaksFinanceNotification"
-  },
-  {
-    "package": "com.motorola.tracfone.rsu",
-    "apk": "/product/priv-app/TFRsu/TFRsu.apk",
-    "hidden_directory": "/product/priv-app/TFRsu"
-  },
-  {
-    "package": "com.verizon.mips.services",
-    "apk": "/product/priv-app/VzwMVS-v1.0.243.0/VzwMVS-v1.0.243.0.apk",
-    "hidden_directory": "/product/priv-app/VzwMVS-v1.0.243.0"
-  },
-  {
-    "package": "com.vzw.hss.myverizon",
-    "apk": "/product/priv-app/VzwMyVerizon-v21.2.3-513/VzwMyVerizon-v21.2.3-513.apk",
-    "hidden_directory": "/product/priv-app/VzwMyVerizon-v21.2.3-513"
-  },
-  {
-    "package": "com.vzw.ecid",
-    "apk": "/product/priv-app/VzwECID-v17-9/VzwECID-v17-9.apk",
-    "hidden_directory": "/product/priv-app/VzwECID-v17-9"
-  },
-  {
-    "package": "com.vzw.apnlib",
-    "apk": "/product/app/VzwAPNLibWs/VzwAPNLibWs.apk",
-    "hidden_directory": "/product/app/VzwAPNLibWs"
-  },
-  {
-    "package": "com.motorola.paks",
-    "apk": "/system_ext/priv-app/PAKSFinance/PAKSFinance.apk",
-    "hidden_directory": "/system_ext/priv-app/PAKSFinance"
-  },
-  {
-    "package": "com.motorola.extensions.tracfone",
-    "apk": "/product/priv-app/TFUnlock/TFUnlock.apk",
-    "hidden_directory": "/product/priv-app/TFUnlock"
-  },
-  {
-    "package": "com.motorola.vzw.provider",
-    "apk": "/product/priv-app/VzwUnifiedSettingsApp/VzwUnifiedSettingsApp.apk",
-    "hidden_directory": "/product/priv-app/VzwUnifiedSettingsApp"
-  },
-  {
-    "package": "com.motorola.vzw.phone.extensions",
-    "apk": "/product/priv-app/vzwPhoneExt/vzwPhoneExt.apk",
-    "hidden_directory": "/product/priv-app/vzwPhoneExt"
-  },
-  {
-    "package": "com.motorola.omadm.service",
-    "apk": "/product/priv-app/DMService/DMService.apk",
-    "hidden_directory": "/product/priv-app/DMService"
-  },
-  {
-    "package": "com.motorola.vzw.settings.extensions",
-    "apk": "/product/priv-app/VzwSettingsExt/VzwSettingsExt.apk",
-    "hidden_directory": "/product/priv-app/VzwSettingsExt"
-  },
-  {
-    "package": "com.motorola.vzw.voicemail.extensions",
-    "apk": "/product/priv-app/VzwVoicemailExt/VzwVoicemailExt.apk",
-    "hidden_directory": "/product/priv-app/VzwVoicemailExt"
-  },
-  {
-    "package": "com.motorola.setupwizard.controller",
-    "apk": "/product/priv-app/VzwController/VzwController.apk",
-    "hidden_directory": "/product/priv-app/VzwController"
-  }
-]
+{
+  "id": "wifi_carrier_debloat",
+  "name": "Wi-Fi device carrier debloat",
+  "version": "1.0",
+  "versionCode": 1,
+  "description": "Reversibly hides Verizon, Tracfone activation and remote-SIM-lock apps, carrier management services, and Motorola PAKS finance apps. Disable and reboot to restore.",
+  "packages": [
+    { "package": "com.motorola.setupwizard.phoneservice", "label": "Verizon setup-wizard phone service", "hidden_directory": "/product/priv-app/VzwPhoneService", "apk": "/product/priv-app/VzwPhoneService/VzwPhoneService.apk" },
+    { "package": "com.mediatek.rsu.tfn", "label": "TracFone remote SIM-lock service", "hidden_directory": "/system_ext/app/TfnRemoteSimlockService", "apk": "/system_ext/app/TfnRemoteSimlockService/TfnRemoteSimlockService.apk" },
+    { "package": "com.verizon.remoteSimlock", "label": "Verizon remote SIM-lock service", "hidden_directory": "/system_ext/app/VZWRemoteSimlockService", "apk": "/system_ext/app/VZWRemoteSimlockService/VZWRemoteSimlockService.apk" },
+    { "package": "com.motorola.tracfone.setup", "label": "TracFone activation setup", "hidden_directory": "/product/priv-app/TracfoneSetup", "apk": "/product/priv-app/TracfoneSetup/TracfoneSetup.apk" },
+    { "package": "com.motorola.vzw.cloudsetup", "label": "Verizon cloud setup", "hidden_directory": "/product/priv-app/CloudSetup", "apk": "/product/priv-app/CloudSetup/CloudSetup.apk" },
+    { "package": "com.motorola.setupwizard.devicesetup", "label": "Verizon device setup", "hidden_directory": "/product/priv-app/VzwDeviceSetup", "apk": "/product/priv-app/VzwDeviceSetup/VzwDeviceSetup.apk" },
+    { "package": "com.motorola.omadm.vzw", "label": "Verizon OMA device management", "hidden_directory": "/product/priv-app/VzwDM", "apk": "/product/priv-app/VzwDM/VzwDM.apk" },
+    { "package": "com.motorola.vzw.pco.extensions.pcoreceiver", "label": "Verizon PCO (carrier provisioning) receiver", "hidden_directory": "/product/priv-app/vzwPcoExt", "apk": "/product/priv-app/vzwPcoExt/vzwPcoExt.apk" },
+    { "package": "com.motorola.paks.notification", "label": "Motorola PAKS finance notifications", "hidden_directory": "/system_ext/priv-app/PaksFinanceNotification", "apk": "/system_ext/priv-app/PaksFinanceNotification/PaksFinanceNotification.apk" },
+    { "package": "com.motorola.tracfone.rsu", "label": "TracFone remote SIM unlock", "hidden_directory": "/product/priv-app/TFRsu", "apk": "/product/priv-app/TFRsu/TFRsu.apk" },
+    { "package": "com.verizon.mips.services", "label": "Verizon MIPS services", "hidden_directory": "/product/priv-app/VzwMVS-v1.0.243.0", "apk": "/product/priv-app/VzwMVS-v1.0.243.0/VzwMVS-v1.0.243.0.apk" },
+    { "package": "com.vzw.hss.myverizon", "label": "My Verizon", "hidden_directory": "/product/priv-app/VzwMyVerizon-v21.2.3-513", "apk": "/product/priv-app/VzwMyVerizon-v21.2.3-513/VzwMyVerizon-v21.2.3-513.apk" },
+    { "package": "com.vzw.ecid", "label": "Verizon ECID", "hidden_directory": "/product/priv-app/VzwECID-v17-9", "apk": "/product/priv-app/VzwECID-v17-9/VzwECID-v17-9.apk" },
+    { "package": "com.vzw.apnlib", "label": "Verizon APN library", "hidden_directory": "/product/app/VzwAPNLibWs", "apk": "/product/app/VzwAPNLibWs/VzwAPNLibWs.apk" },
+    { "package": "com.motorola.paks", "label": "Motorola PAKS finance (financed-device controller)", "hidden_directory": "/system_ext/priv-app/PAKSFinance", "apk": "/system_ext/priv-app/PAKSFinance/PAKSFinance.apk" },
+    { "package": "com.motorola.extensions.tracfone", "label": "TracFone unlock extensions", "hidden_directory": "/product/priv-app/TFUnlock", "apk": "/product/priv-app/TFUnlock/TFUnlock.apk" },
+    { "package": "com.motorola.vzw.provider", "label": "Verizon unified settings provider", "hidden_directory": "/product/priv-app/VzwUnifiedSettingsApp", "apk": "/product/priv-app/VzwUnifiedSettingsApp/VzwUnifiedSettingsApp.apk" },
+    { "package": "com.motorola.vzw.phone.extensions", "label": "Verizon phone extensions", "hidden_directory": "/product/priv-app/vzwPhoneExt", "apk": "/product/priv-app/vzwPhoneExt/vzwPhoneExt.apk" },
+    { "package": "com.motorola.omadm.service", "label": "OMA device-management service", "hidden_directory": "/product/priv-app/DMService", "apk": "/product/priv-app/DMService/DMService.apk" },
+    { "package": "com.motorola.vzw.settings.extensions", "label": "Verizon settings extensions", "hidden_directory": "/product/priv-app/VzwSettingsExt", "apk": "/product/priv-app/VzwSettingsExt/VzwSettingsExt.apk" },
+    { "package": "com.motorola.vzw.voicemail.extensions", "label": "Verizon voicemail extensions", "hidden_directory": "/product/priv-app/VzwVoicemailExt", "apk": "/product/priv-app/VzwVoicemailExt/VzwVoicemailExt.apk" },
+    { "package": "com.motorola.setupwizard.controller", "label": "Verizon setup-wizard controller", "hidden_directory": "/product/priv-app/VzwController", "apk": "/product/priv-app/VzwController/VzwController.apk" }
+  ]
+}

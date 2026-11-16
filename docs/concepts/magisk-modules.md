@@ -55,7 +55,7 @@ Install one with:
 
 ## The three modules in this project
 
-The kit ships two modules, and this fork adds a third. They're a good worked example because all three do the same thing, hide a directory, for different reasons. The kit's two are in `kit/modules/`, the third is in `dev/modules/`, and you can rebuild all of them from source with `.\dev\Build-Kit.ps1`.
+The project ships three modules in `device/modules/`, and they're a good worked example because all three do the same thing, hide a directory, for different reasons. Each is generated from a manifest in `device/modules/manifests/` by one builder, and you can rebuild all of them with `.\dev\Build-Device.ps1`.
 
 ### `wifi-ota-guard` — hide a system app by overlaying nothing
 
@@ -63,11 +63,11 @@ A development device you've carefully prepared shouldn't silently replace its ow
 
 ### `wifi-carrier-debloat` — the same trick, applied to carrier apps
 
-This Wi-Fi development device doesn't need the preinstalled Verizon/Tracfone carrier and activation apps. This module overlays all 22 of their directories with empty replacements, so they don't run — again, reversibly, without touching the firmware partition. The exact list is in `kit/carrier-debloat-manifest.json`.
+This Wi-Fi development device doesn't need the preinstalled Verizon/Tracfone carrier and activation apps. This module overlays all 22 of their directories with empty replacements, so they don't run — again, reversibly, without touching the firmware partition. The exact list is in `manifests/wifi-carrier-debloat.json`.
 
-### `wifi-extra-debloat` — this fork's addition
+### `wifi-extra-debloat` — the second layer
 
-The carrier module leaves a second layer of preinstalled software untouched: partner stubs (AT&T, Cricket, Facebook), Motorola's telemetry and support apps, Ready For desktop mode, visual voicemail and Digital Wellbeing. `dev/modules/wifi-extra-debloat.zip` hides 19 of those the same way. Its manifest, `dev/modules/wifi-extra-debloat-manifest.json`, records each package's on-disk APK path, and `dev/modules/build_extra_module.py` turns that into the ZIP. It lives in `dev/` rather than `kit/` so the upstream kit stays unchanged.
+The carrier module leaves a second layer of preinstalled software untouched: partner stubs (AT&T, Cricket, Facebook), Motorola's telemetry and support apps, Ready For desktop mode, visual voicemail and Digital Wellbeing. `wifi-extra-debloat.zip` hides 19 of those the same way; `manifests/wifi-extra-debloat.json` records each package's on-disk APK path and a one-line description of what it is.
 
 !!! info "`.replace` — the empty-overlay trick"
     All three modules use Magisk's documented convention: a special `.replace` marker in a module directory tells Magisk to overlay that whole path as empty, hiding whatever the system shipped there. It's the cleanest possible "remove without removing".

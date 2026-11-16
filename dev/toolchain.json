@@ -21,14 +21,14 @@
       "build-tools/36.1.0",
       "ndk/30.0.16248370"
     ],
-    "_note": "Names use the Android CLI (android.exe) form: slash, not the legacy sdkmanager semicolon. android-36 = Android 16, the phone's OS. The SDK's platform-tools are for Android Studio; phone procedures use the kit's pinned 37.0.1 copy."
+    "_note": "Names use the Android CLI (android.exe) form: slash, not the legacy sdkmanager semicolon. android-36 = Android 16, the device's OS. The SDK's platform-tools are for Android Studio; the device procedure uses the pinned 37.0.1 copy in work\\platform-tools."
   },
   "jars": [
     {
       "name": "r8-8.3.37.jar",
       "url": "https://dl.google.com/dl/android/maven2/com/android/tools/r8/8.3.37/r8-8.3.37.jar",
       "sha1": "6b023243a76124fb055d66b50e2e11db9b4d9b2b",
-      "purpose": "D8 used by the reference helper build (helpers/BUILD.md)"
+      "purpose": "D8 used to build device/helpers (Build-Device.ps1)"
     },
     {
       "name": "apktool_3.0.3.jar",
@@ -46,8 +46,8 @@
       "purpose": "jadx command-line decompiler (the winget package is GUI-only)"
     }
   ],
-  "kit": {
-    "_note": "The tested phone procedure's exact inputs (kit/GUIDE.md). Downloaded into work/ (GUIDE.md's $Work), which is git-ignored.",
+  "inputs": {
+    "_note": "The device procedure's exact tested inputs (docs/device/walkthrough.md, validation.md). Downloaded into work/ ($Work), which is git-ignored. Change these only when deliberately re-validating the procedure.",
     "platformTools": {
       "version": "37.0.1",
       "url": "https://dl.google.com/android/repository/platform-tools_r37.0.1-win.zip",

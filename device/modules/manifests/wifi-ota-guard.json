@@ -1,0 +1,14 @@
+{
+  "id": "wifi_ota_guard",
+  "name": "Motorola automatic firmware update block",
+  "version": "1.0",
+  "versionCode": 1,
+  "description": "Hides Motorola Software Update while enabled. Disable this module and reboot to restore the updater. Does not block Play Store app updates.",
+  "packages": [
+    {
+      "package": "com.motorola.ccc.ota",
+      "label": "Motorola Software Update (the OTA client)",
+      "hidden_directory": "/system_ext/priv-app/3c_ota"
+    }
+  ]
+}

@@ -2,13 +2,13 @@
 
 ## The device-preparation procedure
 
-The entire procedure in `kit/` — the guide, the helper programs, the system modules, the preparation scripts — was created and tested by **[parsimo2010](https://github.com/parsimo2010/moto-g-power-2026-straight-talk-wifi-root-guide)**. It is included unchanged under its MIT license. See [`kit/UPSTREAM.md`](https://github.com/jim-wyatt/OtomDev/blob/main/kit/UPSTREAM.md) for the exact imported commit and how to pull updates.
+The procedure in [Prepare the device](../device/index.md), the helper programs in `device/helpers/`, the `wifi-ota-guard` and `wifi-carrier-debloat` modules, and the Magisk image preparation script are derived from the **Moto G Power 2026 Straight Talk WiFi and persistent root guide** by **[parsimo2010](https://github.com/parsimo2010/moto-g-power-2026-straight-talk-wifi-root-guide)**, who worked out and tested the procedure on the first unit on 2026-11-14 and published it under the MIT license. This project imported that guide at commit `9526ee08`, carried the procedure out on a second unit, and then restructured the material: the guide's commands and checkpoints became the [walkthrough](../device/walkthrough.md), its tested-device table and validation notes became the [validation page](../device/validation.md), its helpers and modules were documented and given a single manifest-driven builder, and a third module was added.
 
-These documentation pages and the `dev/` environment were built around that procedure to frame it as an Android development project. They are not the work of the upstream author.
+The original license text, and exactly which parts it covers, are in [`NOTICE.md`](https://github.com/jim-wyatt/OtomDev/blob/main/NOTICE.md). The project as a whole is under the [MIT License](https://github.com/jim-wyatt/OtomDev/blob/main/LICENSE), and its use is subject to the [disclaimer](disclaimer.md).
 
-## Upstream tools
+## Software the procedure uses
 
-The procedure uses these third-party projects. None are redistributed in this repo; the bootstrap downloads each from its publisher, pinned by hash in `dev/toolchain.json`. Each is under its own license.
+None of these is redistributed here; the bootstrap downloads each from its publisher, pinned by hash in `dev/toolchain.json`, and each is under its own license (listed in `NOTICE.md`).
 
 | Tool | By | Role |
 | --- | --- | --- |
@@ -37,4 +37,4 @@ Built with [Zensical](https://zensical.org/), the static-site generator from the
 
 ## Scope and honesty
 
-This project documents preparing and developing on **one device model you own**, on one validated firmware build. It does not claim to work on other models or builds, it installs no attempt to hide system access from apps that check for it, and it treats the risk of an unbootable device as real. Everything about what was and wasn't tested is in [`kit/VALIDATION.md`](https://github.com/jim-wyatt/OtomDev/blob/main/kit/VALIDATION.md).
+This project documents preparing and developing on **one device model you own**, on one validated firmware build, carried out on two units. It does not claim to work on other models or builds, it installs no attempt to hide system access from apps that check for it, and it treats the risk of an unbootable device as real. Everything about what was and wasn't tested is on the [validation page](../device/validation.md); the legal position is in the [disclaimer](disclaimer.md).

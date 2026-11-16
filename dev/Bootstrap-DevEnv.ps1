@@ -10,14 +10,14 @@ Installs or verifies:
   - winget tools: OpenJDK 21, Git, GitHub CLI, scrcpy, jadx, 7-Zip (+ Android Studio with -AndroidStudio)
   - Android SDK (cmdline-tools, platform-tools, android-36 platform, build-tools, NDK)
   - Pinned JARs in dev\.tools: R8 8.3.37 (reference helper build), apktool
-  - The guide's exact kit inputs: platform-tools 37.0.1, DFRoot/KernelSU/Magisk APKs,
+  - The device procedure's exact inputs: platform-tools 37.0.1, DFRoot/KernelSU/Magisk APKs,
     Test DPC QR image, val-protocol at its pinned commit, Motorola driver (verify only)
   - work\.venv with val-protocol requirements; dev\.venv-docs with Zensical (docs site)
-Downloads and generated files go in work\ (GUIDE.md's $Work). The original kit is in kit\ ($Kit).
+Downloads and generated files go in work\ (the walkthrough's $Work).
   - Git hooks (.githooks) that block committing device images and identifiers
 
 .PARAMETER AndroidStudio
-Also install Android Studio (large; not needed for the guide or helper builds).
+Also install Android Studio (large; not needed for the device procedure or helper builds).
 
 .PARAMETER AcceptAndroidSdkLicenses
 Accept the Android SDK licenses non-interactively. Without it, sdkmanager asks you
@@ -33,13 +33,13 @@ param(
     [switch]$AcceptAndroidSdkLicenses,
     [switch]$SkipWinget,
     [switch]$SkipSdk,
-    [switch]$SkipKit
+    [switch]$SkipInputs
 )
 $ErrorActionPreference = 'Stop'
 $ProgressPreference = 'SilentlyContinue'   # Invoke-WebRequest is far faster without the progress bar
 
 $Root  = Split-Path -Parent $PSScriptRoot
-$Work  = Join-Path $Root 'work'   # GUIDE.md $Work: downloads, venv, backups, outputs (git-ignored)
+$Work  = Join-Path $Root 'work'   # the walkthrough's $Work: downloads, venv, backups, outputs (git-ignored)
 New-Item -ItemType Directory -Force -Path $Work | Out-Null
 $Spec  = Get-Content -Raw -LiteralPath (Join-Path $PSScriptRoot 'toolchain.json') | ConvertFrom-Json
 $Cache = Join-Path $PSScriptRoot '.cache'
@@ -185,10 +185,10 @@ foreach ($Arc in $Spec.archives) {
     Write-Ok "$($Arc.extractTo) extracted from $($Arc.name)"
 }
 
-# ---------------------------------------------------------------- guide kit inputs
-if (-not $SkipKit) {
-    Write-Step 'Guide kit inputs (exact tested versions)'
-    $Pt = $Spec.kit.platformTools
+# ---------------------------------------------------------------- device procedure inputs
+if (-not $SkipInputs) {
+    Write-Step 'Device procedure inputs (exact tested versions)'
+    $Pt = $Spec.inputs.platformTools
     $PtZip = Join-Path $Work 'platform-tools.zip'
     Get-PinnedFile $Pt.url $PtZip 'SHA1' $Pt.sha1
     $Adb = Join-Path $Work 'platform-tools\adb.exe'
@@ -202,11 +202,11 @@ if (-not $SkipKit) {
     }
     Write-Ok "platform-tools $AdbVersion"
 
-    foreach ($Apk in $Spec.kit.apks) { Get-PinnedFile $Apk.url (Join-Path $Work $Apk.name) 'SHA256' $Apk.sha256 }
-    $Qr = $Spec.kit.testDpcQr
+    foreach ($Apk in $Spec.inputs.apks) { Get-PinnedFile $Apk.url (Join-Path $Work $Apk.name) 'SHA256' $Apk.sha256 }
+    $Qr = $Spec.inputs.testDpcQr
     Get-PinnedFile $Qr.url (Join-Path $Work $Qr.name) 'SHA256' $Qr.sha256
 
-    $Vp = $Spec.kit.valProtocol
+    $Vp = $Spec.inputs.valProtocol
     $VpDir = Join-Path $Work 'val-protocol'
     if (-not (Test-Path (Join-Path $VpDir '.git'))) {
         & git clone --quiet $Vp.repo $VpDir
@@ -217,7 +217,7 @@ if (-not $SkipKit) {
     if ($VpHead -ne $Vp.commit) { Write-Warning "val-protocol is at $VpHead, not the pinned $($Vp.commit). Left untouched." }
     else { Write-Ok "val-protocol @ $($Vp.commit.Substring(0,12))" }
 
-    $Drv = $Spec.kit.motorolaDriver
+    $Drv = $Spec.inputs.motorolaDriver
     $Msi = Join-Path $Work $Drv.name
     if (-not (Test-Path $Msi)) {
         Write-Warning "$($Drv.name) not present. Download it from $($Drv.page) into $Work and re-run to verify."

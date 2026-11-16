@@ -50,7 +50,7 @@ Expect a few Windows **User Account Control** prompts as the JDK, the USB driver
     | IDE | Android Studio (optional), VS Code configuration |
     | Phone tools | Google Platform Tools **37.0.1** (the exact version the procedure was tested with), scrcpy |
     | Inspection | jadx, apktool, 7-Zip |
-    | Guide inputs | The exact DFRoot, KernelSU and Magisk APKs the guide used, Google's Test DPC QR image, Val Protocol at its tested commit |
+    | Device inputs | The exact DFRoot, KernelSU and Magisk APKs the procedure uses, Google's Test DPC QR image, Val Protocol at its tested commit |
     | Python | Two virtual environments: `work\.venv` for the bootloader tooling, `dev\.venv-docs` for this site |
     | Safety | A Git pre-commit hook that blocks device images and identifiers |
 
@@ -70,7 +70,7 @@ It prints a status block like this:
 
 ```text
 OtomDev dev shell
-adb (kit)      Version 37.0.1-15733141
+adb (pinned)   Version 37.0.1-15733141
 java           openjdk version "21.0.13.0.2" 2026-10-22 LTS
 android cli    1.1.16919734
 build-tools    36.1.0
@@ -79,8 +79,8 @@ python         Python 3.12.10
 scrcpy         scrcpy 5.0.1
 jadx           1.5.6
 gh             gh version 2.104.0
-Kit inputs: verified
-Guide variables: $Kit $Work $adb $fb $Backup $py   Commands: docs, apktool, r8d8, ...
+Device inputs: verified
+Variables: $Work $adb $fb $Backup $py   Commands: docs, apktool, r8d8, ...
 ```
 
 If you use **VS Code**, open the repository folder and a new terminal (++ctrl+shift+grave++) does this automatically; the project configures a "OtomDev dev shell" terminal profile.
@@ -91,7 +91,7 @@ If you use **VS Code**, open the repository folder and a new terminal (++ctrl+sh
 .\dev\Test-DevEnv.ps1
 ```
 
-This runs 36 checks that actually *use* each tool: it compiles Java, produces Android bytecode, decompiles it again, cross-compiles a C program for the phone's CPU, and re-verifies every pinned download. The last line should read `0 failed`. If anything fails, the [troubleshooting page](../reference/troubleshooting.md) covers the common causes.
+This runs a few dozen checks that actually *use* each tool: it compiles Java, produces Android bytecode, decompiles it again, cross-compiles a C program for the phone's CPU, and re-verifies every pinned download. The last line should read `0 failed`. If anything fails, the [troubleshooting page](../reference/troubleshooting.md) covers the common causes.
 
 !!! tip "Keep Android Studio closed when working with the phone"
     Android Studio starts its own, newer `adb` server in the background. Two different `adb` versions fighting over one phone can drop the connection in the middle of an operation. Use the dev shell's `$adb` for phone work, and open Studio only for app development.

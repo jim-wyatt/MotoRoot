@@ -2,22 +2,23 @@
 .SYNOPSIS
 Dot-source in each PowerShell window:   . .\dev\Enter-DevShell.ps1
 
-Sets the variables GUIDE.md expects, puts the SDK/JDK tools on this window's PATH,
-re-verifies the pinned kit inputs, and prints a short status. It does not talk to the
-phone and does not change persistent settings.
+Moves to the repository root, sets the variables the device walkthrough expects, puts the
+SDK/JDK tools on this window's PATH, re-verifies the pinned device inputs, and prints a
+short status. It does not talk to the phone and does not change persistent settings.
 
-  $Repo    repository root (this window's working directory)
-  $Kit     kit\   - the original upstream guide, helpers, modules, scripts (read-only reference)
-  $Work    work\  - downloads, venv, and everything the phone procedure creates (git-ignored)
-  $Backup  work\private-backups - your phone's original images. Never share these.
+  $Repo    repository root (this window's working directory after dot-sourcing)
+  $Work    work\  - downloads, venv, and everything the device procedure creates (git-ignored)
+  $Backup  work\private-backups - your device's original images. Never share these.
   $adb $fb work\platform-tools (pinned 37.0.1)     $py  work\.venv python (val-protocol)
 
-The kit's pinned platform-tools (37.0.1) come first on PATH, so a bare `adb` is the
-tested version. Close Android Studio while following the phone procedure: it runs its
-own (newer) ADB server, and two server versions fight over the connection.
+Device-side files (helpers, modules, the Magisk prep script) are referenced relative to
+the root: .\device\...
+
+The pinned platform-tools (37.0.1) come first on PATH, so a bare `adb` is the tested
+version. Close Android Studio while following the device procedure: it runs its own
+(newer) ADB server, and two server versions fight over the connection.
 #>
 $Repo   = Split-Path -Parent $PSScriptRoot
-$Kit    = Join-Path $Repo 'kit'
 $Work   = Join-Path $Repo 'work'
 $adb    = Join-Path $Work 'platform-tools\adb.exe'
 $fb     = Join-Path $Work 'platform-tools\fastboot.exe'
@@ -51,12 +52,12 @@ function global:docs    { & (Join-Path $PSScriptRoot '.venv-docs\Scripts\zensica
 # ---- status
 $Spec = Get-Content -Raw -LiteralPath (Join-Path $PSScriptRoot 'toolchain.json') | ConvertFrom-Json
 $Problems = @()
-foreach ($Apk in $Spec.kit.apks) {
+foreach ($Apk in $Spec.inputs.apks) {
     $P = Join-Path $Work $Apk.name
     if (-not (Test-Path $P) -or (Get-FileHash -LiteralPath $P).Hash.ToLower() -ne $Apk.sha256) { $Problems += "$($Apk.name) missing or hash mismatch" }
 }
 $VpHead = if (Get-Command git -ErrorAction SilentlyContinue) { git -C (Join-Path $Work 'val-protocol') rev-parse HEAD 2>$null } else { $null }
-if ($VpHead -ne $Spec.kit.valProtocol.commit) { $Problems += "val-protocol not at pinned commit ($VpHead)" }
+if ($VpHead -ne $Spec.inputs.valProtocol.commit) { $Problems += "val-protocol not at pinned commit ($VpHead)" }
 if (-not (Test-Path $py)) { $Problems += '.venv missing' }
 if (-not (Test-Path $adb)) { $Problems += 'platform-tools missing' }
 
@@ -65,7 +66,7 @@ function Get-ToolVersion($Label, [scriptblock]$Cmd) {
     '{0,-14} {1}' -f $Label, $v.Trim()
 }
 Write-Host 'OtomDev dev shell' -ForegroundColor Cyan
-Get-ToolVersion 'adb (kit)'   { (& $adb version)[1] }
+Get-ToolVersion 'adb (pinned)' { (& $adb version)[1] }
 Get-ToolVersion 'java'        { java -version }
 Get-ToolVersion 'android cli' { android --no-metrics --version }
 Get-ToolVersion 'build-tools' { if ($Bt) { $Bt.Name } else { 'not installed' } }
@@ -75,5 +76,5 @@ Get-ToolVersion 'scrcpy'      { scrcpy --version }
 Get-ToolVersion 'jadx'        { jadx --version }
 Get-ToolVersion 'gh'          { gh --version }
 if ($Problems) { $Problems | ForEach-Object { Write-Warning $_ }; Write-Warning 'Run .\dev\Bootstrap-DevEnv.ps1 to fix.' }
-else { Write-Host 'Kit inputs: verified' -ForegroundColor Green }
-Write-Host 'Guide variables: $Kit $Work $adb $fb $Backup $py   Commands: docs, apktool, r8d8, .\dev\Build-Kit.ps1, .\dev\Test-DevEnv.ps1'
+else { Write-Host 'Device inputs: verified' -ForegroundColor Green }
+Write-Host 'Variables: $Work $adb $fb $Backup $py   Commands: docs, apktool, r8d8, .\dev\Build-Device.ps1, .\dev\Test-DevEnv.ps1'

@@ -1,6 +1,6 @@
 MIT License
 
-Copyright (c) 2026 parsimo2010
+Copyright (c) 2026 Jim Wyatt
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -20,6 +20,8 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 
-This license covers original documentation, helpers, and module packaging.
-Referenced third-party projects retain their own licenses. Their firmware,
-APKs, and source implementations are not bundled.
+Portions of this repository are derived from work by parsimo2010, also under
+the MIT License; see NOTICE.md for the original notice and the exact scope.
+Third-party software that the project downloads is not included here and is
+governed by its own licenses. Use of this project is also subject to
+DISCLAIMER.md.

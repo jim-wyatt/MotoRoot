@@ -58,20 +58,20 @@ To use this phone as a true development target, you give it that same capability
 This is standard platform-development practice on hardware you own. It is not a modification you make to someone else's device, and it is not about defeating protections: unlocking deliberately **erases the device** precisely so that system access always implies a clean, consenting wipe.
 
 !!! warning "This changes real hardware"
-    Unlocking erases the device, and the low-level preparation on this model can, in the worst case, leave it unbootable. The procedure was validated on exactly one unit and one firmware build. Work through [Android internals](concepts/index.md) first, then follow the [walkthrough](device/walkthrough.md), which marks every point of no return.
+    Unlocking erases the device, and the low-level preparation on this model can, in the worst case, leave it unbootable. The procedure has been carried out on two units of one firmware build; see the [validation notes](device/validation.md) for what that does and doesn't establish. Work through [Android internals](concepts/index.md) first, then follow the [walkthrough](device/walkthrough.md), which marks every point of no return. Use of this project is subject to the [disclaimer](reference/disclaimer.md).
 
 ## How the repository is organized
 
 ```text
 OtomDev/
-├── kit/      The tested device-preparation procedure (by parsimo2010): the source of truth
+├── device/   What goes to the device: helper programs, three reversible system modules, the Magisk prep script
 ├── dev/      The development environment: one script installs every tool, pinned and verified
-├── docs/     These pages
+├── docs/     These pages, including the full device-preparation procedure
 ├── work/     Your downloads, backups, and build outputs (never committed)
 └── .github/  CI that builds and publishes this site
 ```
 
-The device-preparation procedure lives unchanged in `kit/`. These docs explain it and wrap it in the wider goal of learning Android development; they do not replace it.
+The device-preparation procedure is the [walkthrough](device/walkthrough.md) in these pages: every command, with the reasoning, and with the [validation page](device/validation.md) recording exactly what has been tested.
 
 ## A note on the device's data
 
@@ -79,4 +79,4 @@ Your device's backup images and identifiers are **yours and private** — the im
 
 ---
 
-*The device-preparation procedure was created and tested by [parsimo2010](reference/credits.md). The development environment and these docs were built around it.*
+*The device-preparation procedure is derived from the guide created and first tested by [parsimo2010](reference/credits.md) (MIT). This project integrated it, carried it out on a second unit, and built the development environment and these docs around it. See the [credits](reference/credits.md) and the [disclaimer](reference/disclaimer.md).*

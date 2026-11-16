@@ -1,6 +1,6 @@
 # Development environment
 
-A reproducible Windows setup for working on this kit and building Android software for the rooted XT2617V. Every version and download is pinned, with hashes, in [dev/toolchain.json](dev/toolchain.json).
+A reproducible Windows setup for working on this project and building Android software for the prepared XT2617V. Every version and download is pinned, with hashes, in [dev/toolchain.json](dev/toolchain.json). The user-facing documentation is the site built from `docs/`; this file is the short reference for people working on the repository itself.
 
 ## Quick start
 
@@ -8,47 +8,62 @@ A reproducible Windows setup for working on this kit and building Android softwa
 Set-ExecutionPolicy -Scope Process Bypass
 .\dev\Bootstrap-DevEnv.ps1 -AndroidStudio      # idempotent; re-run any time
 . .\dev\Enter-DevShell.ps1                      # in every new window
-.\dev\Build-Kit.ps1                             # rebuild helpers + modules (kit\ and dev\modules), compare with committed copies
-.\dev\Test-DevEnv.ps1                           # end-to-end self-test (36 checks; exit code = failures)
+.\dev\Build-Device.ps1                          # rebuild helpers + modules, compare with the committed copies
+.\dev\Test-DevEnv.ps1                           # end-to-end self-test; exit code = failures
 ```
 
-`Test-DevEnv.ps1` exercises every tool, not just its version. It compiles and dexes the helpers, decompiles with jadx, cross-compiles an aarch64 Android 16 binary with the NDK, builds the docs site, imports val-protocol, re-verifies every kit pin, and checks the git safety settings (hook active, private paths ignored, upstream fetch-only). It reports `origin`'s visibility but doesn't require it to be private: the repository is public by design, and the ignore rules plus the hook are what keep device data out of it. It never talks to the phone and never starts an ADB server.
+`Test-DevEnv.ps1` exercises every tool, not just its version. It compiles and dexes the helpers, decompiles with jadx, cross-compiles an aarch64 Android 16 binary with the NDK, builds the docs site, imports val-protocol, re-verifies every pinned input, and checks the git safety settings (hook active, private paths ignored, no-reply commit email). It reports `origin`'s visibility but doesn't require it to be private: the repository is public by design, and the ignore rules plus the hook are what keep device data out of it. It never talks to the phone and never starts an ADB server.
 
-In VS Code, the default terminal profile **OtomDev dev shell** dot-sources `Enter-DevShell.ps1` for you. The tasks in `.vscode/tasks.json` run the bootstrap, the rebuild (the default build task, Ctrl+Shift+B) and scrcpy.
+In VS Code, the default terminal profile **OtomDev dev shell** dot-sources `Enter-DevShell.ps1` for you. The tasks in `.vscode/tasks.json` run the bootstrap, the rebuild (the default build task, Ctrl+Shift+B), the self-test and scrcpy.
 
 Add `-AcceptAndroidSdkLicenses` only after reading Google's Android SDK terms. Without it, the script asks you to accept them interactively.
+
+## Layout
+
+| Folder | Contents |
+| --- | --- |
+| `device/` | Files the procedure sends to the device: `helpers/` (two `app_process` programs, source and DEX), `modules/` (three Magisk modules, their manifests, and `build_modules.py`), `scripts/Prepare-MagiskImage.ps1`. Generic to the model, never to a unit. |
+| `dev/` | The PC side: `toolchain.json`, bootstrap, dev shell, self-test, `Build-Device.ps1`. Generated tool folders inside it are git-ignored. |
+| `docs/` | The documentation site. `docs/device/` is the authoritative procedure. |
+| `work/` | Downloads, venvs, backups, outputs. Git-ignored in full and blocked by the hook. |
 
 ## What you get
 
 | Area | Tools |
 | --- | --- |
-| Java and DEX | Microsoft OpenJDK 21; pinned R8 8.3.37 (`r8d8` function), the version used for the reference helper build |
-| Android SDK | cmdline-tools, platform-tools, `platforms;android-36` (Android 16, the phone's OS), build-tools 36.1.0, NDK |
+| Java and DEX | Microsoft OpenJDK 21; pinned R8 8.3.37 (`r8d8` function), the version the helpers are built with |
+| Android SDK | cmdline-tools, platform-tools, `platforms;android-36` (Android 16, the device's OS), build-tools 36.1.0, NDK |
 | IDE | Android Studio (optional), and VS Code with recommended extensions |
-| Device | Kit platform-tools **37.0.1** (the tested version, first on PATH), scrcpy for mirroring and control |
+| Device | Pinned platform-tools **37.0.1** (the tested version, first on PATH), scrcpy for mirroring and control |
 | Reverse engineering | jadx (DEX/APK decompiler), apktool (`apktool` function), 7-Zip |
-| Guide inputs | DFRoot 4.7, KernelSU 3.3.1, Magisk 31.1, Test DPC QR, val-protocol at its pinned commit, all hash-checked; Motorola driver verified by signature and hash |
-| Python | `.venv` with val-protocol's requirements and pyasn1 |
+| Device inputs | DFRoot 4.7, KernelSU 3.3.1, Magisk 31.1, Test DPC QR, val-protocol at its pinned commit, all hash-checked; Motorola driver verified by signature and hash |
+| Python | `work\.venv` with val-protocol's requirements and pyasn1; `dev\.venv-docs` for the site |
 | Safety | `.githooks/pre-commit` blocks device images, keys, logs, files over 1 MiB, the private working folders, and lines that look like IMEIs or serials |
 
-`Enter-DevShell.ps1` sets the same variables as GUIDE.md's "Make a work folder" block (`$Work`, `$Kit`, `$adb`, `$fb`, `$Backup`, `$py`). This repository's root acts as both the work folder and the kit.
+`Enter-DevShell.ps1` puts you at the repository root and sets `$Work`, `$adb`, `$fb`, `$Backup` and `$py`, which the walkthrough's commands use directly. Device-side files are referenced relative to the root (`.\device\...`).
 
 ## Rules for phone work
 
-- **Close Android Studio while following GUIDE.md.** Studio runs its own, newer ADB server, and two server versions fighting over one phone can drop the connection mid-operation.
+- **Close Android Studio while following the walkthrough.** Studio runs its own, newer ADB server, and two server versions fighting over one device can drop the connection mid-operation.
 - Always call `$adb` and `$fb`. They point to the tested 37.0.1 binaries.
-- `private-backups/`, `lk-analysis/`, `lk-patch-analysis/` and `magisk-patch-files/` are git-ignored and blocked by the hook. Keep them off any cloud-synced folder as well.
+- `work\private-backups\`, `work\lk-analysis\`, `work\lk-patch-analysis\` and `work\magisk-patch-files\` hold per-unit data. They are git-ignored and blocked by the hook; keep them off any cloud-synced folder as well.
 
 ## Changing pinned versions
 
 1. Edit `dev/toolchain.json` with the new URL and hash, taken from the publisher (for SDK packages, Google's `repository2-3.xml`).
 2. Re-run the bootstrap. A file that is present but doesn't match its pin is never silently overwritten.
-3. **Don't change the `kit` section's pins** unless you are deliberately re-validating the phone procedure. Those are the exact inputs from the tested session.
+3. **Don't change the `inputs` section's pins** unless you are deliberately re-validating the device procedure. Those are the exact inputs from the tested runs; record a re-validation on `docs/device/validation.md`.
 
-## Rebuilding release artifacts
+## Rebuilding the device artifacts
 
-`Build-Kit.ps1` writes to `dev/build/` and reports whether each rebuilt artifact matches the committed copy: the two kit helpers, the two kit modules, and `dev/modules/wifi-extra-debloat.zip`. Module ZIPs are compared by their entries' contents, because the generator stamps the current time on each entry. `-Promote` copies the rebuilt files over the committed ones. For kit files, then regenerate `kit/SHA256SUMS.txt`; in all cases review `git diff`.
+`Build-Device.ps1` rebuilds the two helper DEX files and the three module ZIPs into `dev/build/` and reports whether each matches the committed copy in `device/`. Module builds are deterministic (fixed entry order and timestamps), so they are compared by hash; helpers are compared byte for byte, and a mismatch there usually means a different `javac` build changed the debug line tables, not the behaviour. `-Promote` copies the rebuilt files over the committed ones; review `git diff` and commit the source and artifact together.
 
-## This fork's own module
+## The modules
 
-`dev/modules/wifi-extra-debloat.zip` reversibly hides 19 more preinstalled packages on top of the kit's carrier module: AT&T, Cricket and Facebook partner stubs, Motorola telemetry and support apps, Ready For desktop mode, visual voicemail and Digital Wellbeing. It is generated from `dev/modules/wifi-extra-debloat-manifest.json` by `dev/modules/build_extra_module.py`, with the same overlay-path validation as the kit's builder, and `Build-Kit.ps1` checks that it reproduces. It lives in `dev/` rather than `kit/` so the upstream kit stays byte-for-byte unchanged. The walkthrough's Stage 8 installs it.
+All three modules are generated from `device/modules/manifests/*.json` by `device/modules/build_modules.py`, which validates every overlay path and refuses anything outside `/product` and `/system_ext` app directories. To hide a different set of apps, add a manifest (or edit one): find each package's APK with `& $adb shell pm path <package>`, record its directory as `hidden_directory`, rebuild, and reinstall the module. Each ZIP carries its manifest as `manifest.json`, so a module found later is self-describing.
+
+## Legal
+
+- `LICENSE`: MIT, for the project.
+- `NOTICE.md`: the original MIT notice for the parts derived from parsimo2010's guide, and the licenses of the third-party software the bootstrap downloads.
+- `DISCLAIMER.md`: the terms of use. Keep `docs/reference/disclaimer.md` identical to it.

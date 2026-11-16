@@ -1,6 +1,6 @@
 # Partitions and A/B slots
 
-The phone's internal storage is divided into dozens of named **partitions**: fixed regions, each with a job. When the guide says "flash `lk_a`" or "back up `init_boot_a`", it is naming one of them.
+The phone's internal storage is divided into dozens of named **partitions**: fixed regions, each with a job. When the walkthrough says "flash `lk_a`" or "back up `init_boot_a`", it is naming one of them.
 
 On the phone they appear as block devices:
 
@@ -27,7 +27,7 @@ flowchart TB
     IB --> SYS --> DATA["userdata (yours, encrypted)"]
 ```
 
-| Partition | What it holds | Role in this guide |
+| Partition | What it holds | Role in the walkthrough |
 | --- | --- | --- |
 | `preloader` | The chip vendor's first-stage code | Backed up only. Never touched. |
 | `lk_a`, `lk_b` | **LK** ("Little Kernel"): MediaTek's bootloader. It shows the Fastboot menu, checks signatures, and loads the kernel. | **Patched and flashed** (slot A only). This is what makes unlocking possible. |
@@ -51,10 +51,10 @@ flowchart LR
     B -- "reboot switches" --> A2["Slot B becomes active"]
 ```
 
-Two consequences matter for the guide:
+Two consequences matter for the walkthrough:
 
 1. **Everything targets slot A, explicitly.** The tested phone was on `_a`, and every command says `lk_a` and `init_boot_a`, never a bare `lk`. If your phone is on slot B, the procedure has not been tested for you. Stop.
-2. **A staged update is a trap.** If the phone downloaded an update before you unlocked, slot B now contains *newer* firmware and the bootloader is primed to switch to it on the next reboot. Reboot, and you land on a newer, untested firmware build. The guide has a [whole stage](../device/walkthrough.md#stage-4-if-an-update-is-staged) for detecting and cancelling this. This is also why the guide says to **turn Wi-Fi off the moment you reach the home screen**.
+2. **A staged update is a trap.** If the phone downloaded an update before you unlocked, slot B now contains *newer* firmware and the bootloader is primed to switch to it on the next reboot. Reboot, and you land on a newer, untested firmware build. The walkthrough has a [whole stage](../device/walkthrough.md#stage-4-if-an-update-is-staged) for detecting and cancelling this. This is also why the walkthrough says to **turn Wi-Fi off the moment you reach the home screen**.
 
 Check your slot any time:
 
@@ -64,7 +64,7 @@ Check your slot any time:
 
 ## How partitions are read and written
 
-With root, a partition is just a file-like device. The guide backs them up with `dd`, the classic Unix byte-copier:
+With root, a partition is just a file-like device. The walkthrough backs them up with `dd`, the classic Unix byte-copier:
 
 ```sh
 dd if=/dev/block/by-name/lk_a of=/data/local/tmp/moto-factory-backup/lk_a.img bs=1048576
@@ -73,6 +73,6 @@ dd if=/dev/block/by-name/lk_a of=/data/local/tmp/moto-factory-backup/lk_a.img bs
 `if` is the input, `of` the output, `bs` the block size (1 MiB). Reading is harmless. Writing (`if=<file> of=/dev/block/by-name/...`) is how the Magisk image is installed, and it is just as irreversible as `fastboot flash`.
 
 !!! tip "Sizes are a sanity check"
-    `lk_a` is 16 MiB and `init_boot_a` is 8 MiB on this phone. The guide checks the sizes of the files it is about to write. A file of the wrong size is a sign something went wrong upstream, and the check stops you before the write.
+    `lk_a` is 16 MiB and `init_boot_a` is 8 MiB on this phone. The walkthrough checks the sizes of the files it is about to write. A file of the wrong size is a sign something went wrong upstream, and the check stops you before the write.
 
 Next: [The boot chain and bootloader lock](boot-chain.md).

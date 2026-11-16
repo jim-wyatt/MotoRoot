@@ -9,15 +9,15 @@ flowchart TB
     T["dev/toolchain.json<br/>versions + hashes"]
     T --> B["Bootstrap-DevEnv.ps1<br/>installs & verifies everything"]
     T --> E["Enter-DevShell.ps1<br/>per-window setup (dot-source)"]
-    T --> TEST["Test-DevEnv.ps1<br/>36-check self-test"]
-    B --> BK["Build-Kit.ps1<br/>rebuild helpers & modules"]
+    T --> TEST["Test-DevEnv.ps1<br/>self-test"]
+    B --> BK["Build-Device.ps1<br/>rebuild helpers & modules"]
 ```
 
 | Script | Run it | Does |
 | --- | --- | --- |
-| `Bootstrap-DevEnv.ps1` | once per machine (re-runnable) | Installs the toolchain, downloads and hash-checks the kit inputs, creates both venvs, enables the git hook. |
-| `Enter-DevShell.ps1` | every terminal (`. .\dev\Enter-DevShell.ps1`) | Sets `$Kit $Work $adb $fb $Backup $py`, puts tools on PATH, defines `docs`/`apktool`/`r8d8`, prints status. |
-| `Build-Kit.ps1` | when changing helpers/modules | Rebuilds the kit helpers and modules, and `dev/modules/wifi-extra-debloat.zip`, from source and diffs against the committed copies. |
+| `Bootstrap-DevEnv.ps1` | once per machine (re-runnable) | Installs the toolchain, downloads and hash-checks the device inputs, creates both venvs, enables the git hook. |
+| `Enter-DevShell.ps1` | every terminal (`. .\dev\Enter-DevShell.ps1`) | Moves to the repo root, sets `$Work $adb $fb $Backup $py`, puts tools on PATH, defines `docs`/`apktool`/`r8d8`, prints status. |
+| `Build-Device.ps1` | when changing helpers/modules | Rebuilds the two helper DEX files and the three module ZIPs in `device/` from source and compares them with the committed copies. |
 | `Test-DevEnv.ps1` | to verify | Exercises every tool and re-checks every pin. Exit code = failures. |
 
 ## What's installed
@@ -45,12 +45,12 @@ The device procedure needs the **exact** `adb`/`fastboot` it was tested with (37
 
 Mixing them would risk one's dependencies breaking the other, so they're separate.
 
-## Regenerating the kit artifacts
+## Regenerating the device artifacts
 
-`Build-Kit.ps1` rebuilds the helper DEX files and all three module ZIPs (the kit's two, and this fork's `dev/modules/wifi-extra-debloat.zip` from its manifest) and reports whether each matches the committed copy. `-Promote` copies rebuilt files over the originals (for kit files, then regenerate `kit/SHA256SUMS.txt` and review the diff). The [self-test](#the-scripts) also checks `kit/` against that upstream manifest, so accidental changes are caught.
+`Build-Device.ps1` rebuilds the helper DEX files and all three module ZIPs from the sources and manifests in `device/` and reports whether each matches the committed copy. Module builds are deterministic, so they are compared by hash. `-Promote` copies rebuilt files over the originals; review the diff and commit the source and the artifact together. The [self-test](#the-scripts) runs the same comparison, so an edited manifest with a stale ZIP is caught.
 
 ## Changing a pinned version
 
 1. Edit `dev/toolchain.json` with the new URL and hash from the publisher.
 2. Re-run `Bootstrap-DevEnv.ps1`. A file present but not matching its pin is never silently overwritten.
-3. Don't touch the `kit` pins unless you're deliberately re-validating the device procedure — those are the exact tested inputs.
+3. Don't touch the `inputs` pins unless you're deliberately re-validating the device procedure — those are the exact tested inputs, and a re-validation belongs on the [validation page](../device/validation.md).

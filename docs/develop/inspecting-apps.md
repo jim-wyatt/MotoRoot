@@ -3,7 +3,7 @@
 An **APK** is just a ZIP with a defined structure. Learning to open one up is a core Android skill: it's how you understand a dependency, debug a build, check what a preinstalled app does, or learn from an app you admire. The dev environment installed three tools for this.
 
 !!! note "Inspect what you have the right to"
-    Decompiling is a normal engineering activity — reading your own builds, open-source APKs, or the system apps on a device you own. Respect licenses and don't redistribute others' code. Everything below uses APKs already on your device or in the kit.
+    Decompiling is a normal engineering activity — reading your own builds, open-source APKs, or the system apps on a device you own. Respect licenses and don't redistribute others' code. Everything below uses APKs already on your device or files in this repository.
 
 ## What's inside an APK
 
@@ -45,7 +45,7 @@ jadx-gui "$Work\vending.apk"                         # or browse interactively
 Try it on the project's own helper to see the round trip — the [self-test](../reference/environment.md) does exactly this:
 
 ```powershell
-jadx -d "$Work\helper-src" "$Kit\helpers\UpdateHelper.dex"
+jadx -d "$Work\helper-src" .\device\helpers\UpdateHelper.dex
 ```
 
 ### apktool — decode resources and the manifest
@@ -67,7 +67,7 @@ aapt2 dump badging "$Work\vending.apk" | Select-String 'package|launchable|sdkVe
 
 ## A practical exercise
 
-Inspect the carrier apps the device-prep stage disables, to see *why* they're not needed on a Wi-Fi dev device. Their package names are listed in `kit/carrier-debloat-manifest.json`. Pull one (before disabling it) and read its manifest with `apktool` to see which carrier services and permissions it declares. This is the same due-diligence you'd do before trusting any preinstalled app.
+Inspect the carrier apps the device-prep stage disables, to see *why* they're not needed on a Wi-Fi dev device. Their package names and on-disk paths are listed in `device/modules/manifests/wifi-carrier-debloat.json`. Pull one (before disabling it) and read its manifest with `apktool` to see which carrier services and permissions it declares. This is the same due-diligence you'd do before trusting any preinstalled app.
 
 ## jadx vs. apktool — which?
 

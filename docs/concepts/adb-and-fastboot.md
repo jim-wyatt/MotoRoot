@@ -12,7 +12,7 @@ flowchart LR
 
 ## ADB: when Android is running
 
-**ADB** (Android Debug Bridge) works while Android is booted and USB debugging is on. It gives you a shell, file transfer, app install, log access and screen mirroring. Almost everything in the guide happens over ADB.
+**ADB** (Android Debug Bridge) works while Android is booted and USB debugging is on. It gives you a shell, file transfer, app install, log access and screen mirroring. Almost everything in the walkthrough happens over ADB.
 
 | Command | What it does |
 | --- | --- |
@@ -31,7 +31,7 @@ flowchart LR
 
 On the PC, `adb.exe` is a *client* that talks to an `adb` *server* process it starts on first use. On the phone, a daemon called `adbd` runs as the `shell` user. Commands flow PC client → PC server → USB → `adbd`.
 
-Why this matters: **only one server can own the USB connection**. If you have two different `adb.exe` versions on your PC (the guide's pinned 37.0.1 in `work\platform-tools`, and Android Studio's newer one), and both try to start servers, they fight. Symptoms are devices going `offline` mid-command. The fix is to always use the dev shell's `$adb`, and close Android Studio during phone work.
+Why this matters: **only one server can own the USB connection**. If you have two different `adb.exe` versions on your PC (the pinned 37.0.1 in `work\platform-tools`, and Android Studio's newer one), and both try to start servers, they fight. Symptoms are devices going `offline` mid-command. The fix is to always use the dev shell's `$adb`, and close Android Studio during phone work.
 
 ### `adb shell su`
 
@@ -41,7 +41,7 @@ Once the phone has root, `su` (switch user) lets a shell command run as root ins
 & $adb shell su -c id
 ```
 
-You will see this pattern in every root step of the guide. `su -c '<command>'` means "run this one command as root". If `su` isn't found, the phone has no root, or the root manager hasn't granted the shell permission yet.
+You will see this pattern in every root step of the walkthrough. `su -c '<command>'` means "run this one command as root". If `su` isn't found, the phone has no root, or the root manager hasn't granted the shell permission yet.
 
 ## Fastboot: when the bootloader is running
 
@@ -59,7 +59,7 @@ In this mode there is no Android, no apps and no ADB. Fastboot talks directly to
 | `& $fb reboot bootloader` | Restart the bootloader itself. |
 
 !!! danger "`fastboot flash` has no undo"
-    It overwrites a partition immediately. There is no confirmation and no recycle bin. The guide flashes exactly **two** partitions in the entire procedure, and only after backing them up and checking the file sizes. Never flash a partition the guide doesn't name, and never flash an image that didn't come from *your own* phone (or from Magisk patching *your own* image).
+    It overwrites a partition immediately. There is no confirmation and no recycle bin. The walkthrough flashes exactly **two** partitions in the entire procedure, and only after backing them up and checking the file sizes. Never flash a partition the walkthrough doesn't name, and never flash an image that didn't come from *your own* phone (or from Magisk patching *your own* image).
 
 ### Fastboot needs the driver
 
@@ -67,7 +67,7 @@ ADB works on Windows with the generic driver. Fastboot does not: without Motorol
 
 ### Fastboot vs fastbootd
 
-Modern phones have a second, "userspace" Fastboot called **fastbootd** that runs inside Android's recovery environment. It can flash *dynamic* partitions (the big `system`/`vendor`/`product` ones) that the real bootloader can't. The guide mentions it once, because on the tested phone fastbootd *couldn't* access the partition that needed writing, which is why the Magisk image ends up being written from inside Android with root instead. You won't normally need fastbootd.
+Modern phones have a second, "userspace" Fastboot called **fastbootd** that runs inside Android's recovery environment. It can flash *dynamic* partitions (the big `system`/`vendor`/`product` ones) that the real bootloader can't. The walkthrough mentions it once, because on the tested phone fastbootd *couldn't* access the partition that needed writing, which is why the Magisk image ends up being written from inside Android with root instead. You won't normally need fastbootd.
 
 ## Which tool, when
 

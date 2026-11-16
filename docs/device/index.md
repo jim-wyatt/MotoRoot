@@ -1,12 +1,12 @@
 # Prepare the device
 
-This section turns a factory XT2617V into a development device: bootloader unlocked, persistent system access installed, set up as a Wi-Fi-only unit. It wraps the tested procedure in `kit/GUIDE.md` with the *why* behind each stage, and it marks every irreversible step.
+This section turns a factory XT2617V into a development device: bootloader unlocked, persistent system access installed, set up as a Wi-Fi-only unit. The [walkthrough](walkthrough.md) is the complete tested procedure with the *why* behind each stage, and it marks every irreversible step. Read the [disclaimer](../reference/disclaimer.md) first.
 
 Read [Android internals](../concepts/index.md) first. Every stage here assumes you know what a partition, a slot, and the boot chain are.
 
 ## The exact tested device
 
-The low-level stages are **firmware-specific**. They were validated on one unit with exactly these values. If yours differ, the procedure is not known to work for you — stop and don't treat it as validated.
+The low-level stages are **firmware-specific**. They have been carried out on two units with exactly these values. If yours differ, the procedure is not known to work for you — stop and don't treat it as validated.
 
 | Item | Tested value |
 | --- | --- |
@@ -19,7 +19,7 @@ The low-level stages are **firmware-specific**. They were validated on one unit 
 | Kernel | `5.15.180-android13-8-...-ab14563692` |
 | Active slot | `a` |
 
-Verify with `getprop` ([first ADB session](../start/first-adb-session.md#ask-the-phone-about-itself)) before you start. The authoritative table is in [`kit/README.md`](https://github.com/jim-wyatt/OtomDev/blob/main/kit/README.md).
+Verify with `getprop` ([first ADB session](../start/first-adb-session.md#ask-the-phone-about-itself)) before you start. The full table, both runs on record, and everything that has *not* been established are on the [validation page](validation.md).
 
 ## What you'll end up with
 
