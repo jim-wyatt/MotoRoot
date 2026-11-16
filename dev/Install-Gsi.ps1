@@ -84,14 +84,28 @@ switch ($Action) {
         # images in /data, and asks for confirmation on the screen. KEY_USERDATA_SIZE is in bytes.
         & $Adb shell am start-activity -n com.android.dynsystem/com.android.dynsystem.VerificationActivity `
             -a android.os.image.action.START_INSTALL -d "file://$Remote" --el KEY_USERDATA_SIZE $userdata | Out-Null
-        Write-Host 'On the phone: confirm the DSU installation. Waiting for it to finish (up to 20 min) ...' -ForegroundColor Cyan
-        $t = 0; $st = GsiStatus
-        while ($t -lt 1200 -and $st -eq 'normal') { Start-Sleep 10; $t += 10; $st = GsiStatus }
-        while ($t -lt 1200 -and $st -match 'installing') { Start-Sleep 10; $t += 10; $st = GsiStatus }
+        Write-Host 'On the phone: confirm the DSU installation. Waiting for it to finish (up to 30 min) ...' -ForegroundColor Cyan
+        # gsi_tool lists partitions as "installed" as soon as they are created, while the installer is
+        # still writing them, so the installer's own status in logcat is what to wait for:
+        # NOT_STARTED -> IN_PROGRESS (with a progress fraction) -> READY, or an error cause.
+        & $Adb logcat -c 2>$null
+        $t = 0; $state = 'NOT_STARTED'; $lastShown = ''
+        while ($t -lt 1800) {
+            Start-Sleep 10; $t += 10
+            $line = (& $Adb logcat -d 2>$null | Select-String -Pattern 'DynamicSystemInstallationService: status: (\w+), cause: (\w+)' | Select-Object -Last 1)
+            if ($line) {
+                $state = $line.Matches[0].Groups[1].Value
+                $progress = [regex]::Match($line.Line, 'total_progress: (\d+%)').Groups[1].Value
+                $shown = "$state $progress $($line.Matches[0].Groups[2].Value)"
+                if ($shown -ne $lastShown) { Write-Host "  ${t}s: $shown"; $lastShown = $shown }
+                if ($state -eq 'READY') { break }
+                if ($line.Matches[0].Groups[2].Value -notin 'CAUSE_NOT_SPECIFIED', 'CAUSE_INSTALL_COMPLETED') { break }
+            }
+        }
         & $Adb shell rm -f $Remote | Out-Null
-        Write-Host "DSU status after ${t}s: $st"
-        if ($st -notmatch 'installed|enabled') { throw "Installation did not complete (status '$st'). Check the notification on the phone; -Action Discard cleans up." }
-        Write-Host 'Installed. Next: .\dev\Install-Gsi.ps1 -Action Boot' -ForegroundColor Green
+        $st = GsiStatus
+        if ($state -ne 'READY') { throw "Installation did not complete (installer state '$state', gsi_tool status '$st'). Check the notification on the phone; -Action Discard cleans up." }
+        Write-Host "Installed (gsi_tool: $($st -replace "`n", ' ')). Next: .\dev\Install-Gsi.ps1 -Action Boot" -ForegroundColor Green
     }
     'Boot' {
         Require-Device
