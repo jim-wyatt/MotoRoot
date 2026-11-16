@@ -30,10 +30,12 @@ Now remove the device owner so nothing manages your dev device. Test DPC's own s
 
 ```powershell
 & $adb shell dumpsys activity service com.afwsamples.testdpc/.DeviceAdminService clear-device-owner
-& $adb shell dumpsys device_policy          # Device Owner and Enabled Device Admins must be empty; wait a moment and re-check if not
+# Device Owner and Enabled Device Admins must now be empty (wait a moment and re-check if not):
+& $adb shell dumpsys device_policy
 & $adb shell pm uninstall com.afwsamples.testdpc    # Success
 & $adb shell svc wifi disable
-& $adb shell settings put global ota_disable_automatic_update 1   # extra precaution only; it does not cancel a staged update
+# extra precaution only; it does not cancel a staged update:
+& $adb shell settings put global ota_disable_automatic_update 1
 ```
 
 Don't just uninstall an active device owner or factory-reset to remove it, and **don't scan the QR again** once setup is complete.
@@ -41,11 +43,13 @@ Don't just uninstall an active device owner or factory-reset to remove it, and *
 **Confirm the build matches** the [tested device](validation.md#the-exact-tested-device):
 
 ```powershell
-& $adb shell getprop ro.product.model
+& $adb shell getprop ro.product.model                 # moto g power - 2026
 & $adb shell getprop ro.boot.hardware.sku             # XT2617V
-& $adb shell getprop ro.build.fingerprint             # motorola/vegas_og_sys/vegas26:16/W1WEOS36.48-22-3-3-4-2/36210f-81d7a:user/release-keys
+& $adb shell getprop ro.build.fingerprint
+#   motorola/vegas_og_sys/vegas26:16/W1WEOS36.48-22-3-3-4-2/36210f-81d7a:user/release-keys
 & $adb shell getprop ro.build.version.security_patch  # 2026-04-01
-& $adb shell uname -r                                 # 5.15.180-android13-8-00018-g9b2308ac0ad6-ab14563692
+& $adb shell uname -r
+#   5.15.180-android13-8-00018-g9b2308ac0ad6-ab14563692
 & $adb shell getprop ro.boot.slot_suffix              # _a
 ```
 
@@ -365,9 +369,11 @@ After the reboot, verify that root still works, all three modules are active, th
 
 ```powershell
 & $adb shell su -c id                                   # context=u:r:magisk:s0
-& $adb shell su -c 'ls /data/adb/modules'               # wifi_carrier_debloat  wifi_extra_debloat  wifi_ota_guard
+# all three: wifi_carrier_debloat  wifi_extra_debloat  wifi_ota_guard
+& $adb shell su -c 'ls /data/adb/modules'
 & $adb shell pm list packages -d | Select-String 'devicelockcontroller'
-& $adb shell cmd role get-role-holders android.app.role.SYSTEM_FINANCED_DEVICE_CONTROLLER   # empty
+# the financed-device role must have no holder (prints nothing):
+& $adb shell cmd role get-role-holders android.app.role.SYSTEM_FINANCED_DEVICE_CONTROLLER
 & $adb shell dumpsys device_policy                      # no owner, no admins
 & $adb shell ps -A | Select-String 'com.verizon|com.vzw|com.motorola.omadm|com.motorola.paks|com.motorola.tracfone|ccc.ota'
 & $adb shell pm path com.motorola.motocare              # empty: one of the 19, hidden

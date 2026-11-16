@@ -4,18 +4,18 @@
 OtomDev/
 ├── device/              What goes to the device
 │   ├── helpers/           two tiny Java programs + their compiled .dex files
-│   ├── modules/           three Magisk module ZIPs, the manifests they're built from, and the builder
-│   │   ├── manifests/       wifi-ota-guard.json, wifi-carrier-debloat.json, wifi-extra-debloat.json
-│   │   └── build_modules.py
-│   └── scripts/           Prepare-MagiskImage.ps1: makes the Magisk image file, never flashes
+│   ├── modules/           three module ZIPs, their manifests, and the builder
+│   │   ├── manifests/       one JSON per module: what it hides, and why
+│   │   └── build_modules.py builds the ZIPs from the manifests
+│   └── scripts/           Prepare-MagiskImage.ps1: file-only, never flashes
 ├── dev/                 The development environment (PC side)
 │   ├── toolchain.json     every version and hash, in one place
 │   ├── Bootstrap-DevEnv.ps1   installs everything
 │   ├── Enter-DevShell.ps1     per-terminal setup (dot-source it)
-│   ├── Build-Device.ps1       rebuilds the helpers and modules from source and compares
+│   ├── Build-Device.ps1       rebuilds and compares the device artifacts
 │   ├── Test-DevEnv.ps1        the self-test
 │   └── .tools/ .cache/ build/ .venv-docs/    generated; git-ignored
-├── docs/                These pages (Zensical / Markdown), including the full device procedure
+├── docs/                These pages, including the full device procedure
 ├── work/                YOUR files. Git-ignored in full.
 │   ├── platform-tools/    adb and fastboot 37.0.1
 │   ├── *.apk, *.msi       the procedure's downloads

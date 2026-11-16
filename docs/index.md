@@ -64,8 +64,8 @@ This is standard platform-development practice on hardware you own. It is not a 
 
 ```text
 OtomDev/
-├── device/   What goes to the device: helper programs, three reversible system modules, the Magisk prep script
-├── dev/      The development environment: one script installs every tool, pinned and verified
+├── device/   Helper programs, three reversible modules, the Magisk prep script
+├── dev/      One script installs and verifies every tool, pinned by hash
 ├── docs/     These pages, including the full device-preparation procedure
 ├── work/     Your downloads, backups, and build outputs (never committed)
 └── .github/  CI that builds and publishes this site
