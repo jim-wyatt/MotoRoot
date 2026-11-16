@@ -2,22 +2,29 @@
 .SYNOPSIS
 Dot-source in each PowerShell window:   . .\dev\Enter-DevShell.ps1
 
-Sets the variables GUIDE.md expects ($Work, $Kit, $adb, $fb, $Backup, $py), puts the
-SDK/JDK tools on this window's PATH, re-verifies the pinned kit inputs, and prints a
-short status. It does not talk to the phone and does not change persistent settings.
+Sets the variables GUIDE.md expects, puts the SDK/JDK tools on this window's PATH,
+re-verifies the pinned kit inputs, and prints a short status. It does not talk to the
+phone and does not change persistent settings.
+
+  $Repo    repository root (this window's working directory)
+  $Kit     kit\   - the original upstream guide, helpers, modules, scripts (read-only reference)
+  $Work    work\  - downloads, venv, and everything the phone procedure creates (git-ignored)
+  $Backup  work\private-backups - your phone's original images. Never share these.
+  $adb $fb work\platform-tools (pinned 37.0.1)     $py  work\.venv python (val-protocol)
 
 The kit's pinned platform-tools (37.0.1) come first on PATH, so a bare `adb` is the
 tested version. Close Android Studio while following the phone procedure: it runs its
 own (newer) ADB server, and two server versions fight over the connection.
 #>
-$Work   = Split-Path -Parent $PSScriptRoot
-$Kit    = $Work
+$Repo   = Split-Path -Parent $PSScriptRoot
+$Kit    = Join-Path $Repo 'kit'
+$Work   = Join-Path $Repo 'work'
 $adb    = Join-Path $Work 'platform-tools\adb.exe'
 $fb     = Join-Path $Work 'platform-tools\fastboot.exe'
 $Backup = Join-Path $Work 'private-backups'
 $py     = Join-Path $Work '.venv\Scripts\python.exe'
 $DevTools = Join-Path $PSScriptRoot '.tools'
-Set-Location $Work
+Set-Location $Repo
 
 $env:Path = @([Environment]::GetEnvironmentVariable('Path', 'Machine'), [Environment]::GetEnvironmentVariable('Path', 'User')) -join ';'
 if (-not $env:JAVA_HOME)    { $env:JAVA_HOME    = [Environment]::GetEnvironmentVariable('JAVA_HOME', 'User') }
@@ -39,6 +46,7 @@ $env:Path = (($DevPath | Where-Object { Test-Path $_ }) + $env:Path) -join ';'
 
 function global:apktool { & java -jar (Join-Path $DevTools 'apktool_3.0.3.jar') @args }
 function global:r8d8    { & java -cp (Join-Path $DevTools 'r8-8.3.37.jar') com.android.tools.r8.D8 @args }
+function global:docs    { & (Join-Path $PSScriptRoot '.venv-docs\Scripts\zensical.exe') serve -f (Join-Path $Repo 'zensical.toml') @args }
 
 # ---- status
 $Spec = Get-Content -Raw -LiteralPath (Join-Path $PSScriptRoot 'toolchain.json') | ConvertFrom-Json
@@ -68,4 +76,4 @@ Get-ToolVersion 'jadx'        { jadx --version }
 Get-ToolVersion 'gh'          { gh --version }
 if ($Problems) { $Problems | ForEach-Object { Write-Warning $_ }; Write-Warning 'Run .\dev\Bootstrap-DevEnv.ps1 to fix.' }
 else { Write-Host 'Kit inputs: verified' -ForegroundColor Green }
-Write-Host 'Guide variables set: $Work $Kit $adb $fb $Backup $py   Helpers: apktool, r8d8, .\dev\Build-Kit.ps1'
+Write-Host 'Guide variables: $Kit $Work $adb $fb $Backup $py   Commands: docs, apktool, r8d8, .\dev\Build-Kit.ps1, .\dev\Test-DevEnv.ps1'

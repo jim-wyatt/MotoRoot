@@ -47,7 +47,7 @@
     }
   ],
   "kit": {
-    "_note": "The tested phone procedure's exact inputs (GUIDE.md). Downloaded into the repo root, all git-ignored.",
+    "_note": "The tested phone procedure's exact inputs (kit/GUIDE.md). Downloaded into work/ (GUIDE.md's $Work), which is git-ignored.",
     "platformTools": {
       "version": "37.0.1",
       "url": "https://dl.google.com/android/repository/platform-tools_r37.0.1-win.zip",

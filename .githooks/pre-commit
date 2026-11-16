@@ -9,12 +9,12 @@ block() { echo "pre-commit: BLOCKED $1" >&2; fail=1; }
 
 while IFS= read -r -d '' f; do
   case "$f" in
-    private-backups/*|backups/*|diagnostics/*|private/*|lk-analysis/*|lk-patch-analysis/*|magisk-patch-files/*|dev/.cache/*|dev/.tools/*|dev/build/*)
+    work/*|*/private-backups/*|private-backups/*|backups/*|diagnostics/*|private/*|lk-analysis/*|lk-patch-analysis/*|magisk-patch-files/*|dev/.cache/*|dev/.tools/*|dev/build/*|dev/.venv-docs/*|site/*)
       block "$f (private or generated folder)"; continue ;;
   esac
   case "${f,,}" in
-    *.img|*.bin|*.apk|*.msi|*.log|*.tar|*.csv|*.pem|*.key|*.pk8|*.p12|*.der|*unlock-key*)
-      block "$f (device image, installer, log, or key material)"; continue ;;
+    *.img|*.bin|*.apk|*.aab|*.msi|*.log|*.tar|*.csv|*.pem|*.key|*.pk8|*.p12|*.der|*.jks|*.keystore|*unlock-key*|.env|*/.env|*keystore.properties|*local.properties)
+      block "$f (device image, installer, log, key material, or local secrets)"; continue ;;
   esac
   size=$(git cat-file -s ":$f" 2>/dev/null || echo 0)
   if [ "$size" -gt "$max_bytes" ]; then

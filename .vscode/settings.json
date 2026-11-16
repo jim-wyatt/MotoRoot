@@ -1,5 +1,5 @@
 {
-  "python.defaultInterpreterPath": "${workspaceFolder}/.venv/Scripts/python.exe",
+  "python.defaultInterpreterPath": "${workspaceFolder}/work/.venv/Scripts/python.exe",
   "terminal.integrated.profiles.windows": {
     "MotoRoot dev shell": {
       "source": "PowerShell",
@@ -9,12 +9,14 @@
   "terminal.integrated.defaultProfile.windows": "MotoRoot dev shell",
   "files.exclude": {
     "**/__pycache__": true,
-    "dev/.cache": true
+    "dev/.cache": true,
+    "dev/.venv-docs": true,
+    "site": true
   },
   "search.exclude": {
-    "val-protocol/.git": true,
-    "platform-tools": true,
+    "work": true,
     "dev/.tools": true,
-    "private-backups": true
-  }
+    "dev/build": true
+  },
+  "git.ignoreLimitWarning": true
 }

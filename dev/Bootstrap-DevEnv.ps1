@@ -12,7 +12,8 @@ Installs or verifies:
   - Pinned JARs in dev\.tools: R8 8.3.37 (reference helper build), apktool
   - The guide's exact kit inputs: platform-tools 37.0.1, DFRoot/KernelSU/Magisk APKs,
     Test DPC QR image, val-protocol at its pinned commit, Motorola driver (verify only)
-  - .venv with val-protocol requirements
+  - work\.venv with val-protocol requirements; dev\.venv-docs with Zensical (docs site)
+Downloads and generated files go in work\ (GUIDE.md's $Work). The original kit is in kit\ ($Kit).
   - Git hooks (.githooks) that block committing device images and identifiers
 
 .PARAMETER AndroidStudio
@@ -38,6 +39,8 @@ $ErrorActionPreference = 'Stop'
 $ProgressPreference = 'SilentlyContinue'   # Invoke-WebRequest is far faster without the progress bar
 
 $Root  = Split-Path -Parent $PSScriptRoot
+$Work  = Join-Path $Root 'work'   # GUIDE.md $Work: downloads, venv, backups, outputs (git-ignored)
+New-Item -ItemType Directory -Force -Path $Work | Out-Null
 $Spec  = Get-Content -Raw -LiteralPath (Join-Path $PSScriptRoot 'toolchain.json') | ConvertFrom-Json
 $Cache = Join-Path $PSScriptRoot '.cache'
 $Tools = Join-Path $PSScriptRoot '.tools'
@@ -186,25 +189,25 @@ foreach ($Arc in $Spec.archives) {
 if (-not $SkipKit) {
     Write-Step 'Guide kit inputs (exact tested versions)'
     $Pt = $Spec.kit.platformTools
-    $PtZip = Join-Path $Root 'platform-tools.zip'
+    $PtZip = Join-Path $Work 'platform-tools.zip'
     Get-PinnedFile $Pt.url $PtZip 'SHA1' $Pt.sha1
-    $Adb = Join-Path $Root 'platform-tools\adb.exe'
+    $Adb = Join-Path $Work 'platform-tools\adb.exe'
     # adb prints "Android Debug Bridge version 1.0.41" then "Version 37.0.1-<build>"; match the second line only.
     function Get-AdbVersion { (& $Adb version | Select-String -CaseSensitive '^Version (\S+)').Matches.Groups[1].Value }
     $AdbVersion = if (Test-Path $Adb) { Get-AdbVersion } else { $null }
     if ($AdbVersion -notlike "$($Pt.version)-*") {
-        if (Test-Path (Join-Path $Root 'platform-tools')) { throw "platform-tools\ holds $AdbVersion, not $($Pt.version). Close any ADB server, remove the folder, and re-run." }
-        Expand-Archive -LiteralPath $PtZip -DestinationPath $Root
+        if (Test-Path (Join-Path $Work 'platform-tools')) { throw "platform-tools\ holds $AdbVersion, not $($Pt.version). Close any ADB server, remove the folder, and re-run." }
+        Expand-Archive -LiteralPath $PtZip -DestinationPath $Work
         $AdbVersion = Get-AdbVersion
     }
     Write-Ok "platform-tools $AdbVersion"
 
-    foreach ($Apk in $Spec.kit.apks) { Get-PinnedFile $Apk.url (Join-Path $Root $Apk.name) 'SHA256' $Apk.sha256 }
+    foreach ($Apk in $Spec.kit.apks) { Get-PinnedFile $Apk.url (Join-Path $Work $Apk.name) 'SHA256' $Apk.sha256 }
     $Qr = $Spec.kit.testDpcQr
-    Get-PinnedFile $Qr.url (Join-Path $Root $Qr.name) 'SHA256' $Qr.sha256
+    Get-PinnedFile $Qr.url (Join-Path $Work $Qr.name) 'SHA256' $Qr.sha256
 
     $Vp = $Spec.kit.valProtocol
-    $VpDir = Join-Path $Root 'val-protocol'
+    $VpDir = Join-Path $Work 'val-protocol'
     if (-not (Test-Path (Join-Path $VpDir '.git'))) {
         & git clone --quiet $Vp.repo $VpDir
         if ($LASTEXITCODE -ne 0) { throw 'git clone val-protocol failed.' }
@@ -215,9 +218,9 @@ if (-not $SkipKit) {
     else { Write-Ok "val-protocol @ $($Vp.commit.Substring(0,12))" }
 
     $Drv = $Spec.kit.motorolaDriver
-    $Msi = Join-Path $Root $Drv.name
+    $Msi = Join-Path $Work $Drv.name
     if (-not (Test-Path $Msi)) {
-        Write-Warning "$($Drv.name) not present. Download it from $($Drv.page) into $Root and re-run to verify."
+        Write-Warning "$($Drv.name) not present. Download it from $($Drv.page) into $Work and re-run to verify."
     } else {
         $Sig = Get-AuthenticodeSignature -LiteralPath $Msi
         if ($Sig.Status -ne 'Valid' -or $Sig.SignerCertificate.Subject -notmatch [regex]::Escape($Drv.signer)) {
@@ -228,21 +231,33 @@ if (-not $SkipKit) {
     }
 }
 
-# ---------------------------------------------------------------- Python venv
-Write-Step 'Python venv (.venv)'
-$VenvPy = Join-Path $Root '.venv\Scripts\python.exe'
-if (-not (Test-Path $VenvPy)) {
-    $SysPy = (Get-Command python -ErrorAction SilentlyContinue).Source
-    $Ver = if ($SysPy) { & $SysPy -c 'import sys; print("%d.%d" % sys.version_info[:2])' 2>$null } else { $null }
-    if (-not $Ver -or [version]$Ver -lt [version]'3.11') { throw 'Python 3.11+ not found. winget install -e --id Python.Python.3.12, open a new window, re-run.' }
-    & $SysPy -m venv (Join-Path $Root '.venv')
+# ---------------------------------------------------------------- Python venvs
+# Two separate venvs: work\.venv runs val-protocol (bootloader patching) and is kept minimal;
+# dev\.venv-docs builds the documentation site. Never mix them.
+function New-Venv([string]$Dir) {
+    $VPy = Join-Path $Dir 'Scripts\python.exe'
+    if (-not (Test-Path $VPy)) {
+        $SysPy = (Get-Command python -ErrorAction SilentlyContinue).Source
+        $Ver = if ($SysPy) { & $SysPy -c 'import sys; print("%d.%d" % sys.version_info[:2])' 2>$null } else { $null }
+        if (-not $Ver -or [version]$Ver -lt [version]'3.11') { throw 'Python 3.11+ not found. winget install -e --id Python.Python.3.12, open a new window, re-run.' }
+        & $SysPy -m venv $Dir
+    }
+    $VPy
 }
-$Req = Join-Path $Root 'val-protocol\requirements.txt'
+Write-Step 'Python venv for val-protocol (work\.venv)'
+$VenvPy = New-Venv (Join-Path $Work '.venv')
+$Req = Join-Path $Work 'val-protocol\requirements.txt'
 if (Test-Path $Req) {
     & $VenvPy -m pip install --quiet --disable-pip-version-check -r $Req pyasn1
     if ($LASTEXITCODE -ne 0) { throw 'pip install failed.' }
 }
 Write-Ok ((& $VenvPy --version) -as [string])
+
+Write-Step 'Python venv for docs (dev\.venv-docs)'
+$DocsPy = New-Venv (Join-Path $PSScriptRoot '.venv-docs')
+& $DocsPy -m pip install --quiet --disable-pip-version-check -r (Join-Path $Root 'docs\requirements.txt')
+if ($LASTEXITCODE -ne 0) { throw 'pip install (docs) failed.' }
+Write-Ok ((& (Join-Path $PSScriptRoot '.venv-docs\Scripts\zensical.exe') --version) -as [string])
 
 # ---------------------------------------------------------------- git hooks
 Write-Step 'Git hooks'
