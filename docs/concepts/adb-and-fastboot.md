@@ -1,0 +1,82 @@
+# ADB and Fastboot
+
+You talk to the phone with two different tools, and they work in two different *modes* of the phone. Knowing which mode you are in is half of not making mistakes.
+
+```mermaid
+flowchart LR
+    PC[Your PC] -- "adb (USB)" --> AND["Android running<br/>(normal mode)"]
+    PC -- "fastboot (USB)" --> BL["Bootloader<br/>(phone shows a text menu)"]
+    AND -- "adb reboot bootloader" --> BL
+    BL -- "fastboot reboot" --> AND
+```
+
+## ADB: when Android is running
+
+**ADB** (Android Debug Bridge) works while Android is booted and USB debugging is on. It gives you a shell, file transfer, app install, log access and screen mirroring. Almost everything in the guide happens over ADB.
+
+| Command | What it does |
+| --- | --- |
+| `& $adb devices -l` | List phones. The state column must say `device`. |
+| `& $adb shell <cmd>` | Run one command on the phone. |
+| `& $adb shell` | Interactive shell. `exit` to leave. |
+| `& $adb push <pc-file> <phone-path>` | Copy a file to the phone. |
+| `& $adb pull <phone-path> <pc-file>` | Copy a file from the phone. |
+| `& $adb install <apk>` | Install an app. |
+| `& $adb logcat` | Stream the system log. |
+| `& $adb reboot` | Reboot normally. |
+| `& $adb reboot bootloader` | Reboot into the bootloader so you can use Fastboot. |
+| `& $adb kill-server` | Stop the background server on the PC. |
+
+### The two ends
+
+On the PC, `adb.exe` is a *client* that talks to an `adb` *server* process it starts on first use. On the phone, a daemon called `adbd` runs as the `shell` user. Commands flow PC client → PC server → USB → `adbd`.
+
+Why this matters: **only one server can own the USB connection**. If you have two different `adb.exe` versions on your PC (the guide's pinned 37.0.1 in `work\platform-tools`, and Android Studio's newer one), and both try to start servers, they fight. Symptoms are devices going `offline` mid-command. The fix is to always use the dev shell's `$adb`, and close Android Studio during phone work.
+
+### `adb shell su`
+
+Once the phone has root, `su` (switch user) lets a shell command run as root instead of as `shell`:
+
+```powershell
+& $adb shell su -c id
+```
+
+You will see this pattern in every root step of the guide. `su -c '<command>'` means "run this one command as root". If `su` isn't found, the phone has no root, or the root manager hasn't granted the shell permission yet.
+
+## Fastboot: when the bootloader is running
+
+**Fastboot** works only in **bootloader mode**: the phone shows a plain text screen instead of Android. Get there with `& $adb reboot bootloader`, or by holding Volume Down while powering on.
+
+In this mode there is no Android, no apps and no ADB. Fastboot talks directly to the bootloader, and its job is to read bootloader variables and write raw partitions.
+
+| Command | What it does |
+| --- | --- |
+| `& $fb devices -l` | List phones in bootloader mode. |
+| `& $fb getvar <name>` | Read a bootloader variable (`product`, `current-slot`, `securestate`, `serialno`, ...). |
+| `& $fb flash <partition> <file.img>` | **Write** a raw image to a partition. This is the dangerous one. |
+| `& $fb oem unlock <key>` | Motorola's unlock command. Erases the phone. |
+| `& $fb reboot` | Boot Android. |
+| `& $fb reboot bootloader` | Restart the bootloader itself. |
+
+!!! danger "`fastboot flash` has no undo"
+    It overwrites a partition immediately. There is no confirmation and no recycle bin. The guide flashes exactly **two** partitions in the entire procedure, and only after backing them up and checking the file sizes. Never flash a partition the guide doesn't name, and never flash an image that didn't come from *your own* phone (or from Magisk patching *your own* image).
+
+### Fastboot needs the driver
+
+ADB works on Windows with the generic driver. Fastboot does not: without Motorola's signed driver, Windows shows the phone with a yellow warning (error 28) and `fastboot devices` prints nothing. The bootstrap verifies the driver's signature; make sure it is installed before the unlock stage.
+
+### Fastboot vs fastbootd
+
+Modern phones have a second, "userspace" Fastboot called **fastbootd** that runs inside Android's recovery environment. It can flash *dynamic* partitions (the big `system`/`vendor`/`product` ones) that the real bootloader can't. The guide mentions it once, because on the tested phone fastbootd *couldn't* access the partition that needed writing, which is why the Magisk image ends up being written from inside Android with root instead. You won't normally need fastbootd.
+
+## Which tool, when
+
+| You want to | Mode | Tool |
+| --- | --- | --- |
+| Read properties, install apps, run commands, pull backups | Android | `adb` |
+| Run a command as root | Android (rooted) | `adb shell su -c ...` |
+| Read the bootloader's lock state | Bootloader | `fastboot getvar securestate` |
+| Flash the patched bootloader, unlock | Bootloader | `fastboot flash`, `fastboot oem unlock` |
+| Write the Magisk image on this phone | Android (temporarily rooted) | `adb shell su -c dd ...` (not fastboot; see above) |
+
+Next: [Partitions and A/B slots](partitions-and-slots.md).

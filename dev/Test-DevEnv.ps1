@@ -68,7 +68,7 @@ Check 'build' 'helpers + modules reproduce committed copies' {
     ([regex]::Matches($o, 'True')).Count -eq 4
 }
 Check 'build' 'jadx decompiles UpdateHelper.dex' {
-    & jadx --quiet -d (Join-Path $Tmp 'jadx') (Join-Path $Root 'helpers\UpdateHelper.dex') 2>&1 | Out-Null
+    & jadx --quiet -d (Join-Path $Tmp 'jadx') (Join-Path $Kit 'helpers\UpdateHelper.dex') 2>&1 | Out-Null
     $src = Get-ChildItem (Join-Path $Tmp 'jadx') -Recurse -Filter 'UpdateHelper.java' | Select-Object -First 1
     $src -and ((Get-Content -Raw $src.FullName) -match 'class UpdateHelper')
 }
@@ -90,29 +90,54 @@ Check 'build' 'javac against android-36 android.jar' {
     $LASTEXITCODE -eq 0
 }
 
-# ---------------- guide kit inputs
+Check 'build' 'docs site builds (zensical --strict)' {
+    $z = Join-Path $PSScriptRoot '.venv-docs\Scripts\zensical.exe'
+    $o = & $z build --strict --clean -f (Join-Path $Root 'zensical.toml') 2>&1 | Out-String
+    if ($LASTEXITCODE -ne 0) { throw $o.Trim() }
+    Test-Path (Join-Path $Root 'site\index.html')
+}
+
+# ---------------- original upstream kit
+# kit\SHA256SUMS.txt is upstream's release manifest. Every listed file that lives in kit\ must be unchanged.
+# (.gitattributes and .gitignore are listed too; they are the repo's own files at the root and are allowed to differ.)
+Check 'kit' 'kit\ files match upstream release SHA256SUMS' {
+    $bad = @(); $n = 0
+    foreach ($line in Get-Content (Join-Path $Kit 'SHA256SUMS.txt')) {
+        if ($line -notmatch '^([0-9a-f]{64})\s+\*?(.+)$') { continue }
+        $rel = $Matches[2].Trim(); if ($rel -in '.gitattributes', '.gitignore') { continue }
+        $n++; $p = Join-Path $Kit $rel
+        if (-not (Test-Path -LiteralPath $p) -or (Sha256 $p) -ne $Matches[1]) { $bad += $rel }
+    }
+    if ($bad) { throw "changed or missing: $($bad -join ', ')" }
+    "$n files unchanged"
+}
+
+# ---------------- guide inputs (work\)
 Check 'kit' 'platform-tools 37.0.1 (adb + fastboot)' { ((& $adb version)[1] -match '^Version 37\.0\.1-') -and ((& $fb --version | Select-Object -First 1) -match '37\.0\.1') }
-Check 'kit' 'platform-tools.zip pin' { (Get-FileHash (Join-Path $Root 'platform-tools.zip') -Algorithm SHA1).Hash.ToLower() -eq $Spec.kit.platformTools.sha1 }
-foreach ($Apk in $Spec.kit.apks) { Check 'kit' $Apk.name { (Sha256 (Join-Path $Root $Apk.name)) -eq $Apk.sha256 } }
-Check 'kit' 'Test DPC QR' { (Sha256 (Join-Path $Root $Spec.kit.testDpcQr.name)) -eq $Spec.kit.testDpcQr.sha256 }
-Check 'kit' 'val-protocol pinned commit, clean tree' { ((git -C val-protocol rev-parse HEAD) -eq $Spec.kit.valProtocol.commit) -and -not (git -C val-protocol status --porcelain --untracked-files=no) }
-Check 'kit' 'val-protocol imports in .venv' { $o = & $py -c "import sys; sys.path.insert(0,'val-protocol'); import capstone, pyasn1, liblk, lk_static_analyzer, lk_auto_patch, lk_patch_partition, lk_repack_signed; print('ok')" 2>&1; "$o" -eq 'ok' }
-Check 'kit' 'Motorola driver installer signed + pinned' { $s = Get-AuthenticodeSignature (Join-Path $Root $Spec.kit.motorolaDriver.name); $s.Status -eq 'Valid' -and (Sha256 (Join-Path $Root $Spec.kit.motorolaDriver.name)) -eq $Spec.kit.motorolaDriver.sha256 }
+Check 'kit' 'platform-tools.zip pin' { (Get-FileHash (Join-Path $Work 'platform-tools.zip') -Algorithm SHA1).Hash.ToLower() -eq $Spec.kit.platformTools.sha1 }
+foreach ($Apk in $Spec.kit.apks) { Check 'kit' $Apk.name { (Sha256 (Join-Path $Work $Apk.name)) -eq $Apk.sha256 } }
+Check 'kit' 'Test DPC QR' { (Sha256 (Join-Path $Work $Spec.kit.testDpcQr.name)) -eq $Spec.kit.testDpcQr.sha256 }
+Check 'kit' 'val-protocol pinned commit, clean tree' { ((git -C work/val-protocol rev-parse HEAD) -eq $Spec.kit.valProtocol.commit) -and -not (git -C work/val-protocol status --porcelain --untracked-files=no) }
+Check 'kit' 'val-protocol imports in work\.venv' { $o = & $py -c "import sys; sys.path.insert(0,'work/val-protocol'); import capstone, pyasn1, liblk, lk_static_analyzer, lk_auto_patch, lk_patch_partition, lk_repack_signed; print('ok')" 2>&1; "$o" -eq 'ok' }
+Check 'kit' 'Motorola driver installer signed + pinned' { $s = Get-AuthenticodeSignature (Join-Path $Work $Spec.kit.motorolaDriver.name); $s.Status -eq 'Valid' -and (Sha256 (Join-Path $Work $Spec.kit.motorolaDriver.name)) -eq $Spec.kit.motorolaDriver.sha256 }
 Check 'kit' 'Motorola driver installed' { $d = Get-ItemProperty HKLM:\Software\Microsoft\Windows\CurrentVersion\Uninstall\*, HKLM:\Software\WOW6432Node\Microsoft\Windows\CurrentVersion\Uninstall\* -ErrorAction SilentlyContinue | Where-Object DisplayName -match 'Motorola Mobile Drivers' | Select-Object -First 1; if ($d) { "$($d.DisplayName)" } else { $false } }
 
 # ---------------- git safety
 Check 'git' 'pre-commit hook active' { (git config core.hooksPath) -eq '.githooks' -and (Test-Path .githooks\pre-commit) }
 Check 'git' 'private paths ignored' {
-    $paths = 'private-backups/lk_a.img', 'lk-analysis/x.txt', 'lk-patch-analysis/x.txt', 'magisk-patch-files/init_boot.img', 'unlock-keys.txt', 'dev/.tools/x', 'key.pem'
+    $paths = 'private-backups/lk_a.img', 'lk-analysis/x.txt', 'lk-patch-analysis/x.txt', 'magisk-patch-files/init_boot.img', 'unlock-keys.txt', 'dev/.tools/x', 'key.pem',
+             'release.jks', 'app/local.properties', 'dev/.venv-docs/x', 'site/index.html', 'app/build/x', 'work/anything.txt'
     $ignored = @(git check-ignore $paths)
     if ($ignored.Count -ne $paths.Count) { throw "not ignored: $(($paths | Where-Object { $_ -notin $ignored }) -join ', ')" }
     $true
 }
 Check 'git' 'upstream is fetch-only' { (git remote get-url --push upstream) -notmatch '^https?://|^git@' }
 Check 'git' 'commit email is GitHub no-reply' { (git config user.email) -match '@users\.noreply\.github\.com$' }
+# origin is intentionally PUBLIC. The safety net (ignored paths + pre-commit hook), not
+# repo privacy, is what keeps device data out of the public history. Just report visibility.
 try {
     $v = gh repo view (git remote get-url origin) --json visibility --jq .visibility 2>$null
-    if ($LASTEXITCODE -eq 0) { Check 'git' 'origin is PRIVATE' { $v -eq 'PRIVATE' } } else { Warn 'git' 'origin visibility' 'gh could not reach GitHub' }
+    if ($LASTEXITCODE -eq 0) { Check 'git' "origin visibility ($v)" { $v -in 'PUBLIC', 'PRIVATE' } } else { Warn 'git' 'origin visibility' 'gh could not reach GitHub' }
 } catch { Warn 'git' 'origin visibility' $_.Exception.Message }
 
 # ---------------- ADB hygiene (read-only: never starts a server)

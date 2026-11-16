@@ -1,0 +1,2 @@
+# Documentation site toolchain. Installed into dev\.venv-docs by dev\Bootstrap-DevEnv.ps1.
+zensical==0.1.1
