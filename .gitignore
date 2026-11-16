@@ -17,3 +17,18 @@ __pycache__/
 build-update/
 build-cleanup/
 release/
+# Phone-procedure working folders (GUIDE.md). Private: may hold calibration, keys, identifiers.
+private-backups/
+lk-analysis/
+lk-patch-analysis/
+magisk-patch-files/
+*.pem
+*.key
+*.pk8
+# Kit inputs and dev environment (dev/Bootstrap-DevEnv.ps1)
+platform-tools.zip
+testdpc-qrcode.png
+dev/.cache/
+dev/.tools/
+dev/build/
+*.partial

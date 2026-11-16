@@ -1,0 +1,14 @@
+{
+  "recommendations": [
+    "ms-vscode.powershell",
+    "ms-python.python",
+    "charliermarsh.ruff",
+    "ms-vscode.hexeditor",
+    "timonwong.shellcheck",
+    "redhat.vscode-xml",
+    "redhat.java",
+    "vscjava.vscode-gradle",
+    "llvm-vs-code-extensions.vscode-clangd",
+    "loyieking.smalise"
+  ]
+}

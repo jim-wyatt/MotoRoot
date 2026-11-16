@@ -1,0 +1,20 @@
+{
+  "python.defaultInterpreterPath": "${workspaceFolder}/.venv/Scripts/python.exe",
+  "terminal.integrated.profiles.windows": {
+    "MotoRoot dev shell": {
+      "source": "PowerShell",
+      "args": ["-NoExit", "-ExecutionPolicy", "Bypass", "-Command", ". .\\dev\\Enter-DevShell.ps1"]
+    }
+  },
+  "terminal.integrated.defaultProfile.windows": "MotoRoot dev shell",
+  "files.exclude": {
+    "**/__pycache__": true,
+    "dev/.cache": true
+  },
+  "search.exclude": {
+    "val-protocol/.git": true,
+    "platform-tools": true,
+    "dev/.tools": true,
+    "private-backups": true
+  }
+}

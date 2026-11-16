@@ -1,0 +1,78 @@
+{
+  "_comment": "Single source of truth for the dev environment. Bootstrap-DevEnv.ps1 reads this. Bump a version here, re-run the bootstrap, and commit the change.",
+  "winget": [
+    { "id": "Microsoft.OpenJDK.21", "purpose": "javac/java for helpers, R8/D8, apktool, jadx, Gradle" },
+    { "id": "Git.Git",              "purpose": "source control, val-protocol pinning" },
+    { "id": "GitHub.cli",           "purpose": "fork, PRs, release downloads" },
+    { "id": "Genymobile.scrcpy",    "purpose": "mirror and control the phone over ADB" },
+    { "id": "Skylot.jadx",          "purpose": "decompile APK/DEX for inspection" },
+    { "id": "7zip.7zip",            "purpose": "inspect images and archives" },
+    { "id": "Google.AndroidStudio", "purpose": "full IDE for app development", "optional": true, "switch": "AndroidStudio" }
+  ],
+  "androidSdk": {
+    "cmdlineTools": {
+      "version": "23.0",
+      "url": "https://dl.google.com/android/repository/commandlinetools-win-16111833_latest.zip",
+      "sha1": "57d04f2d75eb8e8fffc5000a987e5de4b5a63e9d"
+    },
+    "packages": [
+      "platform-tools",
+      "platforms/android-36",
+      "build-tools/36.1.0",
+      "ndk/30.0.16248370"
+    ],
+    "_note": "Names use the Android CLI (android.exe) form: slash, not the legacy sdkmanager semicolon. android-36 = Android 16, the phone's OS. The SDK's platform-tools are for Android Studio; phone procedures use the kit's pinned 37.0.1 copy."
+  },
+  "jars": [
+    {
+      "name": "r8-8.3.37.jar",
+      "url": "https://dl.google.com/dl/android/maven2/com/android/tools/r8/8.3.37/r8-8.3.37.jar",
+      "sha1": "6b023243a76124fb055d66b50e2e11db9b4d9b2b",
+      "purpose": "D8 used by the reference helper build (helpers/BUILD.md)"
+    },
+    {
+      "name": "apktool_3.0.3.jar",
+      "url": "https://github.com/iBotPeaches/Apktool/releases/download/v3.0.3/apktool_3.0.3.jar",
+      "sha256": "dbf930b076c6b9be08d57c449cacefc3bdd6b71ebd59b3066fc0e1f5b14f9423",
+      "purpose": "decode/rebuild APK resources"
+    }
+  ],
+  "archives": [
+    {
+      "name": "jadx-1.5.6.zip",
+      "url": "https://github.com/skylot/jadx/releases/download/v1.5.6/jadx-1.5.6.zip",
+      "sha256": "545ea2be9c242511bc145755cf4bda2485ade42966e096f8b4d3da2a230e8974",
+      "extractTo": "jadx",
+      "purpose": "jadx command-line decompiler (the winget package is GUI-only)"
+    }
+  ],
+  "kit": {
+    "_note": "The tested phone procedure's exact inputs (GUIDE.md). Downloaded into the repo root, all git-ignored.",
+    "platformTools": {
+      "version": "37.0.1",
+      "url": "https://dl.google.com/android/repository/platform-tools_r37.0.1-win.zip",
+      "sha1": "e03e78b1d80b396f1c3358e31251cb31740e1110"
+    },
+    "apks": [
+      { "name": "DFRoot_4.7.apk", "url": "https://github.com/diabl0w/DFRoot/releases/download/v4.7/DFRoot_4.7.apk", "sha256": "9e193ffdaada8577e14a04fb19403256b3fa4991fae1331c7956e083c098a7b1" },
+      { "name": "KernelSU_v3.3.1_32680-release.apk", "url": "https://github.com/tiann/KernelSU/releases/download/v3.3.1/KernelSU_v3.3.1_32680-release.apk", "sha256": "b4a059ace71de2fa65cc7f12b1c58d55fc23ab25e057ee4230ce779742abe450" },
+      { "name": "Magisk-v31.1.apk", "url": "https://github.com/topjohnwu/Magisk/releases/download/v31.1/Magisk-v31.1.apk", "sha256": "89cefac0a318afa39fb3880c45c87b036c05bc1ebf02a7a715b7f8d7c26ac6e7" }
+    ],
+    "testDpcQr": {
+      "name": "testdpc-qrcode.png",
+      "url": "https://raw.githubusercontent.com/googlesamples/android-testdpc/master/qrcode.png",
+      "sha256": "55c3483d6834948170e73e8fb78832d5afc8ba9d725cbf5c958bdf6f9034b353"
+    },
+    "valProtocol": {
+      "repo": "https://github.com/Maikyxd/val-protocol.git",
+      "commit": "dc7f41f9b1a32da1a78ef327bb62d2bef17d7bd0"
+    },
+    "motorolaDriver": {
+      "name": "Motorola_Mobile_Drivers_64bit.msi",
+      "page": "https://en-us.support.motorola.com/app/usb-drivers",
+      "sha256": "495cdc3fd15a8790686a7802cbaf8e0e85f9a422f252dbb5fb2a613b6443c72a",
+      "signer": "O=Motorola Mobility Inc.",
+      "_note": "No stable direct URL; download manually from the support page. The bootstrap verifies it if present."
+    }
+  }
+}
