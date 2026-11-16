@@ -1,6 +1,6 @@
 # Preparation walkthrough
 
-This is the full device-preparation sequence, stage by stage, with the reasoning for each step. The **authoritative command reference** is [`kit/GUIDE.md`](https://github.com/jim-wyatt/MotoRoot/blob/main/kit/GUIDE.md); the commands here match it, and where they differ, the kit wins.
+This is the full device-preparation sequence, stage by stage, with the reasoning for each step. The **authoritative command reference** is [`kit/GUIDE.md`](https://github.com/jim-wyatt/MotoDev/blob/main/kit/GUIDE.md); the commands here match it, and where they differ, the kit wins.
 
 Work in a [dev shell](../start/setup.md#4-open-the-dev-shell) (`. .\dev\Enter-DevShell.ps1`) so `$adb`, `$fb`, `$Work`, `$Kit`, `$Backup` and `$py` are set. **Close Android Studio** so only the pinned `adb` is running.
 
@@ -65,7 +65,7 @@ If root can't be verified, **stop** — don't retry an exploit repeatedly, and d
 
 **Goal:** save your own factory images. These are your only recovery path and are **private** (they contain per-unit calibration). They go in `$Backup` (`work\private-backups`), which is git-ignored.
 
-The guide's script reads each partition to a file, pulls it, and verifies the hash. Key partitions: `lk_a`, `boot_a`, `init_boot_a`, `vbmeta_*`, `misc`, and the per-unit ones (`nvram`, `nvdata`, `persist`, `seccfg`, …). See the full loop in [`kit/GUIDE.md` → "Back up your own original images"](https://github.com/jim-wyatt/MotoRoot/blob/main/kit/GUIDE.md).
+The guide's script reads each partition to a file, pulls it, and verifies the hash. Key partitions: `lk_a`, `boot_a`, `init_boot_a`, `vbmeta_*`, `misc`, and the per-unit ones (`nvram`, `nvdata`, `persist`, `seccfg`, …). See the full loop in [`kit/GUIDE.md` → "Back up your own original images"](https://github.com/jim-wyatt/MotoDev/blob/main/kit/GUIDE.md).
 
 ```powershell
 # Abbreviated; the kit script backs up all partitions and checks every hash.
@@ -89,7 +89,7 @@ With temporary root, inspect the boot state:
 & $adb shell su -c '/data/adb/ksu/bin/bootctl get-active-boot-slot'
 ```
 
-If an update is staged (current slot A, next boot B, state `UPDATED_NEED_REBOOT`), the procedure cancels it with Android's own `UpdateEngine.resetStatus`, driven by the included [`UpdateHelper`](../develop/helper-programs.md) — a tiny program that calls that one public API. The full sequence, including backing up the update metadata first, is in [`kit/GUIDE.md` → "If an update is staged before the first unlock"](https://github.com/jim-wyatt/MotoRoot/blob/main/kit/GUIDE.md). Do **not** reboot until both slots report the same, un-staged state.
+If an update is staged (current slot A, next boot B, state `UPDATED_NEED_REBOOT`), the procedure cancels it with Android's own `UpdateEngine.resetStatus`, driven by the included [`UpdateHelper`](../develop/helper-programs.md) — a tiny program that calls that one public API. The full sequence, including backing up the update metadata first, is in [`kit/GUIDE.md` → "If an update is staged before the first unlock"](https://github.com/jim-wyatt/MotoDev/blob/main/kit/GUIDE.md). Do **not** reboot until both slots report the same, un-staged state.
 
 ---
 
@@ -163,7 +163,7 @@ The unlock wiped the device, so **repeat Stage 1** (QR setup, remove Test DPC, W
 # repeat DFRoot → KernelSU → grant Shell → verify uid=0, and confirm ro.boot.flash.locked = 0
 ```
 
-Now write the Magisk-patched image to **`init_boot_a` only**, after checking the current partition still matches your backup and the file is the right size. The guarded write (with read-back verification) is in [`kit/GUIDE.md` → "Install persistent Magisk root"](https://github.com/jim-wyatt/MotoRoot/blob/main/kit/GUIDE.md):
+Now write the Magisk-patched image to **`init_boot_a` only**, after checking the current partition still matches your backup and the file is the right size. The guarded write (with read-back verification) is in [`kit/GUIDE.md` → "Install persistent Magisk root"](https://github.com/jim-wyatt/MotoDev/blob/main/kit/GUIDE.md):
 
 ```powershell
 & $adb push "$Work\magisk-patched-init_boot.img" /data/local/tmp/
@@ -200,7 +200,7 @@ That's the milestone: **root that starts by itself after a normal reboot.**
 & $adb reboot
 ```
 
-After reboot, verify (updater gone, carrier apps absent, root still works) with the checks in [`kit/GUIDE.md`](https://github.com/jim-wyatt/MotoRoot/blob/main/kit/GUIDE.md). Finally, remove the temporary-root tools, re-enable Wi-Fi, and sign into Google Play to install your own development tools:
+After reboot, verify (updater gone, carrier apps absent, root still works) with the checks in [`kit/GUIDE.md`](https://github.com/jim-wyatt/MotoDev/blob/main/kit/GUIDE.md). Finally, remove the temporary-root tools, re-enable Wi-Fi, and sign into Google Play to install your own development tools:
 
 ```powershell
 & $adb shell pm uninstall df.root

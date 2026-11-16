@@ -9,7 +9,7 @@ If you don't have Git yet, download the repository as a ZIP from GitHub and extr
 If you do have Git:
 
 ```powershell
-git clone https://github.com/jim-wyatt/MotoRoot.git $env:USERPROFILE\MotoRoot
+git clone https://github.com/jim-wyatt/MotoDev.git $env:USERPROFILE\MotoRoot
 cd $env:USERPROFILE\MotoRoot
 ```
 

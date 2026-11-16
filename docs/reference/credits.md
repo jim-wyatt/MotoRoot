@@ -2,7 +2,7 @@
 
 ## The device-preparation procedure
 
-The entire procedure in `kit/` — the guide, the helper programs, the system modules, the preparation scripts — was created and tested by **[parsimo2010](https://github.com/parsimo2010/moto-g-power-2026-straight-talk-wifi-root-guide)**. It is included unchanged under its MIT license. See [`kit/UPSTREAM.md`](https://github.com/jim-wyatt/MotoRoot/blob/main/kit/UPSTREAM.md) for the exact imported commit and how to pull updates.
+The entire procedure in `kit/` — the guide, the helper programs, the system modules, the preparation scripts — was created and tested by **[parsimo2010](https://github.com/parsimo2010/moto-g-power-2026-straight-talk-wifi-root-guide)**. It is included unchanged under its MIT license. See [`kit/UPSTREAM.md`](https://github.com/jim-wyatt/MotoDev/blob/main/kit/UPSTREAM.md) for the exact imported commit and how to pull updates.
 
 These documentation pages and the `dev/` environment were built around that procedure to frame it as an Android development project. They are not the work of the upstream author.
 
@@ -37,4 +37,4 @@ Built with [Zensical](https://zensical.org/), the static-site generator from the
 
 ## Scope and honesty
 
-This project documents preparing and developing on **one device model you own**, on one validated firmware build. It does not claim to work on other models or builds, it installs no attempt to hide system access from apps that check for it, and it treats the risk of an unbootable device as real. Everything about what was and wasn't tested is in [`kit/VALIDATION.md`](https://github.com/jim-wyatt/MotoRoot/blob/main/kit/VALIDATION.md).
+This project documents preparing and developing on **one device model you own**, on one validated firmware build. It does not claim to work on other models or builds, it installs no attempt to hide system access from apps that check for it, and it treats the risk of an unbootable device as real. Everything about what was and wasn't tested is in [`kit/VALIDATION.md`](https://github.com/jim-wyatt/MotoDev/blob/main/kit/VALIDATION.md).

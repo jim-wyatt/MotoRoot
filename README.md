@@ -6,12 +6,12 @@ MotoRoot sets up a complete, reproducible Windows toolchain for Android developm
 
 It's aimed at people learning Android development from the ground up: the docs assume **no prior Android experience** and explain `adb`, the build pipeline, how a device boots, and the platform's security model as they go.
 
-📖 **[Read the documentation](https://jim-wyatt.github.io/MotoRoot/)**
+📖 **[Read the documentation](https://jim-wyatt.github.io/MotoDev/)**
 
 ## Quick start
 
 ```powershell
-git clone https://github.com/jim-wyatt/MotoRoot.git $env:USERPROFILE\MotoRoot
+git clone https://github.com/jim-wyatt/MotoDev.git $env:USERPROFILE\MotoRoot
 cd $env:USERPROFILE\MotoRoot
 # Download the Motorola USB driver into work\ (see docs: Getting started)
 Set-ExecutionPolicy -Scope Process Bypass
@@ -39,10 +39,10 @@ One script installs and hash-verifies the full stack: JDK, Android SDK, NDK, pla
 
 ## Safety
 
-This project works with real hardware you own. Unlocking a bootloader **erases the device**, and the low-level preparation on this model can, in the worst case, leave it unbootable. It was validated on one unit and one firmware build. Read the [internals](https://jim-wyatt.github.io/MotoRoot/concepts/) and the [walkthrough](https://jim-wyatt.github.io/MotoRoot/device/walkthrough/) before touching the device.
+This project works with real hardware you own. Unlocking a bootloader **erases the device**, and the low-level preparation on this model can, in the worst case, leave it unbootable. It was validated on one unit and one firmware build. Read the [internals](https://jim-wyatt.github.io/MotoDev/concepts/) and the [walkthrough](https://jim-wyatt.github.io/MotoDev/device/walkthrough/) before touching the device.
 
 Device backups and identifiers are private; a [git pre-commit hook](.githooks/pre-commit) and `.gitignore` keep them out of version control automatically.
 
 ## Credits
 
-Device-preparation procedure © parsimo2010 (MIT). Development environment and documentation built around it. Full attributions in the [credits](https://jim-wyatt.github.io/MotoRoot/reference/credits/).
+Device-preparation procedure © parsimo2010 (MIT). Development environment and documentation built around it. Full attributions in the [credits](https://jim-wyatt.github.io/MotoDev/reference/credits/).

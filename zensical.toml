@@ -5,10 +5,10 @@
 [project]
 site_name = "MotoRoot"
 site_description = "An Android platform development environment built around a Moto G Power 2026 (XT2617V) development device"
-site_url = "https://jim-wyatt.github.io/MotoRoot/"
+site_url = "https://jim-wyatt.github.io/MotoDev/"
 copyright = "Original guide &copy; 2026 parsimo2010 (MIT). Docs and dev environment for this fork."
-repo_url = "https://github.com/jim-wyatt/MotoRoot"
-repo_name = "jim-wyatt/MotoRoot"
+repo_url = "https://github.com/jim-wyatt/MotoDev"
+repo_name = "jim-wyatt/MotoDev"
 edit_uri = "edit/main/docs/"
 
 nav = [
