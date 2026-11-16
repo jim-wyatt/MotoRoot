@@ -17,7 +17,8 @@ OtomDev/
 │   ├── Test-DevEnv.ps1        the self-test
 │   ├── Trace-Device.ps1       records a Perfetto trace into work\traces
 │   ├── Dump-DeviceInfo.ps1    hardware inventory into work\device-info (private)
-│   ├── Install-Gsi.ps1        boots Google's AOSP GSI through DSU, no flashing
+│   ├── Install-Gsi.ps1        boots Google's AOSP GSI (or your own) through DSU
+│   ├── aosp/                  setup.sh, sync.sh, build-gsi.sh: build AOSP in WSL
 │   └── .tools/ .cache/ build/ .venv-docs/    generated; git-ignored
 ├── docs/                These pages, including the full device procedure
 ├── work/                YOUR files. Git-ignored in full.

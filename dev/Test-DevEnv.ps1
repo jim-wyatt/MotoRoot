@@ -141,6 +141,18 @@ Check 'devtools' 'every dev\ and device\ PowerShell script parses' {
     "$((Get-ChildItem $PSScriptRoot -Filter *.ps1).Count + 1) scripts"
 }
 Check 'devtools' 'GSI pin is complete (not downloaded by the bootstrap)' { $g = $Spec.deviceTools.gsi; if ($g.name -and $g.url -and $g.sha256 -match '^[0-9a-f]{64}$' -and $g.url.EndsWith($g.name)) { $g.build } else { throw 'deviceTools.gsi is incomplete' } }
+Check 'devtools' 'AOSP pin is complete and dev\aosp scripts are valid bash' {
+    $a = $Spec.deviceTools.aosp
+    if (-not ($a.tag -match '^android-\d+' -and $a.lunch -and $a.manifest)) { throw 'deviceTools.aosp is incomplete' }
+    if (Get-Command wsl -ErrorAction SilentlyContinue) {
+        foreach ($s in Get-ChildItem (Join-Path $PSScriptRoot 'aosp') -Filter *.sh) {
+            if ((Get-Content -Raw $s.FullName) -match "`r") { throw "$($s.Name) has CRLF line endings; bash in WSL will choke" }
+            $o = wsl -d Ubuntu -- bash -n ("/mnt/c" + ($s.FullName.Substring(2) -replace '\\', '/')) 2>&1
+            if ($LASTEXITCODE -ne 0) { throw "$($s.Name): $o" }
+        }
+    }
+    $a.tag
+}
 
 # ---------------- git safety
 Check 'git' 'pre-commit hook active' { (git config core.hooksPath) -eq '.githooks' -and (Test-Path .githooks\pre-commit) }

@@ -24,12 +24,21 @@ Requires the dev shell ($adb) and root on the device (gsi_tool). Read docs/devic
 .PARAMETER UserdataGiB
 Size of the separate userdata the GSI gets (default 8). It lives in /data as a file and is
 removed by -Action Discard.
+
+.PARAMETER Image
+Install your own image instead of the pinned one: a system.img built by dev\aosp\build-gsi.sh
+(a zip with a system.img inside also works). vbmeta.img and build.prop next to it are packed
+too. No hash pin applies to your own build.
+
+.EXAMPLE
+.\dev\Install-Gsi.ps1 -Action Install -Image "$Work\device-tools\gsi\own\system.img"
 #>
 [CmdletBinding()]
 param(
     [ValidateSet('Download', 'Install', 'Boot', 'Status', 'Discard')][string]$Action = 'Status',
     [switch]$AcceptGoogleGsiTerms,
-    [int]$UserdataGiB = 8
+    [int]$UserdataGiB = 8,
+    [string]$Image
 )
 $ErrorActionPreference = 'Stop'
 $Root = Split-Path -Parent $PSScriptRoot
@@ -38,8 +47,30 @@ $Adb  = Join-Path $Work 'platform-tools\adb.exe'
 $Spec = (Get-Content -Raw (Join-Path $PSScriptRoot 'toolchain.json') | ConvertFrom-Json).deviceTools.gsi
 $Dir  = Join-Path $Work 'device-tools\gsi'
 $Zip  = Join-Path $Dir $Spec.name
-$Remote = "/storage/emulated/0/Download/$($Spec.name)"
 if (-not (Test-Path $Adb)) { throw 'platform-tools missing. Run .\dev\Bootstrap-DevEnv.ps1.' }
+
+# Your own build: the DSU installer wants a zip with system.img (sparse or raw) inside, like
+# Google's, so a bare image is wrapped into one next to itself. No pin: the hash check is skipped.
+if ($Image) {
+    $Image = (Resolve-Path -LiteralPath $Image).Path
+    if ($Image -like '*.zip') { $Zip = $Image }
+    else {
+        $Zip = Join-Path (Split-Path $Image) 'own-gsi.zip'
+        Add-Type -AssemblyName System.IO.Compression.FileSystem
+        if (Test-Path $Zip) { Remove-Item $Zip }
+        $archive = [IO.Compression.ZipFile]::Open($Zip, 'Create')
+        try {
+            [IO.Compression.ZipFileExtensions]::CreateEntryFromFile($archive, $Image, 'system.img', 'Fastest') | Out-Null
+            foreach ($extra in 'vbmeta.img', 'build.prop') {
+                $p = Join-Path (Split-Path $Image) $extra
+                if (Test-Path $p) { [IO.Compression.ZipFileExtensions]::CreateEntryFromFile($archive, $p, $extra, 'Fastest') | Out-Null }
+            }
+        } finally { $archive.Dispose() }
+    }
+    $Spec = [pscustomobject]@{ name = (Split-Path -Leaf $Zip); sha256 = $null; url = $null; terms = $null; build = 'own build' }
+}
+$Remote = "/storage/emulated/0/Download/$($Spec.name)"
+function Verified-Zip { (Test-Path $Zip) -and ($Image -or (Sha256 $Zip) -eq $Spec.sha256) }
 
 function Sha256($p) { (Get-FileHash -LiteralPath $p -Algorithm SHA256).Hash.ToLower() }
 function Root([string]$Command) { (& $Adb shell "su -c '$Command'" 2>&1) -join "`n" }   # quoted so compound commands stay root
@@ -53,6 +84,7 @@ function Require-Device {
 
 switch ($Action) {
     'Download' {
+        if ($Image) { throw '-Download applies to the pinned image only; your own image is already on this PC.' }
         if (Test-Path $Zip) {
             if ((Sha256 $Zip) -eq $Spec.sha256) { Write-Host "Already present and verified: $Zip" -ForegroundColor Green; return }
             throw "$Zip exists but does not match the pinned SHA-256. Delete it and retry."
@@ -71,7 +103,7 @@ switch ($Action) {
     }
     'Install' {
         Require-Device
-        if (-not (Test-Path $Zip) -or (Sha256 $Zip) -ne $Spec.sha256) { throw "Run -Action Download first (missing or unverified: $Zip)." }
+        if (-not (Verified-Zip)) { throw "Run -Action Download first (missing or unverified: $Zip)." }
         $st = GsiStatus
         if ($st -ne 'normal') { throw "DSU state is '$st', not 'normal'. Use -Action Status / -Action Discard first." }
         foreach ($p in 'ro.boot.dynamic_partitions') { if ((Prop $p) -ne 'true') { throw "$p is not true; DSU needs dynamic partitions." } }
@@ -124,7 +156,7 @@ switch ($Action) {
         "gsi_tool status:      $(GsiStatus)"
         "ro.gsid.image_running: $(Prop 'ro.gsid.image_running')   (1 = a GSI is running right now)"
         "build running:        $(Prop 'ro.build.display.id')"
-        "zip on PC:            " + $(if (Test-Path $Zip) { if ((Sha256 $Zip) -eq $Spec.sha256) { 'present, verified' } else { 'present, HASH MISMATCH' } } else { 'not downloaded' })
+        "zip on PC:            " + $(if ($Image) { "own build: $Zip" } elseif (Test-Path $Zip) { if ((Sha256 $Zip) -eq $Spec.sha256) { 'present, verified' } else { 'present, HASH MISMATCH' } } else { 'not downloaded' })
     }
     'Discard' {
         Require-Device

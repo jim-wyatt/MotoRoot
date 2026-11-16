@@ -10,6 +10,7 @@ Now the device is a development target, here's what you can actually build and l
 | [Native code with the NDK](native-code.md) | Compiling C/C++ for the device's ARM64 CPU | NDK, clang |
 | [Instrument with Frida](instrumentation.md) | Hooking and tracing any running process, Java or native | `frida`, `frida-trace` |
 | [Trace with Perfetto](tracing.md) | Reading what the whole device is doing on one timeline | `perfetto`, `simpleperf` |
+| [Build your own system image](aosp-build.md) | Building AOSP's GSI from source in WSL and booting it on the device through DSU | `repo`, `lunch`, `m`, `Install-Gsi.ps1` |
 | [Your first app in Android Studio](android-studio.md) | The normal app-development workflow, and the hand-off to it | Android Studio, Gradle |
 
 ## The two ways code runs on Android
