@@ -48,6 +48,18 @@ Reboot. The one-shot boot is over and the Motorola system comes back with everyt
 
 If the GSI never reaches the home screen, hold **Power** until the phone restarts; because the boot was one-shot, it comes back to the normal system, and `Discard` cleans up.
 
+## What happened on this device
+
+Tried on unit 2 on 2026-11-16 with the pinned `BP4A.251205.006` image, exactly as above. The [validation page](validation.md#engineering-device-tooling-unit-2-2026-11-16) has the table; the short version:
+
+- **It boots.** The DSU installer accepted the zip (the device has no `/avb` key set; `system_gsi` still carried Google's AVB key and the install reported `READY`). The one-shot boot reached the AOSP home screen in well under the ten-minute allowance, `ro.build.fingerprint` was `Android/aosp_arm64/generic_arm64:16/BP4A.251205.006/...`, and Developer options showed *DSU Loader: DSU is running*.
+- **Working:** display in its 120 Hz mode, Mali GPU (OpenGL ES 3.2), Wi-Fi (HAL up, 27 networks in the first scan), audio (the primary output thread exists), 53 sensors registered, the fingerprint HAL registered, USB debugging after enabling it once in the fresh userdata.
+- **Partly:** cameras: AOSP sees 2 of the 3 camera devices.
+- **Noisy:** `gpuservice` crashes and restarts every 30 seconds (`SIGABRT`), a mismatch between the generic image and the Mali vendor libraries. The UI doesn't depend on it, but it's a steady drip of crash logs and a little CPU.
+- **Magisk:** `magiskd` runs and `/debug_ramdisk/magisk -v` answers `31.1:MAGISK:R`, so the boot chain is intact underneath. `su` is denied, because the Magisk app and its grant database live in the real `/data`, which the GSI doesn't see; expect no root inside the GSI, and no modules applied.
+
+One script bug surfaced and is fixed: `gsi_tool status` reports partitions as installed the moment they're created, so the install step now waits for the installer's own `READY` status instead.
+
 ## If it doesn't boot
 
 Three things are untested going in: whether the DSU installer on this firmware accepts an image it can't verify against Google's key (the device has no `/avb` key set, and the bootloader is unlocked, which is the condition DSU documents for unverified images); whether Magisk in `init_boot` is happy underneath a foreign system; and the MediaTek vendor interface itself. The order to investigate is the installer's logcat (`& $adb logcat -d | Select-String dynsystem`), then a boot with Magisk's modules disabled (safe mode: hold Volume Down during the GSI boot), then `gsi_tool install` with a raw image, which bypasses the installer app. None of that touches the installed system.

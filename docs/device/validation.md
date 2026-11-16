@@ -83,6 +83,7 @@ Added after the preparation runs, all on unit 2, all reversible, as described in
 | Frida 17.26.3 | `Start-Frida` pushes and starts the server; `frida-ps -Ua` lists the running apps. |
 | Perfetto | `Trace-Device.ps1` records and pulls traces. The config file must live in `/data/misc/perfetto-configs/`; `/data/local/tmp` is refused by SELinux. |
 | simpleperf | Unusable on this device: no perf events (`cpu-cycles` and `cpu-clock` both "not supported on the device"). |
+| GSI via DSU (`Install-Gsi.ps1`, Google AOSP arm64 Android 16 `BP4A.251205.006`) | Installed through Android's DSU installer (status `READY`, `system_gsi` with Google's AVB key) and booted one-shot to the AOSP home screen; fingerprint `Android/aosp_arm64/generic_arm64:16/BP4A.251205.006`. Working: 120 Hz display, Mali GPU, Wi-Fi (27 networks scanned), audio output, 53 sensors, fingerprint HAL, ADB. 2 of 3 cameras exposed. `gpuservice` restarts every 30 s (SIGABRT). `magiskd` runs but `su` is denied inside the GSI (no Magisk app or grant database in the GSI's userdata). Reboot returned to the Motorola system as designed. |
 | Android Virtualization Framework | Absent: no `ro.boot.hypervisor.*`, no `/dev/kvm`, no `com.android.virt` APEX, no Terminal app. |
 | SDK `adb` vs pinned `adb` | Both 37.0.1-15733141, so Android Studio and the dev shell share one server; the self-test enforces equality. |
 
