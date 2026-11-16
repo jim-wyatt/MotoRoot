@@ -236,6 +236,16 @@ if (-not $SkipKit) {
 # dev\.venv-docs builds the documentation site. Never mix them.
 function New-Venv([string]$Dir) {
     $VPy = Join-Path $Dir 'Scripts\python.exe'
+    $Cfg = Join-Path $Dir 'pyvenv.cfg'
+    if ((Test-Path $VPy) -and (Test-Path $Cfg)) {
+        # A venv records the absolute path it was created at, and its Scripts\*.exe launchers embed it.
+        # If the repository folder has been moved or renamed since, those launchers exit 1 with no output.
+        $Recorded = Select-String -Path $Cfg -Pattern '^command\s*=.*-m venv\s+(.+?)\s*$' | ForEach-Object { $_.Matches[0].Groups[1].Value } | Select-Object -First 1
+        if ($Recorded -and $Recorded.TrimEnd('\') -ne $Dir.TrimEnd('\')) {
+            Write-Warning "$Dir was created at $Recorded (repository moved?). Recreating it."
+            Remove-Item -Recurse -Force $Dir
+        }
+    }
     if (-not (Test-Path $VPy)) {
         $SysPy = (Get-Command python -ErrorAction SilentlyContinue).Source
         $Ver = if ($SysPy) { & $SysPy -c 'import sys; print("%d.%d" % sys.version_info[:2])' 2>$null } else { $null }

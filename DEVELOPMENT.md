@@ -8,11 +8,11 @@ A reproducible Windows setup for working on this kit and building Android softwa
 Set-ExecutionPolicy -Scope Process Bypass
 .\dev\Bootstrap-DevEnv.ps1 -AndroidStudio      # idempotent; re-run any time
 . .\dev\Enter-DevShell.ps1                      # in every new window
-.\dev\Build-Kit.ps1                             # rebuild helpers + modules, compare with committed copies
-.\dev\Test-DevEnv.ps1                           # end-to-end self-test (35 checks; exit code = failures)
+.\dev\Build-Kit.ps1                             # rebuild helpers + modules (kit\ and dev\modules), compare with committed copies
+.\dev\Test-DevEnv.ps1                           # end-to-end self-test (36 checks; exit code = failures)
 ```
 
-`Test-DevEnv.ps1` exercises every tool, not just its version. It compiles and dexes the helpers, decompiles with jadx, cross-compiles an aarch64 Android 16 binary with the NDK, imports val-protocol, re-verifies every kit pin, and checks the git safety settings (hook active, private paths ignored, upstream fetch-only, origin private). It never talks to the phone and never starts an ADB server.
+`Test-DevEnv.ps1` exercises every tool, not just its version. It compiles and dexes the helpers, decompiles with jadx, cross-compiles an aarch64 Android 16 binary with the NDK, builds the docs site, imports val-protocol, re-verifies every kit pin, and checks the git safety settings (hook active, private paths ignored, upstream fetch-only). It reports `origin`'s visibility but doesn't require it to be private: the repository is public by design, and the ignore rules plus the hook are what keep device data out of it. It never talks to the phone and never starts an ADB server.
 
 In VS Code, the default terminal profile **OtomDev dev shell** dot-sources `Enter-DevShell.ps1` for you. The tasks in `.vscode/tasks.json` run the bootstrap, the rebuild (the default build task, Ctrl+Shift+B) and scrcpy.
 
@@ -47,4 +47,8 @@ Add `-AcceptAndroidSdkLicenses` only after reading Google's Android SDK terms. W
 
 ## Rebuilding release artifacts
 
-`Build-Kit.ps1` writes to `dev/build/` and reports whether each rebuilt artifact matches the committed copy. Module ZIPs are compared by their entries' contents, because the generator stamps the current time on each entry. `-Promote` copies the rebuilt files over the committed ones. Then regenerate `SHA256SUMS.txt` and review `git diff`.
+`Build-Kit.ps1` writes to `dev/build/` and reports whether each rebuilt artifact matches the committed copy: the two kit helpers, the two kit modules, and `dev/modules/wifi-extra-debloat.zip`. Module ZIPs are compared by their entries' contents, because the generator stamps the current time on each entry. `-Promote` copies the rebuilt files over the committed ones. For kit files, then regenerate `kit/SHA256SUMS.txt`; in all cases review `git diff`.
+
+## This fork's own module
+
+`dev/modules/wifi-extra-debloat.zip` reversibly hides 19 more preinstalled packages on top of the kit's carrier module: AT&T, Cricket and Facebook partner stubs, Motorola telemetry and support apps, Ready For desktop mode, visual voicemail and Digital Wellbeing. It is generated from `dev/modules/wifi-extra-debloat-manifest.json` by `dev/modules/build_extra_module.py`, with the same overlay-path validation as the kit's builder, and `Build-Kit.ps1` checks that it reproduces. It lives in `dev/` rather than `kit/` so the upstream kit stays byte-for-byte unchanged. The walkthrough's Stage 8 installs it.

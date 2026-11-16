@@ -13,6 +13,9 @@ Common failures and their fixes. If the [self-test](environment.md) passes but s
 ??? failure "Self-test fails on `platform-tools\ holds 1.0.41, not 37.0.1`"
     A different `adb` version got into `work\platform-tools`. Close any running server (`& $adb kill-server`), delete the folder, and re-run the bootstrap to re-extract the pinned copy.
 
+??? failure "Self-test fails on `docs site builds` with no error text, or `zensical` exits 1 silently"
+    A Python venv records the absolute path it was created at, and its `Scripts\*.exe` launchers embed it. If the repository folder has been moved or renamed since the bootstrap ran, those launchers exit with code 1 and print nothing. Re-run `.\dev\Bootstrap-DevEnv.ps1`: it compares `pyvenv.cfg` with the current path and recreates a moved venv (`dev\.venv-docs` and `work\.venv` both). Deleting the venv folder by hand and re-running has the same effect.
+
 ??? failure "SDK license / `android.exe` errors during bootstrap"
     The SDK uses the newer `android` CLI with slash-style package names. If licenses weren't accepted, re-run the bootstrap in an interactive window, or pass `-AcceptAndroidSdkLicenses` after reading [the terms](https://developer.android.com/studio/terms).
 
@@ -45,6 +48,9 @@ Common failures and their fixes. If the [self-test](environment.md) passes but s
 
 ??? failure "`fastboot flash` or `oem unlock` rejected (Stage 6)"
     Confirm `$fb getvar product` is `vegas` and you're on slot A. The unlock key must be a 20-char key generated from **your** serial. Approve the unlock prompt **on the device** quickly — it times out.
+
+??? failure "`su` says `Permission denied` after installing Magisk, and its Superuser tab is empty (Stage 7)"
+    Magisk is rejecting Shell before it can show the Grant pop-up: `& $adb logcat -d | Select-String 'request rejected'` shows `su: request rejected (2000)`, and nothing appears in the Superuser tab. On the unit these docs were written with, Motorola's background freezer suspended the Magisk app, so the daemon couldn't reach it and denied by default. Grant Shell manually: Magisk → **Superuser** tab → **+** (bottom right) → tick **Shell** (`com.android.shell`). The policy is stored, so it survives reboots. Then `& $adb shell su -c id` should report `context=u:r:magisk:s0`. Magisk 31.1 has no "Superuser access: Apps and ADB" setting to change, so don't go looking for one.
 
 ??? failure "Device won't boot after writing a prepared image"
     If Fastboot is reachable, restore your backup to that slot ([recovery](../device/maintenance.md#recovery)). If Fastboot won't start, there's no proven recovery for this model — this is the accepted risk of Stage 6.

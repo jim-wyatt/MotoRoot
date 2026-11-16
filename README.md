@@ -17,7 +17,7 @@ cd $env:USERPROFILE\OtomDev
 Set-ExecutionPolicy -Scope Process Bypass
 .\dev\Bootstrap-DevEnv.ps1 -AndroidStudio -AcceptAndroidSdkLicenses   # installs & verifies the whole toolchain
 . .\dev\Enter-DevShell.ps1                                            # in every new terminal
-.\dev\Test-DevEnv.ps1                                                 # 35-check self-test
+.\dev\Test-DevEnv.ps1                                                 # 36-check self-test
 ```
 
 One script installs and hash-verifies the full stack: JDK, Android SDK, NDK, platform-tools, Android Studio, jadx, apktool, scrcpy, and the device-preparation inputs. Everything is pinned in [`dev/toolchain.json`](dev/toolchain.json).
@@ -27,7 +27,7 @@ One script installs and hash-verifies the full stack: JDK, Android SDK, NDK, pla
 | Folder | What it is |
 | --- | --- |
 | [`kit/`](kit/) | The tested device-preparation procedure by **[parsimo2010](https://github.com/parsimo2010/moto-g-power-2026-straight-talk-wifi-root-guide)**, included unchanged (MIT). See [`kit/UPSTREAM.md`](kit/UPSTREAM.md). |
-| [`dev/`](dev/) | The development environment: bootstrap, per-shell setup, self-test, build scripts. |
+| [`dev/`](dev/) | The development environment: bootstrap, per-shell setup, self-test, build scripts, and this fork's own [`wifi-extra-debloat`](dev/modules/) system module. |
 | [`docs/`](docs/) | The documentation site ([Zensical](https://zensical.org/)), published to GitHub Pages. |
 | `work/` | Your downloads, backups, and build outputs. **Git-ignored in full.** |
 

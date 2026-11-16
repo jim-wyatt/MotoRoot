@@ -91,7 +91,7 @@ If you use **VS Code**, open the repository folder and a new terminal (++ctrl+sh
 .\dev\Test-DevEnv.ps1
 ```
 
-This runs about 35 checks that actually *use* each tool: it compiles Java, produces Android bytecode, decompiles it again, cross-compiles a C program for the phone's CPU, and re-verifies every pinned download. The last line should read `0 failed`. If anything fails, the [troubleshooting page](../reference/troubleshooting.md) covers the common causes.
+This runs 36 checks that actually *use* each tool: it compiles Java, produces Android bytecode, decompiles it again, cross-compiles a C program for the phone's CPU, and re-verifies every pinned download. The last line should read `0 failed`. If anything fails, the [troubleshooting page](../reference/troubleshooting.md) covers the common causes.
 
 !!! tip "Keep Android Studio closed when working with the phone"
     Android Studio starts its own, newer `adb` server in the background. Two different `adb` versions fighting over one phone can drop the connection in the middle of an operation. Use the dev shell's `$adb` for phone work, and open Studio only for app development.

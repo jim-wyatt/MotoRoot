@@ -25,7 +25,7 @@ Verify with `getprop` ([first ADB session](../start/first-adb-session.md#ask-the
 
 - An unlocked bootloader (`securestate: flashing_unlocked`), so the device runs builds and code you provide.
 - Magisk persistent root, verified to survive reboots.
-- A Wi-Fi-only setup with carrier and auto-update apps reversibly disabled.
+- A Wi-Fi-only setup with the carrier, partner-stub, telemetry and auto-update apps reversibly hidden by three system modules.
 - Google Play available for installing your own tools.
 
 Stock Motorola Android is kept throughout — no custom ROM. This is a factory build with system access added, which is exactly what you want as a development baseline.

@@ -17,7 +17,8 @@ OtomDev/
 │   ├── Bootstrap-DevEnv.ps1   installs everything
 │   ├── Enter-DevShell.ps1     per-terminal setup (dot-source it)
 │   ├── Build-Kit.ps1          rebuilds the helpers and modules from source
-│   ├── Test-DevEnv.ps1        the 35-check self-test
+│   ├── Test-DevEnv.ps1        the 36-check self-test
+│   ├── modules/               this fork's wifi-extra-debloat module: manifest, builder, ZIP
 │   ├── .tools/ .cache/ build/ .venv-docs/    generated; git-ignored
 ├── docs/                These pages (Zensical / Markdown)
 ├── work/                YOUR files. Git-ignored in full.
@@ -62,7 +63,7 @@ And these commands:
 | `docs` | Serves this documentation at <http://localhost:8000> with live reload |
 | `apktool ...` | Decode or rebuild an APK's resources |
 | `r8d8 ...` | Google's D8 compiler: `.class` → `.dex` (the exact version the guide's helpers were built with) |
-| `.\dev\Build-Kit.ps1` | Rebuild the helpers and modules and compare with the committed copies |
+| `.\dev\Build-Kit.ps1` | Rebuild the helpers and all three modules and compare with the committed copies |
 | `.\dev\Test-DevEnv.ps1` | Self-test everything |
 
 ## Why pin everything?

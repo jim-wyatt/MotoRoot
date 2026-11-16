@@ -1,0 +1,135 @@
+[
+  {
+    "group": "carrier-partner",
+    "package": "com.att.csoiam.mobilekey",
+    "label": "AT&T Mobile Key",
+    "apk": "/product/priv-app/AttMobileKey/AttMobileKey.apk",
+    "hidden_directory": "/product/priv-app/AttMobileKey"
+  },
+  {
+    "group": "carrier-partner",
+    "package": "com.att.iqi",
+    "label": "AT&T IQI telemetry",
+    "apk": "/system_ext/priv-app/AttIqi/AttIqi.apk",
+    "hidden_directory": "/system_ext/priv-app/AttIqi"
+  },
+  {
+    "group": "carrier-partner",
+    "package": "com.cricketwireless.minus",
+    "label": "Cricket Minus One",
+    "apk": "/product/priv-app/CricketMinusOne/CricketMinusOne.apk",
+    "hidden_directory": "/product/priv-app/CricketMinusOne"
+  },
+  {
+    "group": "carrier-partner",
+    "package": "com.facebook.services",
+    "label": "Facebook background services stub",
+    "apk": "/product/priv-app/facebook-services/facebook-services.apk",
+    "hidden_directory": "/product/priv-app/facebook-services"
+  },
+  {
+    "group": "motorola-telemetry",
+    "package": "com.motorola.bug2go",
+    "label": "Bug2Go bug-report stub",
+    "apk": "/system_ext/priv-app/Bug2GoStub/Bug2GoStub.apk",
+    "hidden_directory": "/system_ext/priv-app/Bug2GoStub"
+  },
+  {
+    "group": "motorola-telemetry",
+    "package": "com.motorola.bach.modemstats",
+    "label": "Modem statistics service",
+    "apk": "/system_ext/priv-app/ModemStatsService/ModemStatsService.apk",
+    "hidden_directory": "/system_ext/priv-app/ModemStatsService"
+  },
+  {
+    "group": "motorola-telemetry",
+    "package": "com.motorola.wifi.motowifimetrics",
+    "label": "Wi-Fi metrics",
+    "apk": "/system_ext/priv-app/MotoWifiMetrics/MotoWifiMetrics.apk",
+    "hidden_directory": "/system_ext/priv-app/MotoWifiMetrics"
+  },
+  {
+    "group": "motorola-telemetry",
+    "package": "com.motorola.android.nativedropboxagent",
+    "label": "Native crash-log (dropbox) agent",
+    "apk": "/system_ext/priv-app/com.motorola.android.nativedropboxagent/com.motorola.android.nativedropboxagent.apk",
+    "hidden_directory": "/system_ext/priv-app/com.motorola.android.nativedropboxagent"
+  },
+  {
+    "group": "motorola-telemetry",
+    "package": "com.motorola.lifetimedata",
+    "label": "Lifetime data collector",
+    "apk": "/system_ext/priv-app/LifetimeData/LifetimeData.apk",
+    "hidden_directory": "/system_ext/priv-app/LifetimeData"
+  },
+  {
+    "group": "motorola-telemetry",
+    "package": "com.motorola.dimo",
+    "label": "Moto digital account (dimo)",
+    "apk": "/system_ext/priv-app/motoDigitalAccount/motoDigitalAccount.apk",
+    "hidden_directory": "/system_ext/priv-app/motoDigitalAccount"
+  },
+  {
+    "group": "motorola-telemetry",
+    "package": "com.motorola.hiddenmenuapp",
+    "label": "Hidden engineering menu",
+    "apk": "/system_ext/priv-app/HiddenMenu/HiddenMenu.apk",
+    "hidden_directory": "/system_ext/priv-app/HiddenMenu"
+  },
+  {
+    "group": "motorola-apps",
+    "package": "com.motorola.motocare",
+    "label": "Moto Care support app",
+    "apk": "/system_ext/priv-app/MotoCare/MotoCare.apk",
+    "hidden_directory": "/system_ext/priv-app/MotoCare"
+  },
+  {
+    "group": "motorola-apps",
+    "package": "com.motorola.mykey",
+    "label": "MyKey",
+    "apk": "/system_ext/priv-app/MyKey/MyKey.apk",
+    "hidden_directory": "/system_ext/priv-app/MyKey"
+  },
+  {
+    "group": "motorola-apps",
+    "package": "com.motorola.mobiledesktop",
+    "label": "Ready For desktop mode",
+    "apk": "/product/priv-app/MotoDesktop/MotoDesktop.apk",
+    "hidden_directory": "/product/priv-app/MotoDesktop"
+  },
+  {
+    "group": "motorola-apps",
+    "package": "com.motorola.mobiledesktop.core",
+    "label": "Ready For core service",
+    "apk": "/system_ext/priv-app/MotoDesktopCore/MotoDesktopCore.apk",
+    "hidden_directory": "/system_ext/priv-app/MotoDesktopCore"
+  },
+  {
+    "group": "motorola-apps",
+    "package": "com.motorola.motcameradesktop",
+    "label": "Ready For camera bridge",
+    "apk": "/system_ext/priv-app/MotCameraDesktop/MotCameraDesktop.apk",
+    "hidden_directory": "/system_ext/priv-app/MotCameraDesktop"
+  },
+  {
+    "group": "motorola-apps",
+    "package": "com.motorola.visualvoicemail",
+    "label": "Visual voicemail",
+    "apk": "/product/priv-app/VVM3/VVM3.apk",
+    "hidden_directory": "/product/priv-app/VVM3"
+  },
+  {
+    "group": "motorola-apps",
+    "package": "com.motorola.entitlement",
+    "label": "Carrier entitlement service",
+    "apk": "/product/priv-app/Entitlement/Entitlement.apk",
+    "hidden_directory": "/product/priv-app/Entitlement"
+  },
+  {
+    "group": "google-extras",
+    "package": "com.google.android.apps.wellbeing",
+    "label": "Digital Wellbeing",
+    "apk": "/product/priv-app/Wellbeing/Wellbeing.apk",
+    "hidden_directory": "/product/priv-app/Wellbeing"
+  }
+]

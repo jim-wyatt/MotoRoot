@@ -59,15 +59,15 @@ All run as **root**. A broken script can slow or stop boot, so test incrementall
 
 ## How the project generates its modules
 
-The two shipped modules are built by a Python script, not hand-zipped — a good pattern once modules get repetitive. `kit/scripts/build_modules.py` reads `kit/carrier-debloat-manifest.json` (the 22 carrier packages and their directories) and writes both module ZIPs, validating every path as it goes.
+The project's modules are built by Python scripts, not hand-zipped — a good pattern once modules get repetitive. `kit/scripts/build_modules.py` reads `kit/carrier-debloat-manifest.json` (the 22 carrier packages and their directories) and writes the kit's two module ZIPs, validating every path as it goes. This fork's `dev/modules/build_extra_module.py` does the same for `wifi-extra-debloat-manifest.json`, and is the one to copy if you want to hide a different set of apps: find each package's APK with `& $adb shell pm path <package>`, add an entry with its directory, change the expected count, and rebuild.
 
-Rebuild and verify them against the committed copies:
+Rebuild all three and verify them against the committed copies:
 
 ```powershell
 .\dev\Build-Kit.ps1
 ```
 
-Both use the `.replace` convention — an empty overlay that *hides* a system directory rather than adding to it (see [the modules concept page](../concepts/magisk-modules.md#the-two-modules-in-this-project)). Reading `build_modules.py` is the fastest way to see how a real, parameterized module generator is structured.
+All three use the `.replace` convention — an empty overlay that *hides* a system directory rather than adding to it (see [the modules concept page](../concepts/magisk-modules.md#the-three-modules-in-this-project)). Reading `build_modules.py` is the fastest way to see how a real, parameterized module generator is structured.
 
 !!! tip "Keep modules reversible and scoped"
     The whole value of a module on a dev device is that it's an experiment you can turn off. Resist editing the real system partition directly; a module that overlays is always the cleaner choice.

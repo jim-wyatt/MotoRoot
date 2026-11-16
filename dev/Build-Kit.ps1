@@ -1,14 +1,15 @@
 <#
 .SYNOPSIS
-Rebuilds kit helpers and modules into dev\build\ and compares them with the committed copies.
+Rebuilds the kit helpers and modules, plus this fork's dev\modules ZIP, into dev\build\ and compares them with the committed copies.
 
 .DESCRIPTION
-Does not overwrite kit\helpers\*.dex or kit\modules\*.zip, and does not talk to the phone.
+Does not overwrite kit\helpers\*.dex, kit\modules\*.zip or dev\modules\*.zip, and does not talk to the phone.
   - Helpers: javac --release 8, then D8 from the pinned R8 8.3.37 (same as kit/helpers/BUILD.md).
     The DEX is compared byte for byte. A mismatch usually means a different javac build;
     it is reported, not treated as a failure.
   - Modules: kit\scripts\build_modules.py runs in a staging copy. Its ZIP timestamps change on
     every run, so entries and contents are compared, not the ZIP hash.
+  - dev\modules\wifi-extra-debloat.zip: dev\modules\build_extra_module.py, same treatment.
 Pass -Promote to copy the rebuilt files over the committed ones once you have reviewed the differences.
 #>
 [CmdletBinding()]
@@ -37,7 +38,7 @@ foreach ($Name in 'UpdateHelper', 'UpdaterCleanup') {
     $Built = Join-Path $Out "$Name.dex"
     Move-Item (Join-Path $Dex 'classes.dex') $Built
     $Same = (Get-FileHash $Built).Hash -eq (Get-FileHash (Join-Path $Kit "helpers\$Name.dex")).Hash
-    $Results += [pscustomobject]@{ Artifact = "helpers\$Name.dex"; Identical = $Same; Built = $Built }
+    $Results += [pscustomobject]@{ Artifact = "helpers\$Name.dex"; Identical = $Same; Built = $Built; Target = (Join-Path $Kit "helpers\$Name.dex") }
 }
 
 $Stage = Join-Path $Out 'stage'
@@ -61,11 +62,22 @@ function Get-ZipManifest([string]$Path) {
 foreach ($Zip in 'wifi-ota-guard.zip', 'wifi-carrier-debloat.zip') {
     $Built = Join-Path $Stage "modules\$Zip"
     $Same = -not (Compare-Object (Get-ZipManifest $Built) (Get-ZipManifest (Join-Path $Kit "modules\$Zip")))
-    $Results += [pscustomobject]@{ Artifact = "modules\$Zip"; Identical = $Same; Built = $Built }
+    $Results += [pscustomobject]@{ Artifact = "modules\$Zip"; Identical = $Same; Built = $Built; Target = (Join-Path $Kit "modules\$Zip") }
 }
+
+# This fork's own module (dev\modules), built the same way and compared the same way.
+$DevMods  = Join-Path $PSScriptRoot 'modules'
+$ExtraStg = Join-Path $Stage 'extra'
+New-Item -ItemType Directory -Force $ExtraStg | Out-Null
+Copy-Item (Join-Path $DevMods 'build_extra_module.py'), (Join-Path $DevMods 'wifi-extra-debloat-manifest.json') $ExtraStg
+& $Py -I (Join-Path $ExtraStg 'build_extra_module.py') | Out-Null
+if ($LASTEXITCODE -ne 0) { throw 'build_extra_module.py failed' }
+$Built = Join-Path $ExtraStg 'wifi-extra-debloat.zip'
+$Same = -not (Compare-Object (Get-ZipManifest $Built) (Get-ZipManifest (Join-Path $DevMods 'wifi-extra-debloat.zip')))
+$Results += [pscustomobject]@{ Artifact = 'dev\modules\wifi-extra-debloat.zip'; Identical = $Same; Built = $Built; Target = (Join-Path $DevMods 'wifi-extra-debloat.zip') }
 
 $Results | Format-Table Artifact, Identical -AutoSize
 if ($Promote) {
-    foreach ($R in $Results) { Copy-Item $R.Built (Join-Path $Kit $R.Artifact) -Force }
-    Write-Host 'Promoted rebuilt artifacts. Update SHA256SUMS.txt and review git diff before committing.'
+    foreach ($R in $Results) { Copy-Item $R.Built $R.Target -Force }
+    Write-Host 'Promoted rebuilt artifacts. For kit\ files, update kit\SHA256SUMS.txt. Review git diff before committing.'
 }

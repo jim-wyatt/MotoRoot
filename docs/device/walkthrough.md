@@ -173,7 +173,10 @@ Now write the Magisk-patched image to **`init_boot_a` only**, after checking the
 & $adb reboot
 ```
 
-**Finish Magisk setup:** open the **Magisk** app, allow "additional setup" and the reboot it asks for, then confirm root is now persistent and managed by Magisk (not KernelSU):
+**Finish Magisk setup:** open the **Magisk** app, allow "additional setup" and the reboot it asks for. Then grant **Shell** root in Magisk (the KernelSU grant doesn't carry over) and confirm root is now persistent and managed by Magisk, not KernelSU:
+
+!!! note "Magisk 31.1 may never show the Grant pop-up"
+    On the unit prepared with these docs, `adb shell su` was rejected instantly (`su: request rejected (2000)` in logcat) and the Superuser tab stayed empty. Motorola's background app-freezer suspends the Magisk app, so the daemon can't reach it to show the prompt and denies by default. Grant Shell **manually** instead: Magisk → **Superuser** tab → **+** → tick **Shell** (`com.android.shell`). The policy is stored, so it survives reboots. There's no "Superuser access: Apps and ADB" setting in this build.
 
 ```powershell
 & $adb shell su -c id             # uid=0, context u:r:magisk:s0
@@ -186,25 +189,56 @@ That's the milestone: **root that starts by itself after a normal reboot.**
 
 ## Stage 8 — Configure the Wi-Fi dev device
 
-**Goal:** apply the two reversible [system modules](../concepts/magisk-modules.md), so the device doesn't auto-update its firmware and isn't cluttered with carrier apps it doesn't need.
+**Goal:** apply the three reversible [system modules](../concepts/magisk-modules.md), so the device doesn't auto-update its firmware and isn't cluttered with carrier, partner and telemetry apps it doesn't need.
+
+Install the updater block first, before Wi-Fi goes back on, and verify it after the reboot:
 
 ```powershell
 # Reversibly hide the Motorola updater
 & $adb push "$Kit\modules\wifi-ota-guard.zip" /data/local/tmp/
 & $adb shell su -c 'magisk --install-module /data/local/tmp/wifi-ota-guard.zip'
+& $adb shell settings put global ota_disable_automatic_update 1
+& $adb reboot
+# after reboot, all three should print nothing:
+& $adb shell pm path com.motorola.ccc.ota
+& $adb shell su -c 'ls -A /system_ext/priv-app/3c_ota'
+& $adb shell ps -A | Select-String 'ccc.ota'
+```
 
-# Reversibly disable the 22 carrier/activation apps (optional; Wi-Fi-only devices)
+Then the two debloat modules. The kit's carrier module hides the 22 Verizon/TracFone activation and finance packages. This fork's `dev/modules/wifi-extra-debloat.zip` hides a further 19: AT&T, Cricket and Facebook partner stubs; Motorola telemetry (bug2go, modem and Wi-Fi statistics, the crash-log agent, lifetime data); Moto Care, MyKey, the hidden engineering menu, Ready For desktop mode, visual voicemail, carrier entitlement, and Digital Wellbeing. The full list with each package's on-disk path is in [`dev/modules/wifi-extra-debloat-manifest.json`](https://github.com/jim-wyatt/OtomDev/blob/main/dev/modules/wifi-extra-debloat-manifest.json). Neither module checks the device it's installed on, so before installing confirm every targeted package exists on your build with `& $adb shell pm path <package>`. Run these from the repository root:
+
+```powershell
+# Reversibly disable the 22 carrier/activation apps
 & $adb shell su -c 'pm disable-user --user 0 com.android.devicelockcontroller'
 & $adb push "$Kit\modules\wifi-carrier-debloat.zip" /data/local/tmp/
 & $adb shell su -c 'magisk --install-module /data/local/tmp/wifi-carrier-debloat.zip'
+
+# Reversibly hide the 19 partner, telemetry and extra Motorola apps
+& $adb push .\dev\modules\wifi-extra-debloat.zip /data/local/tmp/
+& $adb shell su -c 'magisk --install-module /data/local/tmp/wifi-extra-debloat.zip'
 & $adb reboot
 ```
 
-After reboot, verify (updater gone, carrier apps absent, root still works) with the checks in [`kit/GUIDE.md`](https://github.com/jim-wyatt/OtomDev/blob/main/kit/GUIDE.md). Finally, remove the temporary-root tools, re-enable Wi-Fi, and sign into Google Play to install your own development tools:
+After the reboot, verify that root still works, all three modules are active, the device-lock controller is disabled, the financed-device role has no holder, and no carrier or updater process is running:
+
+```powershell
+& $adb shell su -c id                                   # context=u:r:magisk:s0
+& $adb shell su -c 'ls /data/adb/modules'               # wifi_carrier_debloat  wifi_extra_debloat  wifi_ota_guard
+& $adb shell pm list packages -d | Select-String 'devicelockcontroller'
+& $adb shell cmd role get-role-holders android.app.role.SYSTEM_FINANCED_DEVICE_CONTROLLER   # empty
+& $adb shell ps -A | Select-String 'com.verizon|com.vzw|com.motorola.omadm|com.motorola.paks|com.motorola.tracfone|ccc.ota'
+& $adb shell pm path com.motorola.motocare              # empty: one of the 19, hidden
+```
+
+!!! info "Why modules rather than `pm uninstall --user 0`"
+    `pm uninstall --user 0 <package>` also removes a preinstalled app, reversibly (`pm install-existing <package>` brings it back). But it's per-user state kept next to the app data. A module hides the app for every user, reapplies itself on every boot regardless of package state, and is toggled in one place alongside the other two. Neither approach survives a **factory reset**, which wipes `/data` and Magisk's module store with it; reinstall the modules afterwards. Two packages on this build, `com.amazon.appmanager` and `com.motorola.ccc.devicemanagement`, are flagged non-removable by the package manager; the Amazon one ships disabled, and both were deliberately left alone rather than hidden. Android Device Policy (`com.google.android.apps.work.clouddpc`) isn't in the firmware at all — it was installed under `/data/app` during setup — so a plain uninstall removes it for good.
+
+Finally, remove the temporary-root tools and the leftover device-policy app, re-enable Wi-Fi, and sign into Google Play to install your own development tools:
 
 ```powershell
 & $adb shell pm uninstall df.root
 & $adb shell pm uninstall me.weishu.kernelsu
+& $adb shell pm uninstall --user 0 com.google.android.apps.work.clouddpc
 & $adb shell svc wifi enable
 ```
 

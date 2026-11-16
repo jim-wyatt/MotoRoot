@@ -65,7 +65,7 @@ Check 'tools' 'Android Studio' { Test-Path "$env:ProgramFiles\Android\Android St
 Check 'build' 'helpers + modules reproduce committed copies' {
     $o = & (Join-Path $PSScriptRoot 'Build-Kit.ps1') 6>&1 2>&1 | Out-String
     if ($o -match 'False') { throw "mismatch:`n$o" }
-    ([regex]::Matches($o, 'True')).Count -eq 4
+    ([regex]::Matches($o, 'True')).Count -eq 5
 }
 Check 'build' 'jadx decompiles UpdateHelper.dex' {
     & jadx --quiet -d (Join-Path $Tmp 'jadx') (Join-Path $Kit 'helpers\UpdateHelper.dex') 2>&1 | Out-Null
