@@ -14,6 +14,8 @@ It sends a text config over ADB, records for 15 seconds (do the thing you want t
 
 Open the file at [ui.perfetto.dev](https://ui.perfetto.dev): drag it onto the page. The UI runs in your browser and the trace is not uploaded anywhere.
 
+Two lines in the output are normal: perfetto's "No PTY, CTRL+C won't gracefully stop the trace" (there is no terminal behind `adb shell`; the trace stops on its own at the duration) and the `Wrote N bytes` confirmation. The config file is pushed to `/data/misc/perfetto-configs/`, the one place SELinux lets `perfetto` read configs from, and removed afterwards; a copy stays next to the trace as `<name>.pbtxt`.
+
 ## Read it
 
 The first time, try an app launch: start the trace, open an app that was closed, stop. In the UI:

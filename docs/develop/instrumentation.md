@@ -22,7 +22,7 @@ frida-ps -U        # every process on the device (-U = USB; the TCP device works
 frida-ps -Ua       # only apps, with their package names
 ```
 
-`Start-Frida` is idempotent; the server stays up until reboot. Stop it with `& $adb shell su -c 'pkill -f frida-server'`.
+`Start-Frida` is idempotent; the server stays up until reboot. Stop it with `& $adb shell su -c 'pkill -x frida-server'`. A line reading `Unable to start idund: idund did not start listening` from `frida-ps` is noise: recent `frida-tools` first try to auto-deploy their own helper over ADB, fail because the pinned server already answers, and carry on using it.
 
 ## Trace function calls without writing code
 
