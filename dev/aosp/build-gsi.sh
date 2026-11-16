@@ -14,7 +14,8 @@ HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPO_ROOT="$(cd "$HERE/../.." && pwd)"
 AOSP_DIR="${AOSP_DIR:-$HOME/aosp}"
 LUNCH="$(python3 -c 'import json,sys; print(json.load(open(sys.argv[1]))["deviceTools"]["aosp"]["lunch"])' "$HERE/../toolchain.json")"
-OUT_DIR="$REPO_ROOT/work/device-tools/gsi/own"
+# DEST_DIR, not OUT_DIR: OUT_DIR is AOSP's own build variable and envsetup.sh uses it.
+DEST_DIR="$REPO_ROOT/work/device-tools/gsi/own"
 
 cd "$AOSP_DIR"
 [ -f build/envsetup.sh ] || { echo "no AOSP tree in $AOSP_DIR; run sync.sh first" >&2; exit 1; }
@@ -28,9 +29,9 @@ m -j"$(nproc)" || { echo "build failed" >&2; exit 1; }
 PRODUCT_OUT="$(get_build_var PRODUCT_OUT)"
 [ -f "$PRODUCT_OUT/system.img" ] || { echo "no system.img in $PRODUCT_OUT" >&2; exit 1; }
 echo "== build finished $(date)"
-mkdir -p "$OUT_DIR"
-cp "$PRODUCT_OUT/system.img" "$OUT_DIR/system.img"
-[ -f "$PRODUCT_OUT/vbmeta.img" ] && cp "$PRODUCT_OUT/vbmeta.img" "$OUT_DIR/vbmeta.img"
-cp "$PRODUCT_OUT/system/build.prop" "$OUT_DIR/build.prop" 2>/dev/null || true
-echo "== image: $OUT_DIR/system.img ($(du -h "$OUT_DIR/system.img" | cut -f1))"
-echo "   fingerprint: $(grep '^ro.system.build.fingerprint=' "$OUT_DIR/build.prop" 2>/dev/null | cut -d= -f2)"
+mkdir -p "$DEST_DIR"
+cp "$PRODUCT_OUT/system.img" "$DEST_DIR/system.img"
+[ -f "$PRODUCT_OUT/vbmeta.img" ] && cp "$PRODUCT_OUT/vbmeta.img" "$DEST_DIR/vbmeta.img"
+cp "$PRODUCT_OUT/system/build.prop" "$DEST_DIR/build.prop" 2>/dev/null || true
+echo "== image: $DEST_DIR/system.img ($(du -h "$DEST_DIR/system.img" | cut -f1))"
+echo "   fingerprint: $(grep '^ro.system.build.fingerprint=' "$DEST_DIR/build.prop" 2>/dev/null | cut -d= -f2)"

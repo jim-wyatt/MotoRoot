@@ -18,7 +18,7 @@ OtomDev/
 │   ├── Trace-Device.ps1       records a Perfetto trace into work\traces
 │   ├── Dump-DeviceInfo.ps1    hardware inventory into work\device-info (private)
 │   ├── Install-Gsi.ps1        boots Google's AOSP GSI (or your own) through DSU
-│   ├── aosp/                  setup.sh, sync.sh, build-gsi.sh: build AOSP in WSL
+│   ├── aosp/                  setup.sh, sync.sh, build-gsi.sh, build-after-sync.sh: build AOSP in WSL
 │   └── .tools/ .cache/ build/ .venv-docs/    generated; git-ignored
 ├── docs/                These pages, including the full device procedure
 ├── work/                YOUR files. Git-ignored in full.
@@ -28,6 +28,7 @@ OtomDev/
 │   ├── device-tools/      frida-server and the Termux APK, pinned
 │   ├── .venv/ .venv-frida/  Python for val-protocol; Frida's PC tools
 │   ├── traces/ device-info/ Perfetto traces and hardware dumps (private)
+│   ├── aosp-sync.log aosp-build.log   the AOSP scripts' logs
 │   └── private-backups/   your device's original images, made in Stage 3
 ├── .githooks/pre-commit The safety net
 ├── .github/workflows/   Builds and publishes this site
