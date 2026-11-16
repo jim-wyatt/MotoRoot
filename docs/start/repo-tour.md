@@ -17,6 +17,7 @@ OtomDev/
 │   ├── Test-DevEnv.ps1        the self-test
 │   ├── Trace-Device.ps1       records a Perfetto trace into work\traces
 │   ├── Dump-DeviceInfo.ps1    hardware inventory into work\device-info (private)
+│   ├── Install-Gsi.ps1        boots Google's AOSP GSI through DSU, no flashing
 │   └── .tools/ .cache/ build/ .venv-docs/    generated; git-ignored
 ├── docs/                These pages, including the full device procedure
 ├── work/                YOUR files. Git-ignored in full.
@@ -71,6 +72,7 @@ And these commands:
 | `Start-Frida` | Start Frida's agent on the device as root ([instrumentation](../develop/instrumentation.md)) |
 | `.\dev\Trace-Device.ps1` | Record a Perfetto system trace ([tracing](../develop/tracing.md)) |
 | `.\dev\Dump-DeviceInfo.ps1` | Dump the hardware inventory ([hardware](../device/hardware.md)) |
+| `.\dev\Install-Gsi.ps1` | Download, install, boot once and discard a GSI via DSU ([GSI](../device/gsi.md)) |
 
 ## Why pin everything?
 

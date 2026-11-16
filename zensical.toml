@@ -33,6 +33,7 @@ nav = [
     { "Preparation walkthrough" = "device/walkthrough.md" },
     { "Maintaining the device" = "device/maintenance.md" },
     { "Make it an engineering device" = "device/dev-setup.md" },
+    { "Run vanilla Android with a GSI" = "device/gsi.md" },
     { "Hardware inventory" = "device/hardware.md" },
     { "Validation and limits" = "device/validation.md" },
   ] },

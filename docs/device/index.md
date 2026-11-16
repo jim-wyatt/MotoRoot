@@ -49,6 +49,6 @@ Stock Motorola Android is kept throughout — no custom ROM. This is a factory b
 | 7 | [Re-setup and install persistent root](walkthrough.md#stage-7-re-setup-and-install-persistent-root) | Mostly |
 | 8 | [Configure the Wi-Fi dev device](walkthrough.md#stage-8-configure-the-wi-fi-dev-device) | Yes (modules) |
 
-After the walkthrough, two optional pages: [Make it an engineering device](dev-setup.md) (report a userdebug build so profilers can reach any app, ADB over Wi-Fi, a Linux userland via Termux) and the [hardware inventory](hardware.md), which records what the device is and how to re-generate the record on another unit.
+After the walkthrough, three optional pages: [Make it an engineering device](dev-setup.md) (report a userdebug build so profilers can reach any app, ADB over Wi-Fi, a Linux userland via Termux), [Run vanilla Android with a GSI](gsi.md) (boot Google's plain AOSP image through DSU, without flashing), and the [hardware inventory](hardware.md), which records what the device is and how to re-generate the record on another unit.
 
 Start the [walkthrough](walkthrough.md).

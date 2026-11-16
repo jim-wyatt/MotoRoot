@@ -41,7 +41,7 @@ Add `-AcceptAndroidSdkLicenses` only after reading Google's Android SDK terms. W
 | Python | `work\.venv` with val-protocol's requirements and pyasn1; `work\.venv-frida` with `frida`/`frida-tools`; `dev\.venv-docs` for the site |
 | Safety | `.githooks/pre-commit` blocks device images, keys, logs, files over 1 MiB, the private working folders, and lines that look like IMEIs or serials |
 
-`Enter-DevShell.ps1` puts you at the repository root and sets `$Work`, `$adb`, `$fb`, `$Backup` and `$py`, which the walkthrough's commands use directly. Device-side files are referenced relative to the root (`.\device\...`). It also defines `adbwifi` (connect over Wi-Fi) and `Start-Frida`; `dev\Trace-Device.ps1` records a Perfetto trace and `dev\Dump-DeviceInfo.ps1` writes a hardware inventory to `work\device-info\` (private: it contains identifiers).
+`Enter-DevShell.ps1` puts you at the repository root and sets `$Work`, `$adb`, `$fb`, `$Backup` and `$py`, which the walkthrough's commands use directly. Device-side files are referenced relative to the root (`.\device\...`). It also defines `adbwifi` (connect over Wi-Fi), `Start-Frida` and `Connect-Debian` (SSH into Termux's Debian over the cable); `dev\Trace-Device.ps1` records a Perfetto trace, `dev\Dump-DeviceInfo.ps1` writes a hardware inventory to `work\device-info\` (private: it contains identifiers), and `dev\Install-Gsi.ps1` downloads (after you accept Google's terms), installs, boots once and discards the pinned AOSP GSI through DSU.
 
 ## Rules for phone work
 

@@ -1,0 +1,124 @@
+<#
+.SYNOPSIS
+Runs Google's Android GSI on the device through DSU (Dynamic System Updates), without flashing.
+
+.DESCRIPTION
+DSU boots a Generic System Image from a file in /data, on top of the device's own vendor
+partition. Nothing is flashed, the slots and boot images are untouched, and a reboot returns to
+the installed system. This script drives the whole cycle; the image is pinned by hash in
+dev\toolchain.json (deviceTools.gsi).
+
+  -Action Download   Download the pinned GSI zip into work\device-tools\gsi and verify its SHA-256.
+                     Google's download is behind a terms-of-use click-through; pass
+                     -AcceptGoogleGsiTerms only after reading the terms the script prints.
+  -Action Install    Push the zip to the device and hand it to Android's own DSU installer.
+                     The phone shows a confirmation; after you accept, installation takes a few
+                     minutes and the script waits for `gsi_tool status` to report it installed.
+  -Action Boot       Enable the installed GSI for ONE boot and reboot into it. The next reboot,
+                     however it happens, returns to the installed system.
+  -Action Status     Show the DSU state and whether a GSI is running right now.
+  -Action Discard    Remove the installed GSI and its userdata (run from the normal system).
+
+Requires the dev shell ($adb) and root on the device (gsi_tool). Read docs/device/gsi.md first.
+
+.PARAMETER UserdataGiB
+Size of the separate userdata the GSI gets (default 8). It lives in /data as a file and is
+removed by -Action Discard.
+#>
+[CmdletBinding()]
+param(
+    [ValidateSet('Download', 'Install', 'Boot', 'Status', 'Discard')][string]$Action = 'Status',
+    [switch]$AcceptGoogleGsiTerms,
+    [int]$UserdataGiB = 8
+)
+$ErrorActionPreference = 'Stop'
+$Root = Split-Path -Parent $PSScriptRoot
+$Work = Join-Path $Root 'work'
+$Adb  = Join-Path $Work 'platform-tools\adb.exe'
+$Spec = (Get-Content -Raw (Join-Path $PSScriptRoot 'toolchain.json') | ConvertFrom-Json).deviceTools.gsi
+$Dir  = Join-Path $Work 'device-tools\gsi'
+$Zip  = Join-Path $Dir $Spec.name
+$Remote = "/storage/emulated/0/Download/$($Spec.name)"
+if (-not (Test-Path $Adb)) { throw 'platform-tools missing. Run .\dev\Bootstrap-DevEnv.ps1.' }
+
+function Sha256($p) { (Get-FileHash -LiteralPath $p -Algorithm SHA256).Hash.ToLower() }
+function Root([string]$Command) { (& $Adb shell "su -c '$Command'" 2>&1) -join "`n" }   # quoted so compound commands stay root
+function Prop([string]$Name) { ((& $Adb shell getprop $Name) -join '').Trim() }
+function GsiStatus { (Root 'gsi_tool status').Trim() }
+function Require-Device {
+    $d = @(& $Adb devices | Select-Object -Skip 1 | Where-Object { $_ -match '\sdevice$' })
+    if ($d.Count -ne 1) { throw "Connect exactly one authorized device (found $($d.Count))." }
+    if ((Root 'id') -notmatch 'uid=0') { throw 'Root (su) is required on the device.' }
+}
+
+switch ($Action) {
+    'Download' {
+        if (Test-Path $Zip) {
+            if ((Sha256 $Zip) -eq $Spec.sha256) { Write-Host "Already present and verified: $Zip" -ForegroundColor Green; return }
+            throw "$Zip exists but does not match the pinned SHA-256. Delete it and retry."
+        }
+        Write-Host "Google publishes this image under its GSI terms: $($Spec.terms)"
+        if (-not $AcceptGoogleGsiTerms) { throw 'Read the terms, then re-run with -AcceptGoogleGsiTerms to download.' }
+        New-Item -ItemType Directory -Force $Dir | Out-Null
+        $Partial = "$Zip.partial"
+        $size = try { [math]::Round((Invoke-WebRequest -Uri $Spec.url -Method Head -UseBasicParsing -TimeoutSec 30).Headers['Content-Length'][0] / 1MB) } catch { '?' }
+        Write-Host "Downloading $($Spec.name) ($size MB) ..."
+        $ProgressPreference = 'SilentlyContinue'
+        Invoke-WebRequest -Uri $Spec.url -OutFile $Partial -UseBasicParsing
+        if ((Sha256 $Partial) -ne $Spec.sha256) { Remove-Item $Partial; throw 'SHA-256 mismatch after download. Not keeping the file.' }
+        Move-Item $Partial $Zip
+        Write-Host "Verified: $Zip" -ForegroundColor Green
+    }
+    'Install' {
+        Require-Device
+        if (-not (Test-Path $Zip) -or (Sha256 $Zip) -ne $Spec.sha256) { throw "Run -Action Download first (missing or unverified: $Zip)." }
+        $st = GsiStatus
+        if ($st -ne 'normal') { throw "DSU state is '$st', not 'normal'. Use -Action Status / -Action Discard first." }
+        foreach ($p in 'ro.boot.dynamic_partitions') { if ((Prop $p) -ne 'true') { throw "$p is not true; DSU needs dynamic partitions." } }
+        if ((Prop 'ro.gsid.image_running') -eq '1') { throw 'A GSI is running right now. Reboot into the normal system first.' }
+        Write-Host "Pushing $($Spec.name) to the device (this takes a minute) ..."
+        & $Adb push $Zip $Remote | Out-Null
+        if ($LASTEXITCODE -ne 0) { throw 'push failed' }
+        $userdata = [int64]$UserdataGiB * 1GB
+        # Android's own DSU installer: it reads system.img (sparse or raw) out of the zip, creates the
+        # images in /data, and asks for confirmation on the screen. KEY_USERDATA_SIZE is in bytes.
+        & $Adb shell am start-activity -n com.android.dynsystem/com.android.dynsystem.VerificationActivity `
+            -a android.os.image.action.START_INSTALL -d "file://$Remote" --el KEY_USERDATA_SIZE $userdata | Out-Null
+        Write-Host 'On the phone: confirm the DSU installation. Waiting for it to finish (up to 20 min) ...' -ForegroundColor Cyan
+        $t = 0; $st = GsiStatus
+        while ($t -lt 1200 -and $st -eq 'normal') { Start-Sleep 10; $t += 10; $st = GsiStatus }
+        while ($t -lt 1200 -and $st -match 'installing') { Start-Sleep 10; $t += 10; $st = GsiStatus }
+        & $Adb shell rm -f $Remote | Out-Null
+        Write-Host "DSU status after ${t}s: $st"
+        if ($st -notmatch 'installed|enabled') { throw "Installation did not complete (status '$st'). Check the notification on the phone; -Action Discard cleans up." }
+        Write-Host 'Installed. Next: .\dev\Install-Gsi.ps1 -Action Boot' -ForegroundColor Green
+    }
+    'Boot' {
+        Require-Device
+        $st = GsiStatus
+        if ($st -notmatch 'installed|enabled') { throw "No installed GSI (status '$st'). Run -Action Install first." }
+        Write-Host (Root 'gsi_tool enable --single-boot')
+        Write-Host 'Rebooting into the GSI for ONE boot. First boot can take several minutes. If it never reaches the home screen, hold Power to reboot: the next boot is the normal system.' -ForegroundColor Cyan
+        & $Adb reboot
+        & $Adb wait-for-device
+        $t = 0; while ($t -lt 600) { if (((& $Adb shell getprop sys.boot_completed 2>$null) -join '').Trim() -eq '1') { break }; Start-Sleep 5; $t += 5 }
+        Start-Sleep 5
+        Write-Host "booted after ~${t}s: image_running=$(Prop 'ro.gsid.image_running') build=$(Prop 'ro.build.display.id') fingerprint=$(Prop 'ro.build.fingerprint')"
+    }
+    'Status' {
+        Require-Device
+        "gsi_tool status:      $(GsiStatus)"
+        "ro.gsid.image_running: $(Prop 'ro.gsid.image_running')   (1 = a GSI is running right now)"
+        "build running:        $(Prop 'ro.build.display.id')"
+        "zip on PC:            " + $(if (Test-Path $Zip) { if ((Sha256 $Zip) -eq $Spec.sha256) { 'present, verified' } else { 'present, HASH MISMATCH' } } else { 'not downloaded' })
+    }
+    'Discard' {
+        Require-Device
+        if ((Prop 'ro.gsid.image_running') -eq '1') { throw 'A GSI is running. Reboot into the normal system first, then discard.' }
+        $st = GsiStatus
+        if ($st -eq 'normal') { Write-Host 'Nothing installed.'; return }
+        Write-Host (Root 'gsi_tool disable')
+        Write-Host (Root 'gsi_tool wipe')
+        Write-Host "DSU status: $(GsiStatus)" -ForegroundColor Green
+    }
+}

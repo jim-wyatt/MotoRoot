@@ -131,7 +131,16 @@ Check 'inputs' 'Motorola driver installed' { $d = Get-ItemProperty HKLM:\Softwar
 foreach ($Dl in $Spec.deviceTools.downloads) { Check 'devtools' "$($Dl.name) pin" { (Sha256 (Join-Path $Work "device-tools\$($Dl.name)")) -eq $Dl.sha256 } }
 Check 'devtools' 'frida-server extracted' { Test-Path (Join-Path $Work 'device-tools\frida-server') }
 Check 'devtools' "frida-tools venv = server $($Spec.deviceTools.frida.version)" { $v = (& (Join-Path $Work '.venv-frida\Scripts\frida.exe') --version 2>&1) -as [string]; if ($v.Trim() -eq $Spec.deviceTools.frida.version) { $v.Trim() } else { throw "frida $v, server pin $($Spec.deviceTools.frida.version)" } }
-Check 'devtools' 'Trace-Device.ps1 parses' { $errs = $null; [System.Management.Automation.Language.Parser]::ParseFile((Join-Path $PSScriptRoot 'Trace-Device.ps1'), [ref]$null, [ref]$errs) | Out-Null; if ($errs) { throw ($errs | ForEach-Object Message) -join '; ' }; $true }
+Check 'devtools' 'every dev\ and device\ PowerShell script parses' {
+    $bad = @()
+    foreach ($f in (Get-ChildItem $PSScriptRoot -Filter *.ps1) + (Get-ChildItem (Join-Path $Root 'device\scripts') -Filter *.ps1)) {
+        $errs = $null; [System.Management.Automation.Language.Parser]::ParseFile($f.FullName, [ref]$null, [ref]$errs) | Out-Null
+        if ($errs) { $bad += "$($f.Name): $(($errs | ForEach-Object Message) -join '; ')" }
+    }
+    if ($bad) { throw ($bad -join ' | ') }
+    "$((Get-ChildItem $PSScriptRoot -Filter *.ps1).Count + 1) scripts"
+}
+Check 'devtools' 'GSI pin is complete (not downloaded by the bootstrap)' { $g = $Spec.deviceTools.gsi; if ($g.name -and $g.url -and $g.sha256 -match '^[0-9a-f]{64}$' -and $g.url.EndsWith($g.name)) { $g.build } else { throw 'deviceTools.gsi is incomplete' } }
 
 # ---------------- git safety
 Check 'git' 'pre-commit hook active' { (git config core.hooksPath) -eq '.githooks' -and (Test-Path .githooks\pre-commit) }
