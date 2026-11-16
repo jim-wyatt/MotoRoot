@@ -21,7 +21,7 @@ OtomDev/
 │   ├── *.apk, *.msi       the procedure's downloads
 │   ├── val-protocol/      bootloader patching tool, at its pinned commit
 │   ├── .venv/             Python for val-protocol
-│   └── private-backups/   created during the procedure: your device's original images
+│   └── private-backups/   your device's original images, made in Stage 3
 ├── .githooks/pre-commit The safety net
 ├── .github/workflows/   Builds and publishes this site
 ├── .vscode/             Terminal profile, tasks, recommended extensions
