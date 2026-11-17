@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # dev/aosp/verify-tree.sh - find and repair half-checked-out projects in the AOSP tree.
 #
-#   wsl -d Ubuntu -- bash dev/aosp/verify-tree.sh        (sync.sh runs it after every sync)
+#   wsl -- bash dev/aosp/verify-tree.sh        (sync.sh runs it after every sync)
 #
 # A sync interrupted during checkout (Ctrl-C, a killed process, WSL shut down) can leave a project
 # with the right HEAD but a half-written work tree. The next `repo sync` sees HEAD, leaves it alone

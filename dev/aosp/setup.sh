@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # dev/aosp/setup.sh - prepare this WSL Ubuntu instance to build AOSP.
 #
-# Run inside WSL (from the dev shell: wsl -d Ubuntu -- bash dev/aosp/setup.sh). Idempotent.
+# Run inside WSL (from the dev shell: wsl -- bash dev/aosp/setup.sh). Idempotent.
 # Installs the build dependencies Google lists for AOSP, the `repo` tool and git-lfs, and
 # creates the AOSP tree's parent directory on the WSL disk. Nothing here touches the repo on
 # the Windows side except reading this script.

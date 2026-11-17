@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # dev/aosp/apply-local.sh - put this project's changes into the AOSP tree. Idempotent.
 #
-#   wsl -d Ubuntu -- bash dev/aosp/apply-local.sh      (sync.sh and build-gsi.sh run it for you)
+#   wsl -- bash dev/aosp/apply-local.sh      (sync.sh and build-gsi.sh run it for you)
 #
 # Three kinds of input, all kept in this repository (or pinned by it) and never only in the tree:
 #   dev/aosp/product/   product definitions, copied to device/<name>/ in the tree (device/vedotom/gsi

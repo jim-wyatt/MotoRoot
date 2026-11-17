@@ -14,7 +14,7 @@ The AOSP tree is 300–400 GB with its output, needs a case-sensitive Linux file
 
 Requirements that matter: 16 cores and 32 GB of RAM make the first build a matter of hours rather than a day; WSL's default memory cap is half of RAM, which gets the big link steps killed, so `%UserProfile%\.wslconfig` sets `memory=26GB` and `swap=16GB` under `[wsl2]` (apply with `wsl --shutdown`). Disk: the WSL instance here has a 1 TB virtual disk.
 
-Even so, the first build on this machine was killed by the kernel's out-of-memory handler at 76 %: the C++ phase is fine on all 32 cores, but the later phase runs R8 (dex optimisation) as one multi-gigabyte JVM per job, and 32 of them filled the 16 GB of swap. `build-gsi.sh` takes a `JOBS` override for that: `wsl -d Ubuntu -- env JOBS=12 bash dev/aosp/build-gsi.sh` (or the same for `build-after-sync.sh`) resumes the build with 12 jobs and stays inside memory. Nothing is lost by the kill; ninja continues from the steps already done.
+Even so, the first build on this machine was killed by the kernel's out-of-memory handler at 76 %: the C++ phase is fine on all 32 cores, but the later phase runs R8 (dex optimisation) as one multi-gigabyte JVM per job, and 32 of them filled the 16 GB of swap. `build-gsi.sh` takes a `JOBS` override for that: `wsl -- env JOBS=12 bash dev/aosp/build-gsi.sh` (or the same for `build-after-sync.sh`) resumes the build with 12 jobs and stays inside memory. Nothing is lost by the kill; ninja continues from the steps already done.
 
 ## The pin
 
@@ -22,18 +22,18 @@ Even so, the first build on this machine was killed by the kernel's out-of-memor
 
 ## Steps
 
-From a dev shell (each script runs inside WSL and is safe to re-run):
+From a dev shell (each script runs inside WSL and is safe to re-run). `wsl --` runs in your default distribution, whatever its name (`Ubuntu`, `Ubuntu-26.04`, ...); `wsl -l -v` marks it with `*`, and `wsl -d <name> --` picks another:
 
 ```powershell
-wsl -d Ubuntu -- bash dev/aosp/setup.sh       # build dependencies, repo, git-lfs, JDK (minutes)
-wsl -d Ubuntu -- bash dev/aosp/sync.sh        # repo init at the tag + partial-clone sync (hours, ~120 GB)
-wsl -d Ubuntu -- bash dev/aosp/build-gsi.sh   # lunch + m; copies system.img back (hours the first time)
+wsl -- bash dev/aosp/setup.sh       # build dependencies, repo, git-lfs, JDK (minutes)
+wsl -- bash dev/aosp/sync.sh        # repo init at the tag + partial-clone sync (hours, ~120 GB)
+wsl -- bash dev/aosp/build-gsi.sh   # lunch + m; copies system.img back (hours the first time)
 ```
 
 Or chain the two long steps and walk away:
 
 ```powershell
-wsl -d Ubuntu -- bash dev/aosp/build-after-sync.sh   # waits for a running sync, or runs one; then builds
+wsl -- bash dev/aosp/build-after-sync.sh   # waits for a running sync, or runs one; then builds
 Get-Content $Work\aosp-sync.log -Tail 5; Get-Content $Work\aosp-build.log -Tail 5   # progress
 ```
 

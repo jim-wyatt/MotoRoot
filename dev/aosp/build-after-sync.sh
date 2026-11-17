@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # dev/aosp/build-after-sync.sh - run the GSI build as soon as the sync is done (overnight runs).
 #
-#   wsl -d Ubuntu -- bash dev/aosp/build-after-sync.sh      (run it in the background)
+#   wsl -- bash dev/aosp/build-after-sync.sh      (run it in the background)
 #
 # Expects sync.sh to be running (or to have run) with its output in work/aosp-sync.log, ending in
 # a "sync exit: N" line. If no sync is running and none has finished, it runs sync.sh itself.

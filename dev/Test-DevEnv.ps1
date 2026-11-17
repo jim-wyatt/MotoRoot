@@ -156,7 +156,9 @@ Check 'devtools' 'AOSP pin is complete and dev\aosp scripts are valid bash' {
     if (Get-Command wsl -ErrorAction SilentlyContinue) {
         foreach ($s in Get-ChildItem (Join-Path $PSScriptRoot 'aosp') -Filter *.sh) {
             if ((Get-Content -Raw $s.FullName) -match "`r") { throw "$($s.Name) has CRLF line endings; bash in WSL will choke" }
-            $o = wsl -d Ubuntu -- bash -n ("/mnt/c" + ($s.FullName.Substring(2) -replace '\\', '/')) 2>&1
+            # Default WSL distro (its name varies between machines: Ubuntu, Ubuntu-26.04, ...)
+            $p = '/mnt/' + $s.FullName.Substring(0, 1).ToLower() + ($s.FullName.Substring(2) -replace '\\', '/')
+            $o = wsl -- bash -n $p 2>&1
             if ($LASTEXITCODE -ne 0) { throw "$($s.Name): $o" }
         }
     }

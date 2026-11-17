@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # dev/aosp/sync.sh - check out the pinned AOSP release into $AOSP_DIR (default ~/aosp).
 #
-# Run inside WSL after setup.sh:  wsl -d Ubuntu -- bash dev/aosp/sync.sh
+# Run inside WSL after setup.sh:  wsl -- bash dev/aosp/sync.sh
 # The tag comes from dev/toolchain.json (deviceTools.aosp.tag) so the source matches the GSI
 # build that was validated on the device. A partial clone keeps the first download to roughly
 # 60-100 GB; `repo sync` is resumable, so re-run this if it is interrupted.

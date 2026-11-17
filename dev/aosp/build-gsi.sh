@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # dev/aosp/build-gsi.sh - build the GSI (aosp_arm64) from the synced tree and hand the image back.
 #
-# Run inside WSL after sync.sh:  wsl -d Ubuntu -- bash dev/aosp/build-gsi.sh
+# Run inside WSL after sync.sh:  wsl -- bash dev/aosp/build-gsi.sh
 # The lunch target comes from dev/toolchain.json (deviceTools.aosp.lunch). The first build takes
 # hours and all cores; later builds are incremental. On success the system image is copied to
 # work/device-tools/gsi/own/ on the Windows side, where Install-Gsi.ps1 -Image can boot it
