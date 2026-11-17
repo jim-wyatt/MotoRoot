@@ -25,5 +25,7 @@ PRODUCT_MODEL := VedoTom AOSP on ARM64
 # on the bootloader's splash until the lock screen. To replace the animation instead, drop this
 # line and add a bootanimation.zip:
 #   PRODUCT_COPY_FILES += device/vedotom/gsi/bootanimation.zip:$(TARGET_COPY_OUT_PRODUCT)/media/bootanimation.zip
-PRODUCT_SYSTEM_PROPERTIES += \
+# The GSI's artifact-path rules forbid adding properties to the system partition
+# (generic_system.mk), so this goes into /product/build.prop; property_get() reads all of them.
+PRODUCT_PRODUCT_PROPERTIES += \
     debug.sf.nobootanimation=1
