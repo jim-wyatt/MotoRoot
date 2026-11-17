@@ -4,7 +4,7 @@
 VedoTom/
 ├── device/              What goes to the device
 │   ├── helpers/           two tiny Java programs + their compiled .dex files
-│   ├── modules/           five module ZIPs, their manifests, and the builder
+│   ├── modules/           six module ZIPs, their manifests, and the builder
 │   │   ├── manifests/       one JSON per module: what it hides or runs, and why
 │   │   ├── scripts/         the post-fs-data.sh of the two development modules
 │   │   └── build_modules.py builds the ZIPs from the manifests

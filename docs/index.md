@@ -66,7 +66,7 @@ This is standard platform-development practice on hardware you own. It is not a 
 
 ```text
 VedoTom/
-├── device/   Helper programs, three reversible modules, the Magisk prep script
+├── device/   Helper programs, six reversible modules, the Magisk prep script
 ├── dev/      One script installs and verifies every tool, pinned by hash
 ├── docs/     These pages, including the full device-preparation procedure
 ├── work/     Your downloads, backups, and build outputs (never committed)

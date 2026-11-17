@@ -54,9 +54,9 @@ Install one with:
 & $adb reboot
 ```
 
-## The five modules in this project
+## The six modules in this project
 
-The project ships five modules in `device/modules/`: three that hide directories, for three different reasons, and two that set properties at boot. Each is generated from a manifest in `device/modules/manifests/` by one builder, and you can rebuild all of them with `.\dev\Build-Device.ps1`.
+The project ships six modules in `device/modules/`: four that hide directories, for four different reasons, and two that set properties at boot. Each is generated from a manifest in `device/modules/manifests/` by one builder, and you can rebuild all of them with `.\dev\Build-Device.ps1`.
 
 ### `wifi-ota-guard` — hide a system app by overlaying nothing
 
@@ -69,6 +69,10 @@ This Wi-Fi development device doesn't need the preinstalled Verizon/Tracfone car
 ### `wifi-extra-debloat` — the second layer
 
 The carrier module leaves a second layer of preinstalled software untouched: partner stubs (AT&T, Cricket, Facebook), Motorola's telemetry and support apps, Ready For desktop mode, visual voicemail and Digital Wellbeing. `wifi-extra-debloat.zip` hides 19 of those the same way; `manifests/wifi-extra-debloat.json` records each package's on-disk APK path and a one-line description of what it is.
+
+### `google-debloat` — the Google layer, once F-Droid is there
+
+The optional fourth overlay hides 28 Google packages: the Play Store and its auto-install hooks, the Google app and its hotword services, the consumer apps (Chrome, Gmail, YouTube, Maps, Photos and the rest) and the account extras. Play services, the keyboard, WebView and the apps with a system role stay. It is the one module whose installation has a prerequisite step, because the Store had updated some of these apps into `/data`; [Make it an engineering device](../device/dev-setup.md) explains that and lists everything it keeps.
 
 ### Script modules
 

@@ -81,6 +81,7 @@ Added after the preparation runs, all on unit 2, all reversible, as described in
 | `dev_adb_tcp` module | Installed; `adbd` listening on `*:5555` after boot. A Wi-Fi connection from the PC was not exercised: the PC and phone sat on different subnets, which `adbwifi` now detects and reports. |
 | Termux 0.118.3 (GitHub build, hash-pinned) | Installed over ADB; `openssh` and `proot-distro` installed in the app; Debian 13 (trixie) via `proot-distro`. SSH over the ADB forward (`Connect-Debian`) verified from the PC: a session lands in Debian with the phone's `/data` free space available. `sshd` must be started in Termux after each reboot. |
 | F-Droid 2.0.3 (hash-pinned; signing certificate and PGP signature verified against f-droid.org) | Installed over ADB (`versionCode` 2000053, installer none); launched. |
+| `google_debloat` module (28 Google packages hidden; 8 Play updates removed first with `pm uninstall-system-updates`) | Installed; after the reboot none of the 28 packages is listed, Play services, GSF, WebView, Gboard, Contacts, Messages, Files, F-Droid and Termux remain, no crash in the crash log, launcher and root unaffected. |
 | Frida 17.26.3 | `Start-Frida` pushes and starts the server; `frida-ps -Ua` lists the running apps. |
 | Perfetto | `Trace-Device.ps1` records and pulls traces. The config file must live in `/data/misc/perfetto-configs/`; `/data/local/tmp` is refused by SELinux. |
 | simpleperf | Unusable on this device: no perf events (`cpu-cycles` and `cpu-clock` both "not supported on the device"). |

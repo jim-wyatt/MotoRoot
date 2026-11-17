@@ -103,7 +103,32 @@ Open it, let it download the repository index, and install apps from there. From
 - **Leave Termux alone.** The Termux in this project is the GitHub build, signed with a different key from F-Droid's build; F-Droid will offer its own Termux and add-ons, and Android refuses to update an app across signing keys. Keep installing Termux and its add-ons from the GitHub release, or uninstall it first and switch wholesale to F-Droid's builds.
 - **Android's "install unknown apps" prompt** appears the first time F-Droid installs something. That is the per-app permission F-Droid needs in order to act as an installer; granting it to F-Droid is the point.
 
-If you want the Google components out of sight as well, the module mechanism on this page is the tool: a manifest listing the Store's directory would hide it reversibly, like the carrier apps. Hiding Play *services* is a bigger step (many stock apps crash without them) and is not part of this project.
+### Hiding the Google apps
+
+With F-Droid in place, the sixth module, `google-debloat`, hides the Google layer that a development device doesn't need, the same reversible way the carrier modules work (an empty overlay over each app's directory; nothing on the firmware partitions changes). `manifests/google-debloat.json` lists all 28 packages in four groups:
+
+| Group | What goes |
+| --- | --- |
+| store | Play Store, and the two Play auto-install hooks that pull carrier apps in at setup |
+| search-assistant | the Google app (search bar, Assistant, Circle to Search), both hotword enrolment services, Gemini |
+| consumer-apps | Chrome, Gmail, YouTube, YouTube Music, Maps, Photos, Drive, Meet, Google TV, Google Home, Calendar, Google Fi |
+| account-extras | account restore at setup, partner setup, Location History, Family Link, the feedback reporter, Android Auto, cross-device streaming, Google's carrier Wi-Fi, ARCore |
+
+What stays, deliberately: Play services and the services framework (too much of the stock system binds to them), WebView and its shared Trichrome library, Gboard (the only keyboard), Contacts, Messages, Files, the Google dialer, speech services, TalkBack and Switch Access, the eSIM manager, Device Health Services, the wallpaper picker, and everything delivered as a Mainline APEX. Nothing in this module needs a Google account, and nothing left behind asks for one.
+
+One detail matters for eight of these apps: the Play Store had updated them, so a newer copy lived in `/data/app` beside the system one. Hide only the system copy and Android keeps the update as an ordinary app. `pm uninstall-system-updates` drops the update first, so the hidden copy is the only copy:
+
+```powershell
+& $adb push .\device\modules\google-debloat.zip /data/local/tmp/google-debloat.zip
+& $adb shell su -c 'magisk --install-module /data/local/tmp/google-debloat.zip'
+foreach ($p in 'com.android.vending','com.google.android.googlequicksearchbox','com.google.android.projection.gearhead',
+               'com.google.ambient.streaming','com.google.android.apps.carrier.carrierwifi','com.google.android.apps.restore',
+               'com.google.android.partnersetup','com.google.ar.core') { & $adb shell "pm uninstall-system-updates $p" }
+& $adb reboot
+```
+
+What you'll notice afterwards: the launcher's search bar goes inert (it was the Google app), there is no browser until you install one from F-Droid (Fennec is Firefox; WebView still renders in-app pages), and the Google system apps that remain stay at their factory versions, since the Store that updated them is gone. Disable the module and reboot to get all of it back; the Store then re-applies its updates on its own.
+
 
 ## Instrumentation and tracing
 
@@ -121,4 +146,5 @@ Once this page is done, day-to-day app work belongs in Android Studio; this repo
 & $adb reboot
 & $adb uninstall com.termux                                           # removes Termux and its Debian
 & $adb uninstall org.fdroid.fdroid                                    # removes F-Droid (apps it installed stay)
+& $adb shell su -c 'touch /data/adb/modules/google_debloat/disable'   # Google apps and the Play Store return after a reboot
 ```
