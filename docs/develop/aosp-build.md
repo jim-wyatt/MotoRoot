@@ -50,6 +50,10 @@ Then boot your build exactly like Google's, one-shot, nothing flashed:
 & $adb root                                   # works on a userdebug build
 ```
 
+## What the first build established
+
+On the validated device (2026-11-16): the image built from the pinned tag reproduces Google's GSI build id `BP4A.251205.006`, the DSU installer accepts a test-keyed image on this unlocked device, and `adb root` works in the resulting `userdebug` system. Hardware support is identical to Google's binary, which is expected: it is the same source. The one visible defect is also shared, and now explained: `gpuservice` aborts every 30 seconds in `GpuWork::initialize()` because the Motorola kernel does not carry the GPU-work BPF program that AOSP's GPU service expects. That is a system-side crash in code you now have, so it is the natural first patch. Timing on a 32-core, 32 GB machine: 2 h 35 min including a restart; see the memory note above.
+
 ## Changing something
 
 The inner loop is: edit under `~/aosp` (in WSL; a VS Code *WSL* window is handy for that), `build-gsi.sh` again, `Install-Gsi.ps1 -Action Discard` then `-Action Install -Image …` and `-Action Boot`. Good first targets: `frameworks/base` for the framework, `packages/apps/Settings`, `packages/apps/Launcher3`, `system/sepolicy` for policy; `build/make/target/product/gsi_release.mk` and `aosp_arm64.mk` for what goes into the image. `m <module>` builds one module; `m` builds the image.
