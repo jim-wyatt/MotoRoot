@@ -63,6 +63,8 @@ Changes live in this repository, not only in the tree, and `apply-local.sh` (run
 
 `verify-tree.sh` lists `frameworks/native` as a project with local changes and leaves it alone; that is the patch.
 
+Both changes were confirmed on the device the same evening: the image boots with no animation and `gpuservice` stays up, logging one warning instead of dying every 30 seconds. The rebuild after switching products took 15 minutes, most of it Soong re-analysing the tree for the new product name. One rule to know: the GSI forbids `PRODUCT_SYSTEM_PROPERTIES` (its artifact-path requirement), so properties go in `PRODUCT_PRODUCT_PROPERTIES`, which lands in `/product/build.prop` inside the image and is read just the same.
+
 The inner loop is: edit under `~/aosp` (in WSL; a VS Code *WSL* window is handy for that), `build-gsi.sh` again, `Install-Gsi.ps1 -Action Discard` then `-Action Install -Image …` and `-Action Boot`. Good first targets: `frameworks/base` for the framework, `packages/apps/Settings`, `packages/apps/Launcher3`, `system/sepolicy` for policy; `build/make/target/product/gsi_release.mk` and `aosp_arm64.mk` for what goes into the image. `m <module>` builds one module; `m` builds the image.
 
 ## Things to know
