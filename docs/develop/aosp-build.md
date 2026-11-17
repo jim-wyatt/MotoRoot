@@ -114,6 +114,35 @@ icacls C:\ProgramData\ssh\administrators_authorized_keys /inheritance:r /grant '
 
 The first command also creates a firewall rule that opens port 22 to any address. Narrow it to the addresses the install machine connects from, with `Set-NetFirewallRule -Name OpenSSH-Server-In-TCP -RemoteAddress ...`. Once key login works, set `PasswordAuthentication no` in `C:\ProgramData\ssh\sshd_config` and restart `sshd`, so the server accepts keys only.
 
+**If Windows' sshd resets every login.** A hardened Windows (the STIG setting *Deny access to this computer from the network* including **Local account**, `S-1-5-113`) refuses the network logon Windows' sshd needs for a local account. sshd then drops the connection right after `SERVICE_ACCEPT`, with no `Permission denied` and nothing in its log. Instead of weakening that policy, run the server inside the build machine's WSL, where Linux does the login. The tested setup is a read-only SFTP chroot that holds only the published image, with its own user, so the key can't reach your home folder, your keys or `/mnt/c`:
+
+```bash
+sudo apt-get install -y openssh-server
+sudo useradd --system --no-create-home --home-dir / --shell /usr/sbin/nologin vedotom-xfer
+sudo install -d -m 755 /srv/vedotomxfer/repo/work/device-tools/gsi          # root-owned: required for a chroot
+sudo install -d -o "$USER" -m 755 /srv/vedotomxfer/repo/work/device-tools/gsi/own
+sudo install -d -m 755 /etc/ssh/authorized_keys
+echo "<the install machine's public key line>" | sudo tee /etc/ssh/authorized_keys/vedotom-xfer
+sudo tee /etc/ssh/sshd_config.d/10-vedotom-xfer.conf <<'EOF'
+Port 2222
+PasswordAuthentication no
+KbdInteractiveAuthentication no
+PermitRootLogin no
+AllowUsers vedotom-xfer
+Match User vedotom-xfer
+    AuthorizedKeysFile /etc/ssh/authorized_keys/%u
+    ChrootDirectory /srv/vedotomxfer
+    ForceCommand internal-sftp -R
+    AllowTcpForwarding no
+    AllowAgentForwarding no
+    X11Forwarding no
+    PermitTTY no
+EOF
+sudo sshd -t && sudo systemctl daemon-reload && sudo systemctl enable --now ssh.socket
+```
+
+Build with `PUBLISH_DIR` set, and `build-gsi.sh` copies the image, its checksum and `build.prop` into the chroot as well (written under temporary names and renamed, checksum last): `wsl -- env JOBS=16 PUBLISH_DIR=/srv/vedotomxfer/repo/work/device-tools/gsi/own bash dev/aosp/build-after-sync.sh`. For the install machine to reach WSL, set `networkingMode=mirrored` in `.wslconfig` (WSL then shares the Windows address) and allow the port through the Hyper-V firewall, which filters WSL's inbound traffic, in an elevated PowerShell: `New-NetFirewallHyperVRule -Name VedoTom-SFTP-In -DisplayName 'VedoTom image SFTP (WSL)' -Direction Inbound -VMCreatorId '{40E0AC32-46A5-438A-A0B2-2B479E8F2E90}' -Protocol TCP -LocalPorts 2222 -RemoteAddresses <install machine's subnets>`. WSL stops when nothing runs in it, so the server is reachable while a build or a WSL window is open. On the install machine, pass `-Port 2222 -User vedotom-xfer -RemoteRepo /repo`.
+
 Then, once, on the **install machine**:
 
 ```powershell

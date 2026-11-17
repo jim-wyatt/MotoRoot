@@ -15,15 +15,19 @@
       machine's checksum.
     - The image it replaces is kept as system.prev.img.
 
-    The build machine needs the Windows OpenSSH Server, with this PC's public key authorised.
-    See docs/develop/aosp-build.md, "Building on one machine, installing from another".
+    The build machine needs an SSH server with this PC's public key authorised: either the
+    Windows OpenSSH Server, or an SFTP-only server inside its WSL (for machines whose policy
+    denies network logon to local accounts). See docs/develop/aosp-build.md, "Building on one
+    machine, installing from another".
 
     Which machine to pull from is private to your network, so it isn't in the repository. Pass
-    -BuildHost, -User and -RemoteRepo once with -Save, and they are kept in
+    -BuildHost, -User, -RemoteRepo (and -Port, if not 22) once with -Save, and they are kept in
     work\remote-build.json (git-ignored).
 
 .EXAMPLE
     .\dev\Get-RemoteImage.ps1 -BuildHost 192.0.2.10 -User builder -RemoteRepo C:/Users/builder/Projects/VedoTom -Save
+.EXAMPLE
+    .\dev\Get-RemoteImage.ps1 -BuildHost 192.0.2.10 -Port 2222 -User vedotom-xfer -RemoteRepo /repo -Save   # WSL SFTP chroot
 .EXAMPLE
     .\dev\Get-RemoteImage.ps1            # uses work\remote-build.json
 .EXAMPLE
@@ -34,6 +38,7 @@ param(
     [string]$BuildHost,
     [string]$User,
     [string]$RemoteRepo,
+    [ValidateRange(1, 65535)][int]$Port,
     [switch]$Save,
     [switch]$Check
 )
@@ -48,6 +53,7 @@ $conf = if (Test-Path $Cfg) { Get-Content -Raw $Cfg | ConvertFrom-Json } else { 
 if ($BuildHost)  { $conf | Add-Member -Force NoteProperty host $BuildHost }
 if ($User)       { $conf | Add-Member -Force NoteProperty user $User }
 if ($RemoteRepo) { $conf | Add-Member -Force NoteProperty repo ($RemoteRepo -replace '\\', '/') }
+if ($Port)       { $conf | Add-Member -Force NoteProperty port $Port }
 foreach ($k in 'host', 'user', 'repo') {
     if (-not $conf.$k) { throw "No build machine configured ($k missing). Run once with -BuildHost, -User, -RemoteRepo and -Save." }
 }
@@ -59,6 +65,7 @@ if ($Save) {
 $target = "$($conf.user)@$($conf.host)"
 $remoteDir = "$($conf.repo.TrimEnd('/'))/work/device-tools/gsi/own"
 $sshOpts = @('-o', 'BatchMode=yes', '-o', 'StrictHostKeyChecking=accept-new', '-o', 'ConnectTimeout=10')
+if ($conf.port) { $sshOpts += @('-P', "$($conf.port)") }   # scp takes the port as -P
 
 function Pull([string]$name, [string]$to) {
     & scp.exe @sshOpts -q "${target}:$remoteDir/$name" $to

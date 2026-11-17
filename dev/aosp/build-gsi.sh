@@ -41,5 +41,19 @@ cp "$PRODUCT_OUT/system.img" "$DEST_DIR/system.img"
 cp "$PRODUCT_OUT/system/build.prop" "$DEST_DIR/build.prop" 2>/dev/null || true
 # A checksum beside the image, so a copy on another machine can be verified (Get-RemoteImage.ps1).
 (cd "$DEST_DIR" && sha256sum system.img > system.img.sha256)
+# Optional second copy for another machine to pull, e.g. a chrooted SFTP folder on WSL's own disk
+# (see "Building on one machine, installing from another" in docs/develop/aosp-build.md). Each file
+# is written under a temporary name and renamed, and the checksum goes last, so a pull that
+# overlaps a build never sees a half-written image paired with the new checksum.
+if [ -n "${PUBLISH_DIR:-}" ]; then
+  mkdir -p "$PUBLISH_DIR" || { echo "cannot create PUBLISH_DIR $PUBLISH_DIR" >&2; exit 1; }
+  rm -f "$PUBLISH_DIR/system.img.sha256"
+  for f in system.img vbmeta.img build.prop system.img.sha256; do
+    [ -f "$DEST_DIR/$f" ] || continue
+    cp "$DEST_DIR/$f" "$PUBLISH_DIR/.$f.part" && chmod 644 "$PUBLISH_DIR/.$f.part" && mv -f "$PUBLISH_DIR/.$f.part" "$PUBLISH_DIR/$f" \
+      || { echo "publishing $f to $PUBLISH_DIR failed" >&2; exit 1; }
+  done
+  echo "== published to $PUBLISH_DIR"
+fi
 echo "== image: $DEST_DIR/system.img ($(du -h "$DEST_DIR/system.img" | cut -f1))"
 echo "   fingerprint: $(grep '^ro.system.build.fingerprint=' "$DEST_DIR/build.prop" 2>/dev/null | cut -d= -f2)"
