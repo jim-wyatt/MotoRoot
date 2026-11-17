@@ -55,37 +55,7 @@ adbwifi                      # → connected to 192.168.x.y:5555
 
 ## Linux on the device
 
-Android 16 ships a built-in Linux Terminal (a Debian VM on the Android Virtualization Framework), but this SoC doesn't have the framework: no hypervisor properties, no `/dev/kvm`, no `com.android.virt` APEX, no Terminal app. The [hardware inventory](hardware.md) records the check.
-
-The route that works everywhere is **Termux**, a terminal and package manager that runs as an ordinary app, plus `proot-distro`, which runs a real Debian userland inside it with no root required. The bootstrap downloads the Termux APK from its GitHub release, pinned by hash (the Play Store build has lagged for years). Install it, open it once (the first launch unpacks its base system), then set everything up from inside the app:
-
-```powershell
-& $adb install "$Work\device-tools\termux-app_v0.118.3+github-debug_universal.apk"
-& $adb shell am start -n com.termux/.app.TermuxActivity
-```
-
-```sh
-pkg update && pkg upgrade -y
-pkg install -y proot-distro openssh
-proot-distro install debian        # ~100 MB download
-passwd                             # a password for SSH logins (or add your key; below)
-sshd                               # Termux's SSH server, port 8022; rerun after a reboot
-proot-distro login debian          # a Debian shell; exit returns to Termux
-```
-
-Inside Debian, `apt update && apt install -y build-essential python3 git` gives you a normal development box on the phone. `termux-setup-storage` grants Termux access to shared storage if you want it. Don't mix in Termux add-ons from the Play Store or F-Droid: they must match this GitHub build's signing key.
-
-Termux deliberately refuses package operations from a root shell, and this project doesn't work around that: the setup above is typed in the app, and the PC side only forwards a port.
-
-### From the PC, over the cable
-
-Termux's `sshd` listens on port 8022. Forwarded through ADB, it is reachable as `localhost:8022` from the PC whatever network either side is on, so the dev shell's `Connect-Debian` opens an SSH session that lands straight in Debian (`Connect-Debian -Termux` stops at the Termux shell):
-
-```powershell
-Connect-Debian               # = adb forward tcp:8022 tcp:8022; ssh -p 8022 localhost 'proot-distro login debian'
-```
-
-The username doesn't matter to Termux's `sshd`; the password is the one from `passwd`. To log in with your key instead, put the PC's public key into Termux: `& $adb push "$env:USERPROFILE\.ssh\id_ed25519.pub" /sdcard/pc.pub`, then in Termux `termux-setup-storage` once, and `mkdir -p ~/.ssh && cat ~/storage/shared/pc.pub >> ~/.ssh/authorized_keys && chmod 700 ~/.ssh && chmod 600 ~/.ssh/authorized_keys`. `sshd` stops when Termux is closed or the phone reboots; run it again in the app (the Termux:Boot add-on from the same GitHub release can start it automatically). With root, a full chroot rather than proot is possible and faster; it's a later project.
+Android 16 ships a built-in Linux Terminal (a Debian VM on the Android Virtualization Framework), but this SoC doesn't have the framework: no hypervisor properties, no `/dev/kvm`, no `com.android.virt` APEX, no Terminal app. The [hardware inventory](hardware.md) records the check. This project keeps the device to a stock development baseline and installs no Linux userland on it; work that needs a Linux box belongs on the PC (WSL), and root shells on the phone come from `su -c` over ADB.
 
 ## Apps without Google: F-Droid
 
@@ -100,7 +70,6 @@ A development device is a good place to stay out of Google's ecosystem as far as
 
 Open it, let it download the repository index, and install apps from there. From then on F-Droid updates itself and the apps it installed. Two cautions:
 
-- **Leave Termux alone.** The Termux in this project is the GitHub build, signed with a different key from F-Droid's build; F-Droid will offer its own Termux and add-ons, and Android refuses to update an app across signing keys. Keep installing Termux and its add-ons from the GitHub release, or uninstall it first and switch wholesale to F-Droid's builds.
 - **Android's "install unknown apps" prompt** appears the first time F-Droid installs something. That is the per-app permission F-Droid needs in order to act as an installer; granting it to F-Droid is the point.
 
 #### Installing from F-Droid without touching the screen, and offline maps over ADB
@@ -171,13 +140,24 @@ The device is now ready for the two tools that make a rooted phone worth having:
 
 Once this page is done, day-to-day app work belongs in Android Studio; this repository stays the bootstrap, the reference and the documentation. [Your first app in Android Studio](../develop/android-studio.md) has the hand-off details: the two `adb` copies are kept at the same version so they never fight, the Wi-Fi device shows up in Studio's device list, and with `dev_debuggable` Studio's *Attach Debugger to Android Process* lists everything.
 
+## Living on the charger: battery protection
+
+A development device spends most of its life plugged in, and a lithium battery held at 100% ages fastest. Motorola's battery protection caps charging at 80%: **Settings → Battery → Battery protection**, switch on **Use Battery protection**, choose **Manual schedule** and set its run time to **Always**. *Smart schedule* is the wrong choice here: it learns when you unplug and tops up to 100% an hour before, which a phone that never leaves the desk doesn't need. The setting belongs to Moto Actions (`com.motorola.actions`), which no module hides; Battery Care, which `vendor-extras-debloat` does hide, only manages background apps.
+
+To check it from the PC:
+
+```powershell
+& $adb shell dumpsys battery | Select-String AdaptiveCharging   # mUpperLimit:80; mChargingDisabled:true while above it
+```
+
+Above 80% the phone stops charging and runs from the charger while the level drifts down to the cap, so a battery that was full when protection went on takes a while to settle at 80%.
+
 ## Undoing any of it
 
 ```powershell
 & $adb shell su -c 'touch /data/adb/modules/dev_debuggable/disable'   # back to ro.debuggable=0
 & $adb shell su -c 'touch /data/adb/modules/dev_adb_tcp/disable'      # USB only
 & $adb reboot
-& $adb uninstall com.termux                                           # removes Termux and its Debian
 & $adb uninstall org.fdroid.fdroid                                    # removes F-Droid (apps it installed stay)
 & $adb shell su -c 'touch /data/adb/modules/google_debloat/disable'   # the hidden Google apps return after a reboot
 & $adb shell su -c 'touch /data/adb/modules/vendor_extras_debloat/disable'   # carrier, partner and Motorola extras return after a reboot

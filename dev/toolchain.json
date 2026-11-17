@@ -80,12 +80,6 @@
         "purpose": "Frida agent that runs as root on the device; the PC-side frida-tools must be the same major.minor"
       },
       {
-        "name": "termux-app_v0.118.3+github-debug_universal.apk",
-        "url": "https://github.com/termux/termux-app/releases/download/v0.118.3/termux-app_v0.118.3+github-debug_universal.apk",
-        "sha256": "7600078440c3c34ef050bc009b00fc3215cb87ec4a449e01a696f74cf4249db2",
-        "purpose": "Termux terminal and package manager; with proot-distro it runs a Debian userland on the device (install by hand with adb install)"
-      },
-      {
         "name": "org.fdroid.fdroid_2000053.apk",
         "url": "https://f-droid.org/repo/org.fdroid.fdroid_2000053.apk",
         "sha256": "dac55a0d17b1edf7e7286b48cfbd70c7c52fbb32a00af062c68830a437c47959",

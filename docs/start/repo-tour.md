@@ -32,7 +32,7 @@ VedoTom/
 │   ├── platform-tools/    adb and fastboot 37.0.1
 │   ├── *.apk, *.msi       the procedure's downloads
 │   ├── val-protocol/      bootloader patching tool, at its pinned commit
-│   ├── device-tools/      frida-server, the Termux APK and the F-Droid APK, pinned
+│   ├── device-tools/      frida-server and the pinned APKs (F-Droid, and the image's apps)
 │   ├── .venv/ .venv-frida/  Python for val-protocol; Frida's PC tools
 │   ├── traces/ device-info/ Perfetto traces and hardware dumps (private)
 │   ├── aosp-sync.log aosp-build.log   the AOSP scripts' logs

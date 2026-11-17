@@ -57,7 +57,6 @@ The `wifi-extra-debloat` module, the development environment in `dev/`, and the 
 | [Android Platform Tools](https://developer.android.com/tools/releases/platform-tools), SDK, NDK, command-line tools | Google | Android SDK license terms; component licenses in the SDK's NOTICE files | `adb`, `fastboot`, building for the device |
 | [Motorola USB driver](https://en-us.support.motorola.com/app/usb-drivers) | Motorola Mobility | Proprietary; Motorola's terms | Fastboot connectivity on Windows |
 | [Frida](https://github.com/frida/frida) (server for the device, `frida-tools` for the PC) | Ole André Vadla Ravnås and contributors | wxWindows Library Licence 3.1 | Hooking and tracing processes on the device |
-| [Termux](https://github.com/termux/termux-app) | the Termux project | GPL-3.0 | Terminal and package manager on the device; Debian via `proot-distro` |
 
 ## Development toolchain
 

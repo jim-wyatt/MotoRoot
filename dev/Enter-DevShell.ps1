@@ -64,17 +64,6 @@ function global:adbwifi {
     if (-not $same) { Write-Warning "The phone is on $phone/$prefix but this PC's addresses are $($pcAddrs -join ', '): different networks. Join the PC to the phone's Wi-Fi (or the phone to the PC's) and retry."; return }
     & $adb connect "${phone}:5555"
 }
-# SSH into Termux's Debian through the USB cable: forwards Termux's sshd port (8022) over ADB, so it
-# works whatever network either side is on, and opens a session that lands in Debian. Pass -Termux to
-# stop at the Termux shell instead. One-time setup inside the Termux app (openssh, Debian, a password
-# or your key) is in the docs; sshd itself is started in Termux, which guards its own environment.
-function global:Connect-Debian([switch]$Termux) {
-    & $adb forward tcp:8022 tcp:8022 | Out-Null
-    $target = if ($Termux) { 'bash -l' } else { 'proot-distro login debian' }
-    # 127.0.0.1, not localhost: the adb forward listens on IPv4 only, and Windows may resolve localhost to ::1 first.
-    ssh -p 8022 -o StrictHostKeyChecking=accept-new -t 127.0.0.1 $target
-    if ($LASTEXITCODE -eq 255) { Write-Warning 'Nothing answered on port 8022. In the Termux app, run: sshd   (first-time setup: docs, Make it an engineering device, Linux on the device).' }
-}
 # Start Frida's agent on the device as root (idempotent) so frida-ps / frida-trace work from this PC.
 function global:Start-Frida {
     $bin = Join-Path $Work 'device-tools\frida-server'
@@ -118,4 +107,4 @@ Get-ToolVersion 'jadx'        { jadx --version }
 Get-ToolVersion 'gh'          { gh --version }
 if ($Problems) { $Problems | ForEach-Object { Write-Warning $_ }; Write-Warning 'Run .\dev\Bootstrap-DevEnv.ps1 to fix.' }
 else { Write-Host 'Device inputs: verified' -ForegroundColor Green }
-Write-Host 'Variables: $Work $adb $fb $Backup $py   Commands: docs, apktool, r8d8, adbwifi, Start-Frida, Connect-Debian, .\dev\Trace-Device.ps1, .\dev\Build-Device.ps1, .\dev\Test-DevEnv.ps1'
+Write-Host 'Variables: $Work $adb $fb $Backup $py   Commands: docs, apktool, r8d8, adbwifi, Start-Frida, .\dev\Trace-Device.ps1, .\dev\Build-Device.ps1, .\dev\Test-DevEnv.ps1'

@@ -40,9 +40,6 @@ Every term the docs use, in plain language.
 **Perfetto**
 : Android's built-in system tracer (`perfetto`, `traced`): CPU scheduling, memory, framework events and logs on one timeline, viewed at ui.perfetto.dev. Recorded here by `Trace-Device.ps1`. [More](../develop/tracing.md).
 
-**Termux / proot-distro**
-: A terminal and package manager that runs as an ordinary app; `proot-distro` runs a Debian userland inside it without root. The Linux route on this device, which has no virtualization framework. [More](../device/dev-setup.md#linux-on-the-device).
-
 ### How Android is built
 
 **Partition**

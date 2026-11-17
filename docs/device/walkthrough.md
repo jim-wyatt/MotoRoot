@@ -392,4 +392,4 @@ Finally, remove the temporary-root tools and the leftover device-policy app, re-
 & $adb shell am start -a android.intent.action.MAIN -c android.intent.category.LAUNCHER -p com.android.vending
 ```
 
-Your development device is ready. Next: [Maintaining the device](maintenance.md), the optional [engineering-device setup](dev-setup.md) (userdebug reporting, ADB over Wi-Fi, Linux on the device), and then start [developing](../develop/index.md).
+Your development device is ready. Next: [Maintaining the device](maintenance.md), the optional [engineering-device setup](dev-setup.md) (userdebug reporting, ADB over Wi-Fi, F-Droid), and then start [developing](../develop/index.md).
