@@ -62,7 +62,15 @@ The product tree `dev/aosp/product/vedotom/gsi/` is the whole description. `vedo
 
 What stays from AOSP, deliberately: Launcher3QuickStep (SystemUI binds its quickstep service for gesture navigation and recents; Fossify Launcher is made the home screen by `preferred-apps/vedotom.xml`, since both answer HOME with equal priority and Android would otherwise ask), LatinIME beside Fossify Keyboard (a working keyboard must never depend on a prebuilt), Browser2 (a WebView browser until a browser decision is made), DocumentsUI (the system file picker), Settings, and everything delivered as a Mainline module. The framework overlay names Fossify Phone and Messages as the default dialer and SMS app through `config_defaultDialer` and `config_defaultSms`.
 
-**Preloads and the first-boot service.** Organic Maps ships its native libraries compressed, which a system-image prebuilt cannot keep without rewriting the APK, and a rewritten APK would need our signature, after which F-Droid could no longer update it. So it travels in `/product/preload/`, and `vedotom-firstboot` (a `sh_binary` started by `init.vedotom.rc` once `sys.boot_completed` is set, as root in the userdebug-only `su` domain) installs it as an ordinary app with F-Droid as the installer, keeping a marker in `/data/local/vedotom-firstboot/` so later boots do nothing. The same service is where the offline map data will be seeded.
+**Preloads and the first-boot service.** Organic Maps ships its native libraries compressed, which a system-image prebuilt cannot keep without rewriting the APK, and a rewritten APK would need our signature, after which F-Droid could no longer update it. So it travels in `/product/preload/`, and `vedotom-firstboot` (a `sh_binary` started by `init.vedotom.rc` once `sys.boot_completed` is set, as root in the userdebug-only `su` domain) installs it as an ordinary app with F-Droid as the installer, keeping a marker in `/data/local/vedotom-firstboot/` so later boots do nothing. The same service sets the Fossify launcher icons to teal, to match the wallpaper. Inside the apps Fossify already uses the system's Material You colours on Android 12 and later; the icon colour is a separate per-app choice, stored as one enabled `SplashActivity.<Colour>` alias plus two preferences the app reconciles on every start. The service sets all three, once per app, so a colour chosen later in an app's settings is kept.
+
+**Offline maps** are not in the image. The US set alone is 15.5 GB, more than doubling the image and every push of it, and a DSU image's data partition defaults to 8 GB. Install with a larger one and push the maps from the PC copy after the first boot:
+
+```powershell
+.\dev\Install-Gsi.ps1 -Action Install -Image "$Work\device-tools\gsi\own\system.img" -UserdataGiB 24
+.\dev\Install-Gsi.ps1 -Action Boot
+.\dev\Push-OfflineMaps.ps1 -Region 'United States of America'
+```
 
 ## Changing something
 

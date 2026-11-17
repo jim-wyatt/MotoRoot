@@ -109,6 +109,14 @@ F-Droid has no command line, but its repository is verifiable by hand, which is 
 
 Organic Maps keeps its region catalogue in the APK (`assets/countries.json`: ids, sizes, and the data version `v`) and serves the files from `https://cdn.organicmaps.app/maps/<v>/<id>.mwm`; they belong in `/sdcard/Android/data/app.organicmaps/files/<v>/`. Three things bite when pushing a whole country over ADB: region ids can contain spaces (`US_West Virginia`), `adb` reads standard input and empties a `while read` loop unless every call gets `</dev/null`, and the ADB shell user cannot write into another app's `Android/data` folder on Android 16, so push to `/data/local/tmp` and let root `mv` the file in and `chown` it to the app's uid with group `ext_data_rw`. The 154-file United States set (15.5 GB) went on that way in about 25 minutes; keep the downloaded files in `work\` so a second device is a push, not a download.
 
+`dev\Push-OfflineMaps.ps1` does all of it: it reads the catalogue from the pinned Organic Maps APK, downloads the named regions into `work\organicmaps\<version>\` (resumable, each file checked against the catalogue size), and pushes them with the root move, on the stock system or on this project's own image:
+
+```powershell
+.\dev\Push-OfflineMaps.ps1 -List                                 # every country with its size
+.\dev\Push-OfflineMaps.ps1 -Region 'United States of America'      # download what is missing, then push
+.\dev\Push-OfflineMaps.ps1 -Region Iceland,Norway -DownloadOnly    # fetch now, push later
+```
+
 ### Hiding the Google apps
 
 With F-Droid in place, the sixth module, `google-debloat`, hides the Google layer that a development device doesn't need, the same reversible way the carrier modules work (an empty overlay over each app's directory; nothing on the firmware partitions changes). `manifests/google-debloat.json` lists all 28 packages in four groups:
