@@ -20,6 +20,7 @@ VedoTom/
 │   ├── Install-Gsi.ps1        boots Google's AOSP GSI (or your own) through DSU
 │   ├── Push-OfflineMaps.ps1   Organic Maps regions: download, verify, push to the phone
 │   ├── Get-RemoteImage.ps1    fetch a verified image from a separate build machine over SSH
+│   ├── Deploy-Image.ps1       fetch, install and boot an image, restore maps, report
 │   ├── aosp/                  AOSP in WSL: setup, sync, verify-tree, apply-local, build-gsi, build-after-sync
 │   │   ├── product/vedotom/gsi/   the vedotom_arm64 product: makefiles, framework overlay, prebuilt app list,
 │   │   │                          first-boot service, release-flag override (APKs come from

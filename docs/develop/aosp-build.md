@@ -151,6 +151,14 @@ Then, once, on the **install machine**:
 
 The address, account and path are saved in `work\remote-build.json`, which is git-ignored, because they describe your network rather than the project. After that, `.\dev\Get-RemoteImage.ps1` fetches and `-Check` only reports whether a new image is waiting. Images are test-keyed builds: copy them only between your own machines, never through a public service.
 
+To take a delivered image all the way onto the phone, run this on the install machine:
+
+```powershell
+.\dev\Deploy-Image.ps1
+```
+
+It fetches the newest image and reboots the phone to the stock system if a VedoTom image is running. Then it discards the installed image, installs and boots the new one, waits for the first-boot service and pushes the maps back. It ends with the fingerprint, the role holders and the crash log. It asks before starting, because the install deletes the old image's data. `-NoFetch` installs the image already on this PC, and `-NoMaps` skips the maps.
+
 ## Things to know
 
 - **Signing.** Your image is signed with AOSP's public test keys, not Google's. On this unlocked device the DSU installer accepted Google's image while unable to extract a trusted key, and `gsid` doesn't enforce trusted keys in the `orange` boot state, so a test-keyed image is expected to install; the first `-Action Install` confirms it. Never ship or publish a test-keyed image as if it were a release.
