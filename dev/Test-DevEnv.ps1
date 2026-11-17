@@ -130,6 +130,15 @@ Check 'inputs' 'Motorola driver installed' { $d = Get-ItemProperty HKLM:\Softwar
 # ---------------- device tools (work\device-tools, work\.venv-frida)
 foreach ($Dl in $Spec.deviceTools.downloads) { Check 'devtools' "$($Dl.name) pin" { (Sha256 (Join-Path $Work "device-tools\$($Dl.name)")) -eq $Dl.sha256 } }
 Check 'devtools' 'frida-server extracted' { Test-Path (Join-Path $Work 'device-tools\frida-server') }
+# APKs that carry a signerSha256 pin: the signing certificate inside the file must be the publisher's. The hash
+# pins the bytes; this pins the identity, so re-pinning a newer version cannot silently accept a differently
+# signed build.
+foreach ($Dl in ($Spec.deviceTools.downloads | Where-Object { $_.signerSha256 })) {
+    Check 'devtools' "$($Dl.name) signing certificate" {
+        $o = & "$Sdk\build-tools\36.1.0\apksigner.bat" verify --print-certs (Join-Path $Work "device-tools\$($Dl.name)") 2>&1 | Out-String
+        if ($o -match 'certificate SHA-256 digest: ([0-9a-f]{64})' -and $Matches[1] -eq $Dl.signerSha256) { $Matches[1].Substring(0, 16) + '...' } else { $false }
+    }
+}
 Check 'devtools' "frida-tools venv = server $($Spec.deviceTools.frida.version)" { $v = (& (Join-Path $Work '.venv-frida\Scripts\frida.exe') --version 2>&1) -as [string]; if ($v.Trim() -eq $Spec.deviceTools.frida.version) { $v.Trim() } else { throw "frida $v, server pin $($Spec.deviceTools.frida.version)" } }
 Check 'devtools' 'every dev\ and device\ PowerShell script parses' {
     $bad = @()

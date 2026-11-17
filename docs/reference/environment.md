@@ -39,7 +39,7 @@ flowchart TB
 | Python | val-protocol venv | 3.12 | `work\.venv` |
 | Python | Frida tools venv (`frida`, `frida-tools`) | 17.26.3 / 14.13.1 | `work\.venv-frida` |
 | Python | docs venv (Zensical) | 3.12 | `dev\.venv-docs` |
-| Device tools | Frida server (ARM64), Termux APK | 17.26.3, 0.118.3 | `work\device-tools` |
+| Device tools | Frida server (ARM64), Termux APK, F-Droid APK | 17.26.3, 0.118.3, 2.0.3 | `work\device-tools` |
 
 ## Two Platform Tools, on purpose
 

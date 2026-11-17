@@ -87,6 +87,24 @@ Connect-Debian               # = adb forward tcp:8022 tcp:8022; ssh -p 8022 loca
 
 The username doesn't matter to Termux's `sshd`; the password is the one from `passwd`. To log in with your key instead, put the PC's public key into Termux: `& $adb push "$env:USERPROFILE\.ssh\id_ed25519.pub" /sdcard/pc.pub`, then in Termux `termux-setup-storage` once, and `mkdir -p ~/.ssh && cat ~/storage/shared/pc.pub >> ~/.ssh/authorized_keys && chmod 700 ~/.ssh && chmod 600 ~/.ssh/authorized_keys`. `sshd` stops when Termux is closed or the phone reboots; run it again in the app (the Termux:Boot add-on from the same GitHub release can start it automatically). With root, a full chroot rather than proot is possible and faster; it's a later project.
 
+## Apps without Google: F-Droid
+
+A development device is a good place to stay out of Google's ecosystem as far as the hardware allows. The device ships with Play services and the Play Store in the system image (this project does not remove them: too much of the stock system expects them), but nothing requires you to sign in to a Google account, and installing apps doesn't need the Store at all.
+
+**F-Droid** is the free-software app store: a catalogue of open-source apps built from source on F-Droid's own build servers, with no account, no tracking and no proprietary dependencies. The bootstrap downloads the pinned client APK into `work\device-tools\`, hash-checked like everything else, and the self-test additionally verifies the APK's signing certificate against the fingerprint F-Droid publishes (`43238d51…ccab`, on [its signing-keys page](https://f-droid.org/docs/Release_Channels_and_Signing_Keys/)). The PGP signature F-Droid ships for the same file (`F-Droid.apk.asc`, key `37D2 C987 89D8 3119 4839 4E3E 41E7 044E 1DBA 2E89`) was verified when the pin was recorded.
+
+```powershell
+& $adb install "$Work\device-tools\org.fdroid.fdroid_2000053.apk"
+& $adb shell am start -n org.fdroid.fdroid/org.fdroid.IconActivity   # first launch fetches the catalogue (needs Wi-Fi)
+```
+
+Open it, let it download the repository index, and install apps from there. From then on F-Droid updates itself and the apps it installed. Two cautions:
+
+- **Leave Termux alone.** The Termux in this project is the GitHub build, signed with a different key from F-Droid's build; F-Droid will offer its own Termux and add-ons, and Android refuses to update an app across signing keys. Keep installing Termux and its add-ons from the GitHub release, or uninstall it first and switch wholesale to F-Droid's builds.
+- **Android's "install unknown apps" prompt** appears the first time F-Droid installs something. That is the per-app permission F-Droid needs in order to act as an installer; granting it to F-Droid is the point.
+
+If you want the Google components out of sight as well, the module mechanism on this page is the tool: a manifest listing the Store's directory would hide it reversibly, like the carrier apps. Hiding Play *services* is a bigger step (many stock apps crash without them) and is not part of this project.
+
 ## Instrumentation and tracing
 
 The device is now ready for the two tools that make a rooted phone worth having: [Frida](../develop/instrumentation.md) to hook and trace any process, and [Perfetto](../develop/tracing.md) for system-wide traces. Both are set up by the bootstrap and driven from the dev shell.
@@ -102,4 +120,5 @@ Once this page is done, day-to-day app work belongs in Android Studio; this repo
 & $adb shell su -c 'touch /data/adb/modules/dev_adb_tcp/disable'      # USB only
 & $adb reboot
 & $adb uninstall com.termux                                           # removes Termux and its Debian
+& $adb uninstall org.fdroid.fdroid                                    # removes F-Droid (apps it installed stay)
 ```

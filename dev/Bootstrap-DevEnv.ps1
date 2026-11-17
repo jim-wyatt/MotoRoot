@@ -233,7 +233,7 @@ if (-not $SkipInputs) {
 
 # ---------------------------------------------------------------- device tools (optional, work\device-tools)
 if (-not $SkipInputs) {
-    Write-Step 'Device tools (Frida server, Termux)'
+    Write-Step 'Device tools (Frida server, Termux, F-Droid)'
     $ToolDir = Join-Path $Work 'device-tools'
     New-Item -ItemType Directory -Force -Path $ToolDir | Out-Null
     foreach ($Dl in $Spec.deviceTools.downloads) {

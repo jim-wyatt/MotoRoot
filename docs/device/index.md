@@ -27,7 +27,7 @@ Verify with `getprop` ([first ADB session](../start/first-adb-session.md#ask-the
 - Magisk persistent root, verified to survive reboots.
 - A Wi-Fi-only setup with the carrier, partner-stub, telemetry and auto-update apps reversibly hidden by three system modules.
 - Google Play available for installing your own tools.
-- Optionally, an engineering-build report (`userdebug`) for profiling any app, ADB over Wi-Fi, Frida and Perfetto set up, and a Debian userland in Termux.
+- Optionally, an engineering-build report (`userdebug`) for profiling any app, ADB over Wi-Fi, Frida and Perfetto set up, a Debian userland in Termux, and F-Droid for apps without a Google account.
 
 Stock Motorola Android is kept throughout — no custom ROM. This is a factory build with system access added, which is exactly what you want as a development baseline.
 
