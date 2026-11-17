@@ -1,11 +1,10 @@
 {
   "id": "google_debloat",
   "name": "Google ecosystem debloat",
-  "version": "1.0",
-  "versionCode": 1,
-  "description": "Reversibly hides the Google consumer apps, the Play Store and its auto-install hooks, the Google app with its hotword enrollers, and Google's account/partner extras, for a device that gets its apps from F-Droid. Play services, the framework, the keyboard, WebView, Contacts, Messages, Files and the accessibility services stay. Disable and reboot to restore.",
+  "version": "1.1",
+  "versionCode": 2,
+  "description": "Reversibly hides the Google consumer apps, the Play auto-install hooks, the Google app with its hotword enrollers, and Google's account/partner extras. The Play Store stays (from 1.1), so it can be used with or without signing in; F-Droid remains the no-account app source. Play services, the framework, the keyboard, WebView, Contacts, Messages, Files and the accessibility services stay. Disable and reboot to restore.",
   "packages": [
-    { "group": "store", "package": "com.android.vending", "label": "Google Play Store (updated copy in /data: run pm uninstall-system-updates first)", "hidden_directory": "/product/priv-app/Phonesky", "apk": "/product/priv-app/Phonesky/Phonesky.apk" },
     { "group": "store", "package": "android.autoinstalls.config.motorola.layout", "label": "Play auto-install layout (carrier app installs at setup)", "hidden_directory": "/product/app/PlayAutoInstallConfig", "apk": "/product/app/PlayAutoInstallConfig/PlayAutoInstallConfig.apk" },
     { "group": "store", "package": "com.motorola.playautoinstallext", "label": "Play auto-install extension", "hidden_directory": "/product/app/PlayAutoInstallExt", "apk": "/product/app/PlayAutoInstallExt/PlayAutoInstallExt.apk" },
     { "group": "search-assistant", "package": "com.google.android.googlequicksearchbox", "label": "Google app: search, Assistant, Circle to Search (updated copy in /data)", "hidden_directory": "/product/priv-app/VelvetForCircleToSearch", "apk": "/product/priv-app/VelvetForCircleToSearch/VelvetForCircleToSearch.apk" },

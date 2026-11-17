@@ -24,7 +24,8 @@ Each manifests/*.json describes one module. Two kinds exist, and a manifest may 
       ],
       "scripts": {                        # SCRIPT module: Magisk lifecycle scripts
         "post-fs-data.sh": "dev_debuggable/post-fs-data.sh"      # path under scripts/
-      }
+      },
+      "sepolicy": "dev_debuggable/sepolicy.rule"                 # optional, path under scripts/
     }
 
 Overlay modules: for every package the ZIP contains an empty
@@ -36,6 +37,10 @@ Script modules: the named lifecycle scripts (customize.sh at install; post-fs-da
 in boot, blocking; service.sh late in boot; uninstall.sh at removal) are copied from
 scripts/ into the ZIP root. Scripts run as root, so they are normalised to LF line endings
 and no BOM regardless of how git checked them out on Windows, and stored executable.
+
+SELinux rules: an optional ``sepolicy`` file (magiskpolicy statements, one per line) is
+copied to the ZIP root as sepolicy.rule, which Magisk patches into the live policy at every
+boot while the module is enabled. Normalised the same way as the scripts.
 
 In both cases the manifest travels inside the ZIP as manifest.json, so a module found later
 is self-describing.
@@ -115,6 +120,13 @@ def _validate_scripts(name: str, scripts: dict) -> None:
             raise ManifestError(f"{name}: {script_name}: scripts/{rel} does not exist")
 
 
+def _validate_sepolicy(name: str, rel: object) -> None:
+    if not isinstance(rel, str) or ".." in Path(rel).parts or Path(rel).is_absolute():
+        raise ManifestError(f"{name}: sepolicy: malformed path {rel!r}")
+    if not (SCRIPTS_DIR / rel).is_file():
+        raise ManifestError(f"{name}: sepolicy: scripts/{rel} does not exist")
+
+
 def load_manifest(path: Path) -> dict:
     """Read and validate one manifest. Every error names the manifest and the offending item."""
     try:
@@ -138,6 +150,8 @@ def load_manifest(path: Path) -> dict:
         _validate_packages(path.name, packages)
     if scripts is not None:
         _validate_scripts(path.name, scripts)
+    if "sepolicy" in data:
+        _validate_sepolicy(path.name, data["sepolicy"])
     return data
 
 
@@ -180,6 +194,8 @@ def build_module(manifest_path: Path, out_dir: Path) -> Path:
             rel = (manifest.get("scripts") or {}).get(script_name)
             if rel:
                 write_entry(archive, script_name, script_bytes(rel), mode=0o755)
+        if manifest.get("sepolicy"):
+            write_entry(archive, "sepolicy.rule", script_bytes(manifest["sepolicy"]))
         for directory in sorted(item["hidden_directory"] for item in manifest.get("packages") or []):
             write_entry(archive, "system" + directory + "/.replace", b"")
         write_entry(archive, "manifest.json", json.dumps(manifest, indent=2) + "\n")

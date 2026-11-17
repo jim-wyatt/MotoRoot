@@ -72,7 +72,7 @@ The carrier module leaves a second layer of preinstalled software untouched: par
 
 ### `google-debloat` — the Google layer, once F-Droid is there
 
-The optional fourth overlay hides 28 Google packages: the Play Store and its auto-install hooks, the Google app and its hotword services, the consumer apps (Chrome, Gmail, YouTube, Maps, Photos and the rest) and the account extras. Play services, the keyboard, WebView and the apps with a system role stay. It is the one module whose installation has a prerequisite step, because the Store had updated some of these apps into `/data`; [Make it an engineering device](../device/dev-setup.md) explains that and lists everything it keeps.
+The optional fourth overlay hides 27 Google packages: the Play auto-install hooks, the Google app and its hotword services, the consumer apps (Chrome, Gmail, YouTube, Maps, Photos and the rest) and the account extras. The Play Store, Play services, the keyboard, WebView and the apps with a system role stay. It is the one module whose installation has a prerequisite step, because the Play Store had updated some of these apps into `/data`; [Make it an engineering device](../device/dev-setup.md) explains that and lists everything it keeps.
 
 ### `vendor-extras-debloat` — the rest of the vendor layer
 

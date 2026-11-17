@@ -1,0 +1,9 @@
+# dev_debuggable: the SELinux rule a real userdebug build carries and this user build lacks.
+#
+# With ro.debuggable=1, Settings > Developer options shows "Logger buffer persist" and writes
+# logd.logpersistd* on every open. AOSP grants system_app that only in userdebug/eng policy
+# (system_app.te: userdebug_or_eng(set_prop(system_app, logpersistd_logging_prop))), so on
+# this device's user policy the write is denied and Developer options crashed on launch.
+# Magisk applies this file at every boot while the module is enabled.
+allow system_app logpersistd_logging_prop file { read open getattr map }
+allow system_app logpersistd_logging_prop property_service set
