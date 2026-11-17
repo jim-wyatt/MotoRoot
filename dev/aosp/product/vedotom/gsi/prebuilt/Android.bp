@@ -169,3 +169,14 @@ android_app_import {
     product_specific: true,
     dex_preopt: { enabled: false },
 }
+
+// Fennec F-Droid (MPL-2.0), F-Droid's build of Firefox for Android: the image's web browser in
+// place of AOSP's Browser2. Its native libraries are compressed too, so it is a preload for the
+// same reason as Organic Maps.
+prebuilt_etc {
+    name: "FennecPreload",
+    src: "Fennec.apk",
+    filename: "Fennec.apk",
+    sub_dir: "preload",
+    product_specific: true,
+}

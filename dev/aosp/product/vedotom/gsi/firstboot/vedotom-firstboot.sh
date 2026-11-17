@@ -36,6 +36,17 @@ if [ ! -e "$STATE/home-role" ] && pm path org.fossify.home >/dev/null 2>&1; then
     fi
 fi
 
+# 2b. Fennec F-Droid (a preload from step 1) as the default browser, so links from other apps
+#     open in it without a chooser. Once, like the HOME role; a browser the user picks later wins.
+if [ ! -e "$STATE/browser-role" ] && pm path org.mozilla.fennec_fdroid >/dev/null 2>&1; then
+    if cmd role add-role-holder android.app.role.BROWSER org.mozilla.fennec_fdroid 0 >/dev/null 2>&1; then
+        touch "$STATE/browser-role"
+        log -t "$TAG" "BROWSER role -> org.mozilla.fennec_fdroid"
+    else
+        log -t "$TAG" "BROWSER role assignment failed; will retry next boot"
+    fi
+fi
+
 # 3. Fossify app icons in teal, to match the image's wallpaper and accent (the suite's default is
 #    green). Inside the apps Fossify already follows the system's Material You colours on
 #    Android 12+; the launcher icon colour is a separate per-app choice, implemented as one

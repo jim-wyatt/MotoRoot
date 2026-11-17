@@ -100,6 +100,13 @@
         "purpose": "Organic Maps 2026.09.29-32 (Apache-2.0), F-Droid's build: offline OpenStreetMap maps. Hash and signer taken from F-Droid's signed index-v2 (entry.jar signature verified against the F-Droid certificate). Bundled into the vedotom_arm64 image as a prebuilt; see docs/develop/aosp-build.md."
       },
       {
+        "name": "org.mozilla.fennec_fdroid_1600020.apk",
+        "url": "https://f-droid.org/repo/org.mozilla.fennec_fdroid_1600020.apk",
+        "sha256": "43cf491bbc677244d7b56ba2e8ae20ccd802c9d8f6b44d6b6aff7eb1753eab1b",
+        "signerSha256": "06665358efd8ba05be236a47a12cb0958d7d75dd939d77c2b31f5398537ebdc5",
+        "purpose": "Fennec F-Droid 160.0.0 (MPL-2.0), arm64-v8a: F-Droid's build of Firefox for Android, the image's web browser in place of AOSP's Browser2. Hash and signer taken from F-Droid's signed index-v2 (entry.jar signature verified against the F-Droid certificate). F-Droid flags it 'Tracking' because it can reach Mozilla services; see docs/develop/aosp-build.md. Bundled into the vedotom_arm64 image as a preload."
+      },
+      {
         "name": "org.fossify.home_16.apk",
         "url": "https://f-droid.org/repo/org.fossify.home_16.apk",
         "sha256": "a603d3d510482feafd73d52a93a1ea9baefd2ca0aae329a14cbf0e21f43638e3",

@@ -1,0 +1,6 @@
+# The MessageQueue of the shipping Android 16 release (bp4a), in place of trunk_staging's
+# experimental CombinedDeliMessageQueue. See ../../release_config_map.textproto.
+name: "RELEASE_PACKAGE_MESSAGEQUEUE_IMPLEMENTATION"
+value {
+  string_value: "LegacyMessageQueue/MessageQueue.java"
+}

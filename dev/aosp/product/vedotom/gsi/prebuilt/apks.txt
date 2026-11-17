@@ -17,3 +17,4 @@ FossifyPaint.apk           org.fossify.paint_7.apk
 FossifyKeyboard.apk        org.fossify.keyboard_14.apk
 FDroid.apk                 org.fdroid.fdroid_2000053.apk
 OrganicMaps.apk            app.organicmaps_26092932.apk
+Fennec.apk                 org.mozilla.fennec_fdroid_1600020.apk

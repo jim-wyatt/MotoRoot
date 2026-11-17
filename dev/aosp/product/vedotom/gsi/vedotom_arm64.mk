@@ -78,12 +78,14 @@ PRODUCT_PACKAGES += \
     FossifyKeyboard \
     FDroid
 
-# Organic Maps ships its native libraries compressed, which a system-image prebuilt cannot keep
-# without re-signing (and a re-signed app could no longer be updated by F-Droid). It is therefore
-# carried as a preload: the APK sits in /product/etc/preload (a prebuilt_etc module; the build
-# refuses APKs in PRODUCT_COPY_FILES) and the first-boot service installs it as an ordinary app,
-# with F-Droid recorded as the installer, keeping its F-Droid signature.
+# Organic Maps and Fennec F-Droid (the browser, in place of AOSP's Browser2) ship their native
+# libraries compressed, which a system-image prebuilt cannot keep without re-signing (and a
+# re-signed app could no longer be updated by F-Droid). They are therefore carried as preloads:
+# the APKs sit in /product/etc/preload (prebuilt_etc modules; the build refuses APKs in
+# PRODUCT_COPY_FILES) and the first-boot service installs them as ordinary apps, with F-Droid
+# recorded as the installer, keeping their F-Droid signatures.
 PRODUCT_PACKAGES += \
     OrganicMapsPreload \
+    FennecPreload \
     vedotom-firstboot \
     init.vedotom.rc

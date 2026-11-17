@@ -37,7 +37,8 @@ vedotom_gsi_symlinks = [
     },
 ]
 
-// android_gsi_defaults without Camera2, Dialer and messaging (Fossify Camera, Phone, Messages).
+// android_gsi_defaults without Browser2, Camera2, Dialer and messaging (Fennec F-Droid, Fossify
+// Camera, Phone, Messages).
 android_filesystem_defaults {
     name: "vedotom_gsi_defaults",
     defaults: [
@@ -71,8 +72,7 @@ android_filesystem_defaults {
         "com.android.vndk.v33",
         "com.android.vndk.v34",
 
-        // gsi_product, minus Camera2, Dialer, messaging
-        "Browser2",
+        // gsi_product, minus Browser2, Camera2, Dialer, messaging
         "LatinIME",
         "apns-full-conf.xml",
         "frameworks-base-overlays",
@@ -140,6 +140,7 @@ android_system_image {
         "FossifyKeyboard",
         "FDroid",
         "OrganicMapsPreload",
+        "FennecPreload",
         "vedotom-firstboot",
         "init.vedotom.rc",
     ] + select(product_variable("debuggable"), {
