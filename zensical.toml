@@ -47,6 +47,7 @@ nav = [
     { "Instrument with Frida" = "develop/instrumentation.md" },
     { "Trace with Perfetto" = "develop/tracing.md" },
     { "Build your own system image" = "develop/aosp-build.md" },
+    { "Image backlog" = "develop/image-backlog.md" },
     { "Your first app in Android Studio" = "develop/android-studio.md" },
   ] },
   { "Reference" = [

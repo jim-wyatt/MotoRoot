@@ -159,6 +159,10 @@ To take a delivered image all the way onto the phone, run this on the install ma
 
 It fetches the newest image and reboots the phone to the stock system if a VedoTom image is running. Then it discards the installed image, installs and boots the new one, waits for the first-boot service and pushes the maps back. It ends with the fingerprint, the role holders and the crash log. It asks before starting, because the install deletes the old image's data. `-NoFetch` installs the image already on this PC, and `-NoMaps` skips the maps.
 
+## Open work
+
+[The image backlog](image-backlog.md) lists what the 2026-11-17 review of the image found. Its first item changes this page: the image is being reduced to the Fossify suite on top of AOSP. Organic Maps, Fennec and the F-Droid client come out, and so do the preloads, the maps step and the MessageQueue override. Until that build lands, the sections above describe the image as it currently is.
+
 ## Things to know
 
 - **Signing.** Your image is signed with AOSP's public test keys, not Google's. On this unlocked device the DSU installer accepted Google's image while unable to extract a trusted key, and `gsid` doesn't enforce trusted keys in the `orange` boot state, so a test-keyed image is expected to install; the first `-Action Install` confirms it. Never ship or publish a test-keyed image as if it were a release.
