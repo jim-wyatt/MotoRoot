@@ -78,11 +78,8 @@ android_filesystem_defaults {
         "frameworks-base-overlays",
     ],
     multilib: {
-        lib64: {
-            deps: [
-                "com.android.compos",
-            ],
-        },
+        // No lib64 com.android.compos (AVF): vedotom_arm64.mk doesn't inherit the
+        // Virtualization product packages.
         both: {
             // PRODUCT_PACKAGES_SHIPPING_API_LEVEL_34
             deps: ["android.hidl.memory@1.0-impl"],
@@ -114,9 +111,8 @@ android_system_image {
         "ImsServiceEntitlement",
         "preinstalled-packages-platform-telephony-product.xml",
 
-        // more AOSP packages (vedotom_product.mk)
+        // more AOSP packages (vedotom_product.mk), without PhotoTable
         "initial-package-stopped-states-aosp.xml",
-        "PhotoTable",
         "preinstalled-packages-platform-aosp-product.xml",
         "ThemePicker",
 

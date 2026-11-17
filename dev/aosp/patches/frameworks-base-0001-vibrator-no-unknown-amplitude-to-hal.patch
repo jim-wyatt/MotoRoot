@@ -1,0 +1,19 @@
+diff --git a/services/core/java/com/android/server/vibrator/VintfHalVibrator.java b/services/core/java/com/android/server/vibrator/VintfHalVibrator.java
+index 18d431930..747cc2e93 100644
+--- a/services/core/java/com/android/server/vibrator/VintfHalVibrator.java
++++ b/services/core/java/com/android/server/vibrator/VintfHalVibrator.java
+@@ -292,6 +292,14 @@ class VintfHalVibrator {
+                     if (!mVibratorInfo.hasCapability(IVibrator.CAP_AMPLITUDE_CONTROL)) {
+                         return false;
+                     }
++                    if (amplitude < 0) {
++                        // A negative amplitude is the "unknown" state (mCurrentAmplitude after the
++                        // vibrator turned on, before any amplitude was set), which
++                        // SetAmplitudeVibratorStep.turnVibratorBackOn can pass back in. It is not a
++                        // valid HAL value: some HALs (MediaTek/Motorola) reject it with
++                        // IllegalArgumentException. Leave the vibrator at its current strength.
++                        return false;
++                    }
+                     boolean result = VintfUtils.runNoThrow(mHalSupplier,
+                                 hal -> hal.setAmplitude(amplitude),
+                                 e -> logError("Error setting amplitude to " + amplitude, e));

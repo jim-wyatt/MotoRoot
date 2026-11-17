@@ -54,19 +54,26 @@ if [ ! -e "$STATE/dev-settings" ]; then
     else failed "development settings"; fi
 fi
 
-# 3. Hide the AOSP Files icon. Fossify File Manager is the file app; DocumentsUI stays installed
-#    because it is the system file picker behind every open, get-content and save dialog
-#    (.picker.PickActivity), Fossify's included. Only its launcher entry, the activity-alias
-#    .LauncherActivity (not gated on any resource in this tag), is disabled. Once: the user can
-#    enable it again with pm enable.
-if [ ! -e "$STATE/files-icon" ] && pm path com.android.documentsui >/dev/null 2>&1; then
-    if pm disable com.android.documentsui/.LauncherActivity >/dev/null 2>&1; then
-        touch "$STATE/files-icon"; restart_launcher=1
-        note "AOSP Files icon hidden (DocumentsUI kept as the file picker)"
+# 3. Hide the app-drawer icons of AOSP apps that stay for what they do in the background, where a
+#    Fossify app is the one to open. Only the launcher entry is disabled, once per entry (neither
+#    is gated on a resource in this tag); pm enable on the same component brings an icon back.
+#      Files      DocumentsUI stays: it is the system file picker behind every open, get-content
+#                 and save dialog (.picker.PickActivity), Fossify's included. Fossify File
+#                 Manager is the file app. The icon is the activity-alias .LauncherActivity.
+#      Keyboard   LatinIME stays as the fallback keyboard. Its settings are still reachable from
+#                 Settings, System, Keyboard. Fossify Keyboard is the keyboard app.
+for entry in "files com.android.documentsui/.LauncherActivity" \
+             "keyboard com.android.inputmethod.latin/.setup.SetupActivity"; do
+    name="${entry%% *}"; component="${entry#* }"
+    [ -e "$STATE/$name-icon" ] && continue
+    pm path "${component%%/*}" >/dev/null 2>&1 || continue
+    if pm disable "$component" >/dev/null 2>&1; then
+        touch "$STATE/$name-icon"; restart_launcher=1
+        note "launcher icon hidden: $component"
     else
-        failed "hiding the AOSP Files icon"
+        failed "hiding the launcher icon $component"
     fi
-fi
+done
 
 # 4. Fossify app icons in teal, to match the image's wallpaper and accent (the suite's default is
 #    green). Inside the apps Fossify already follows the system's Material You colours on

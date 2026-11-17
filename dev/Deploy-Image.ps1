@@ -18,8 +18,8 @@
        /data/local/vedotom-firstboot/status and every step to .../log, read here as root
        (su 0, which a userdebug image has), so the result does not depend on the log buffers.
     5. It reports the fingerprint, the HOME role holder, what the first-boot service did, the
-       defaults the image sets (animations, log buffers, time zone, AOSP Files icon), and
-       whether anything is in the crash log.
+       defaults the image sets (animations, log buffers, time zone, the hidden AOSP Files and
+       keyboard icons), and whether anything is in the crash log.
 
     Step 3 deletes the installed image's data: its apps' data and settings. So the script asks
     before it starts. -Confirm:$false skips the question.
@@ -99,7 +99,7 @@ $fb | Where-Object { $_ -like '*failed*' -or $_ -like '*did not stick*' } | ForE
 Step 'Result'
 $crashes = @(& $Adb logcat -d -b crash 2>$null | Select-String ' F libc|FATAL EXCEPTION').Count
 $scales = @('window_animation_scale', 'transition_animation_scale', 'animator_duration_scale' | ForEach-Object { Sh "settings get global $_" }) -join '/'
-$filesIcon = Sh 'pm query-activities -a android.intent.action.MAIN -c android.intent.category.LAUNCHER --components | grep com.android.documentsui'
+$aospIcons = Sh 'pm query-activities -a android.intent.action.MAIN -c android.intent.category.LAUNCHER --components | grep -E "com.android.documentsui|com.android.inputmethod.latin"'
 [pscustomobject]@{
     Fingerprint = Sh 'getprop ro.build.fingerprint'
     Home        = Sh 'cmd role get-role-holders android.app.role.HOME'
@@ -107,7 +107,7 @@ $filesIcon = Sh 'pm query-activities -a android.intent.action.MAIN -c android.in
     Animations  = "$scales (want 0/0/0)"
     LogBuffer   = Sh 'logcat -g -b main'
     TimeZone    = Sh 'getprop persist.sys.timezone'
-    FilesIcon   = if ($filesIcon) { "still in the launcher: $filesIcon" } else { 'hidden' }
+    AospIcons   = if ($aospIcons) { "still in the launcher: $aospIcons" } else { 'hidden (Files, keyboard)' }
     CrashLog    = if ($crashes) { "$crashes entries: check adb logcat -b crash" } else { 'empty' }
     DataFree    = ((Sh 'df -h /data | tail -1') -split '\s+')[3]
 } | Format-List

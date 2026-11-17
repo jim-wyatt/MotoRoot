@@ -22,9 +22,9 @@ PRODUCT_PRODUCT_PROPERTIES += \
     ro.config.notification_sound?=pixiedust.ogg \
     ro.com.android.dataroaming?=true \
 
+# PhotoTable (a photo screensaver) is left out.
 PRODUCT_PACKAGES += \
     initial-package-stopped-states-aosp.xml \
-    PhotoTable \
     preinstalled-packages-platform-aosp-product.xml \
     ThemePicker \
 

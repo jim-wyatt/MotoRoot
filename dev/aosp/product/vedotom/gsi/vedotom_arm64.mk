@@ -1,9 +1,10 @@
 #
 # vedotom_arm64: AOSP's arm64 GSI, with this project's apps, defaults and fixes.
 #
-# This is build/make/target/product/aosp_arm64.mk with two changes: the product-partition app set
+# This is build/make/target/product/aosp_arm64.mk with three changes: the product-partition app set
 # comes from vedotom_product.mk instead of aosp_product.mk (so the AOSP apps the Fossify suite
-# replaces are not built in at all), and the settings aosp_arm64.mk keeps behind its
+# replaces are not built in at all), the Virtualization (AVF) packages are not inherited, and the
+# settings aosp_arm64.mk keeps behind its
 # `ifeq (aosp_arm64,$(TARGET_PRODUCT))` guard are applied unconditionally. Everything else is
 # inherited from the same upstream makefiles, so the system partition is the stock GSI's.
 #
@@ -13,7 +14,11 @@ $(call inherit-product, $(SRC_TARGET_DIR)/product/generic_system.mk)
 PRODUCT_ENFORCE_ARTIFACT_PATH_REQUIREMENTS := relaxed
 $(call inherit-product, $(SRC_TARGET_DIR)/product/handheld_system_ext.mk)
 $(call inherit-product, $(SRC_TARGET_DIR)/product/telephony_system_ext.mk)
-$(call inherit-product-if-exists, packages/modules/Virtualization/apex/product_packages.mk)
+# Not inherited, unlike aosp_arm64.mk: packages/modules/Virtualization/apex/product_packages.mk.
+# This SoC has no AVF (pKVM), so CompOS (com.android.compos), the virtualization feature file and
+# the AVF properties are dead weight. com.android.virt itself stays: base_system.mk installs it
+# and its framework-virtualization jar is on the classpath; without PRODUCT_AVF_ENABLED it builds
+# its variant for devices without AVF.
 $(call inherit-product, device/vedotom/gsi/vedotom_product.mk)
 $(call inherit-product, $(SRC_TARGET_DIR)/board/generic_arm64/device.mk)
 
