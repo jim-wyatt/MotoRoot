@@ -19,7 +19,8 @@ VedoTom/
 │   ├── Dump-DeviceInfo.ps1    hardware inventory into work\device-info (private)
 │   ├── Install-Gsi.ps1        boots Google's AOSP GSI (or your own) through DSU
 │   ├── aosp/                  AOSP in WSL: setup, sync, verify-tree, apply-local, build-gsi, build-after-sync
-│   │   ├── product/vedotom/gsi/   the vedotom_arm64 product (aosp_arm64 + our settings)
+│   │   ├── product/vedotom/gsi/   the vedotom_arm64 product: makefiles, framework overlay, prebuilt app list,
+│   │   │                          preferred-apps, first-boot service (APKs come from work/, never committed)
 │   │   └── patches/               our diffs against upstream projects
 │   └── .tools/ .cache/ build/ .venv-docs/    generated; git-ignored
 ├── docs/                These pages, including the full device procedure

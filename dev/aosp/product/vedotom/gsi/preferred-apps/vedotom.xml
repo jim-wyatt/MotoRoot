@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Read once by PackageManager at first boot from /product/etc/preferred-apps: the preferred
+     activity for each intent. Fossify Launcher and AOSP's Launcher3 both answer HOME with the same
+     priority, which would otherwise leave the choice to a "select a home app" dialog. -->
+<preferred-activities>
+    <item name="org.fossify.home/.activities.MainActivity" match="100000" always="true">
+        <filter>
+            <action name="android.intent.action.MAIN" />
+            <cat name="android.intent.category.HOME" />
+            <cat name="android.intent.category.DEFAULT" />
+        </filter>
+    </item>
+</preferred-activities>

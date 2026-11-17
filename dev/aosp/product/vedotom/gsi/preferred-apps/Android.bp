@@ -1,0 +1,20 @@
+// Installs vedotom.xml to /product/etc/preferred-apps, where PackageManager reads it at first
+// boot (see the file for what it decides).
+
+package {
+    default_applicable_licenses: ["device_vedotom_gsi_preferred_apps_license"],
+}
+
+license {
+    name: "device_vedotom_gsi_preferred_apps_license",
+    visibility: [":__subpackages__"],
+    license_kinds: ["SPDX-license-identifier-MIT"],
+}
+
+prebuilt_etc {
+    name: "VedoTomPreferredApps",
+    src: "vedotom.xml",
+    filename: "vedotom.xml",
+    sub_dir: "preferred-apps",
+    product_specific: true,
+}

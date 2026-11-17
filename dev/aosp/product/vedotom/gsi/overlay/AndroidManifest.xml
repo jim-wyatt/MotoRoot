@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Static overlay on the framework: enabled at boot, not toggleable from Settings. -->
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    package="vedotom.gsi.overlay.framework">
+    <application android:hasCode="false" />
+    <overlay
+        android:targetPackage="android"
+        android:isStatic="true"
+        android:priority="201" />
+</manifest>

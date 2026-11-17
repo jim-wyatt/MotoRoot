@@ -37,7 +37,7 @@ Add `-AcceptAndroidSdkLicenses` only after reading Google's Android SDK terms. W
 | Device | Pinned platform-tools **37.0.1** (the tested version, first on PATH), scrcpy for mirroring and control |
 | Reverse engineering | jadx (DEX/APK decompiler), apktool (`apktool` function), 7-Zip |
 | Device inputs | DFRoot 4.7, KernelSU 3.3.1, Magisk 31.1, Test DPC QR, val-protocol at its pinned commit, all hash-checked; Motorola driver verified by signature and hash |
-| Device tools | `work\device-tools\`: Frida server (hash-pinned, must match the PC `frida` version) the Termux APK (hash-pinned against the release's checksums) and the F-Droid APK (hash-pinned; its signing certificate is pinned too and checked by the self-test) |
+| Device tools | `work\device-tools\`: Frida server (hash-pinned, must match the PC `frida` version) the Termux APK (hash-pinned against the release's checksums) the F-Droid APK, Organic Maps and the 16-app Fossify suite (each hash-pinned with its signing certificate, checked by the self-test; they are bundled into the vedotom_arm64 image) |
 | Python | `work\.venv` with val-protocol's requirements and pyasn1; `work\.venv-frida` with `frida`/`frida-tools`; `dev\.venv-docs` for the site |
 | Safety | `.githooks/pre-commit` blocks device images, keys, logs, files over 1 MiB, the private working folders, and lines that look like IMEIs or serials |
 

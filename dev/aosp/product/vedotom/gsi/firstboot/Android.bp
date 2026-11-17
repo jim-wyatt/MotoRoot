@@ -1,0 +1,27 @@
+// The first-boot service of the VedoTom image: a shell script init starts once the system has
+// booted, as root, to finish what the image cannot do from read-only partitions (install the
+// preloaded apps as ordinary apps; later, seed the offline maps into the maps app's data folder).
+// It is idempotent and cheap on every later boot. See vedotom-firstboot.sh and init.vedotom.rc.
+
+package {
+    default_applicable_licenses: ["device_vedotom_gsi_firstboot_license"],
+}
+
+license {
+    name: "device_vedotom_gsi_firstboot_license",
+    visibility: [":__subpackages__"],
+    license_kinds: ["SPDX-license-identifier-MIT"],
+}
+
+sh_binary {
+    name: "vedotom-firstboot",
+    src: "vedotom-firstboot.sh",
+    product_specific: true,
+}
+
+prebuilt_etc {
+    name: "init.vedotom.rc",
+    src: "init.vedotom.rc",
+    sub_dir: "init",
+    product_specific: true,
+}

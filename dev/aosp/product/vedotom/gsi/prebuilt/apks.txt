@@ -1,0 +1,19 @@
+# module APK name (as prebuilt/Android.bp names it)   pinned file in work/device-tools (dev/toolchain.json)
+FossifyLauncher.apk        org.fossify.home_16.apk
+FossifyGallery.apk         org.fossify.gallery_40.apk
+FossifyFileManager.apk     org.fossify.filemanager_16.apk
+FossifyDocuments.apk       org.fossify.documents_20.apk
+FossifyCalendar.apk        org.fossify.calendar_25.apk
+FossifyContacts.apk        org.fossify.contacts_13.apk
+FossifyPhone.apk           org.fossify.phone_22.apk
+FossifyMessages.apk        org.fossify.messages_26.apk
+FossifyClock.apk           org.fossify.clock_10.apk
+FossifyCalculator.apk      org.fossify.math_10.apk
+FossifyNotes.apk           org.fossify.notes_13.apk
+FossifyMusicPlayer.apk     org.fossify.musicplayer_18.apk
+FossifyCamera.apk          org.fossify.camera_11.apk
+FossifyVoiceRecorder.apk   org.fossify.voicerecorder_21.apk
+FossifyPaint.apk           org.fossify.paint_7.apk
+FossifyKeyboard.apk        org.fossify.keyboard_14.apk
+FDroid.apk                 org.fdroid.fdroid_2000053.apk
+OrganicMaps.apk            app.organicmaps_26092932.apk

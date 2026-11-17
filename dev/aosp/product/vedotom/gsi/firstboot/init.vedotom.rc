@@ -1,0 +1,13 @@
+# VedoTom first-boot service. Runs once per boot after sys.boot_completed, as root in the
+# (userdebug-only, permissive) su domain, so it can call pm and write into app data folders.
+# The script itself is idempotent; most boots it finds nothing to do and exits in a second.
+service vedotom_firstboot /product/bin/vedotom-firstboot
+    class late_start
+    user root
+    group root
+    seclabel u:r:su:s0
+    oneshot
+    disabled
+
+on property:sys.boot_completed=1
+    start vedotom_firstboot

@@ -1,0 +1,24 @@
+diff --git a/Android.bp b/Android.bp
+index b010612..fe3b1ae 100644
+--- a/Android.bp
++++ b/Android.bp
+@@ -220,6 +220,9 @@ build_prop {
+     visibility: [
+         "//build/make/target/product/gsi",
+         "//build/soong/fsgen",
++        // VedoTom: our own android_system_image (device/vedotom/gsi/Android.bp) builds the
++        // product and system_ext build.prop files the same way the GSI does.
++        "//device/vedotom/gsi",
+     ],
+ }
+ 
+@@ -236,6 +239,9 @@ build_prop {
+     visibility: [
+         "//build/make/target/product/gsi",
+         "//build/soong/fsgen",
++        // VedoTom: our own android_system_image (device/vedotom/gsi/Android.bp) builds the
++        // product and system_ext build.prop files the same way the GSI does.
++        "//device/vedotom/gsi",
+         "//bootable/recovery/tests/ota",
+     ],
+ }

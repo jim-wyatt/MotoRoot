@@ -1,13 +1,36 @@
 {
   "_comment": "Single source of truth for the dev environment. Bootstrap-DevEnv.ps1 reads this. Bump a version here, re-run the bootstrap, and commit the change.",
   "winget": [
-    { "id": "Microsoft.OpenJDK.21", "purpose": "javac/java for helpers, R8/D8, apktool, jadx, Gradle" },
-    { "id": "Git.Git",              "purpose": "source control, val-protocol pinning" },
-    { "id": "GitHub.cli",           "purpose": "fork, PRs, release downloads" },
-    { "id": "Genymobile.scrcpy",    "purpose": "mirror and control the phone over ADB" },
-    { "id": "Skylot.jadx",          "purpose": "decompile APK/DEX for inspection" },
-    { "id": "7zip.7zip",            "purpose": "inspect images and archives" },
-    { "id": "Google.AndroidStudio", "purpose": "full IDE for app development", "optional": true, "switch": "AndroidStudio" }
+    {
+      "id": "Microsoft.OpenJDK.21",
+      "purpose": "javac/java for helpers, R8/D8, apktool, jadx, Gradle"
+    },
+    {
+      "id": "Git.Git",
+      "purpose": "source control, val-protocol pinning"
+    },
+    {
+      "id": "GitHub.cli",
+      "purpose": "fork, PRs, release downloads"
+    },
+    {
+      "id": "Genymobile.scrcpy",
+      "purpose": "mirror and control the phone over ADB"
+    },
+    {
+      "id": "Skylot.jadx",
+      "purpose": "decompile APK/DEX for inspection"
+    },
+    {
+      "id": "7zip.7zip",
+      "purpose": "inspect images and archives"
+    },
+    {
+      "id": "Google.AndroidStudio",
+      "purpose": "full IDE for app development",
+      "optional": true,
+      "switch": "AndroidStudio"
+    }
   ],
   "androidSdk": {
     "cmdlineTools": {
@@ -61,7 +84,6 @@
         "url": "https://github.com/termux/termux-app/releases/download/v0.118.3/termux-app_v0.118.3+github-debug_universal.apk",
         "sha256": "7600078440c3c34ef050bc009b00fc3215cb87ec4a449e01a696f74cf4249db2",
         "purpose": "Termux terminal and package manager; with proot-distro it runs a Debian userland on the device (install by hand with adb install)"
-
       },
       {
         "name": "org.fdroid.fdroid_2000053.apk",
@@ -69,6 +91,125 @@
         "sha256": "dac55a0d17b1edf7e7286b48cfbd70c7c52fbb32a00af062c68830a437c47959",
         "signerSha256": "43238d512c1e5eb2d6569f4a3afbf5523418b82e0a3ed1552770abb9a9c9ccab",
         "purpose": "F-Droid 2.0.3, the free-software app store: apps and updates without a Google account. signerSha256 is the APK signing certificate published at https://f-droid.org/docs/Release_Channels_and_Signing_Keys/; the self-test checks it with apksigner. Install by hand with adb install."
+      },
+      {
+        "name": "app.organicmaps_26092932.apk",
+        "url": "https://f-droid.org/repo/app.organicmaps_26092932.apk",
+        "sha256": "654a736d43317084f13560281fe7013f869800610e9d6036b6789d9c9e07f8bc",
+        "signerSha256": "e216fc386c327ec88d056026f1dea27be2bc3f9d7ee956e4361c4b64ec459fe9",
+        "purpose": "Organic Maps 2026.09.29-32 (Apache-2.0), F-Droid's build: offline OpenStreetMap maps. Hash and signer taken from F-Droid's signed index-v2 (entry.jar signature verified against the F-Droid certificate). Bundled into the vedotom_arm64 image as a prebuilt; see docs/develop/aosp-build.md."
+      },
+      {
+        "name": "org.fossify.home_16.apk",
+        "url": "https://f-droid.org/repo/org.fossify.home_16.apk",
+        "sha256": "a603d3d510482feafd73d52a93a1ea9baefd2ca0aae329a14cbf0e21f43638e3",
+        "signerSha256": "affdb124d3f4720c2f98dbca9eacba0514fba4306e20a2786c861c3c0d6ff292",
+        "purpose": "Fossify Launcher 1.10.0 (GPL-3.0-only), signed by Fossify, distributed by F-Droid: the home screen of the vedotom_arm64 image. Hash and signer from F-Droid's signed index-v2."
+      },
+      {
+        "name": "org.fossify.calendar_25.apk",
+        "url": "https://f-droid.org/repo/org.fossify.calendar_25.apk",
+        "sha256": "2825816d0a972bd85eb289e556221293fadecfd3179a4a2531bde6f89c6f0238",
+        "signerSha256": "affdb124d3f4720c2f98dbca9eacba0514fba4306e20a2786c861c3c0d6ff292",
+        "purpose": "Fossify Calendar 1.12.2 (GPL-3.0-only), signed by Fossify, distributed by F-Droid: part of the Fossify suite bundled into the vedotom_arm64 image. Hash and signer from F-Droid's signed index-v2."
+      },
+      {
+        "name": "org.fossify.camera_11.apk",
+        "url": "https://f-droid.org/repo/org.fossify.camera_11.apk",
+        "sha256": "116004fd8743f9e47bf25eb9c6049eb77d3f19d59506c3f47513f584c6138435",
+        "signerSha256": "affdb124d3f4720c2f98dbca9eacba0514fba4306e20a2786c861c3c0d6ff292",
+        "purpose": "Fossify Camera Beta 1.5.0 (GPL-3.0-only), signed by Fossify, distributed by F-Droid: part of the Fossify suite bundled into the vedotom_arm64 image. Hash and signer from F-Droid's signed index-v2."
+      },
+      {
+        "name": "org.fossify.clock_10.apk",
+        "url": "https://f-droid.org/repo/org.fossify.clock_10.apk",
+        "sha256": "43cf9f0ec45f1f1ff2df47286622e5b8f3acedaeb07b7f7641b5243dbedca079",
+        "signerSha256": "affdb124d3f4720c2f98dbca9eacba0514fba4306e20a2786c861c3c0d6ff292",
+        "purpose": "Fossify Clock Beta 1.6.0 (GPL-3.0-only), signed by Fossify, distributed by F-Droid: part of the Fossify suite bundled into the vedotom_arm64 image. Hash and signer from F-Droid's signed index-v2."
+      },
+      {
+        "name": "org.fossify.contacts_13.apk",
+        "url": "https://f-droid.org/repo/org.fossify.contacts_13.apk",
+        "sha256": "6a89be96b5ec39f5e2b11bd61dc7031f4b88261b324ab13af5743fbc62f0cddb",
+        "signerSha256": "affdb124d3f4720c2f98dbca9eacba0514fba4306e20a2786c861c3c0d6ff292",
+        "purpose": "Fossify Contacts 1.6.0 (GPL-3.0-only), signed by Fossify, distributed by F-Droid: part of the Fossify suite bundled into the vedotom_arm64 image. Hash and signer from F-Droid's signed index-v2."
+      },
+      {
+        "name": "org.fossify.documents_20.apk",
+        "url": "https://f-droid.org/repo/org.fossify.documents_20.apk",
+        "sha256": "ef50f14a68b6b63a263cb9681b0da9a56bbd5df1258087d0e20a841b5502b514",
+        "signerSha256": "affdb124d3f4720c2f98dbca9eacba0514fba4306e20a2786c861c3c0d6ff292",
+        "purpose": "Fossify Documents Beta 1.2.1 (GPL-3.0-only), signed by Fossify, distributed by F-Droid: part of the Fossify suite bundled into the vedotom_arm64 image. Hash and signer from F-Droid's signed index-v2."
+      },
+      {
+        "name": "org.fossify.filemanager_16.apk",
+        "url": "https://f-droid.org/repo/org.fossify.filemanager_16.apk",
+        "sha256": "6e4656b8947966a2853681691bb0005e802ee89983fb141ec0f7186497dcd5f4",
+        "signerSha256": "affdb124d3f4720c2f98dbca9eacba0514fba4306e20a2786c861c3c0d6ff292",
+        "purpose": "Fossify File Manager 1.6.4 (GPL-3.0-only), signed by Fossify, distributed by F-Droid: part of the Fossify suite bundled into the vedotom_arm64 image. Hash and signer from F-Droid's signed index-v2."
+      },
+      {
+        "name": "org.fossify.gallery_40.apk",
+        "url": "https://f-droid.org/repo/org.fossify.gallery_40.apk",
+        "sha256": "ff3e6122ccf1873620e9e8e374b9c9dec4d7eb3a8f42559135bd82562c65f41f",
+        "signerSha256": "affdb124d3f4720c2f98dbca9eacba0514fba4306e20a2786c861c3c0d6ff292",
+        "purpose": "Fossify Gallery 1.14.2 (GPL-3.0-only), signed by Fossify, distributed by F-Droid: part of the Fossify suite bundled into the vedotom_arm64 image. Hash and signer from F-Droid's signed index-v2."
+      },
+      {
+        "name": "org.fossify.keyboard_14.apk",
+        "url": "https://f-droid.org/repo/org.fossify.keyboard_14.apk",
+        "sha256": "e326885c08b68212fd9fdda9be8a4fa492d5daba7ff37bb4ff4511826f40a8d0",
+        "signerSha256": "affdb124d3f4720c2f98dbca9eacba0514fba4306e20a2786c861c3c0d6ff292",
+        "purpose": "Fossify Keyboard Beta 1.9.1 (GPL-3.0-only), signed by Fossify, distributed by F-Droid: part of the Fossify suite bundled into the vedotom_arm64 image. Hash and signer from F-Droid's signed index-v2."
+      },
+      {
+        "name": "org.fossify.math_10.apk",
+        "url": "https://f-droid.org/repo/org.fossify.math_10.apk",
+        "sha256": "7c5443c22d6d62c67dfe80df33ea9161ff0fa440f92590bcb45d7008b57613ed",
+        "signerSha256": "affdb124d3f4720c2f98dbca9eacba0514fba4306e20a2786c861c3c0d6ff292",
+        "purpose": "Fossify Calculator Beta 1.4.0 (GPL-3.0-only), signed by Fossify, distributed by F-Droid: part of the Fossify suite bundled into the vedotom_arm64 image. Hash and signer from F-Droid's signed index-v2."
+      },
+      {
+        "name": "org.fossify.messages_26.apk",
+        "url": "https://f-droid.org/repo/org.fossify.messages_26.apk",
+        "sha256": "7077dae6613d7a9d775841c4c10be16e255f8af8d5152bc84a5e6984740b56e1",
+        "signerSha256": "affdb124d3f4720c2f98dbca9eacba0514fba4306e20a2786c861c3c0d6ff292",
+        "purpose": "Fossify Messages 1.10.2 (GPL-3.0-only), signed by Fossify, distributed by F-Droid: part of the Fossify suite bundled into the vedotom_arm64 image. Hash and signer from F-Droid's signed index-v2."
+      },
+      {
+        "name": "org.fossify.musicplayer_18.apk",
+        "url": "https://f-droid.org/repo/org.fossify.musicplayer_18.apk",
+        "sha256": "61fdf0bb71cb3a809960e59a5872030f16c799a0c0f285115a6f40f7fa5012c0",
+        "signerSha256": "affdb124d3f4720c2f98dbca9eacba0514fba4306e20a2786c861c3c0d6ff292",
+        "purpose": "Fossify Music Player 1.8.5 (GPL-3.0-only), signed by Fossify, distributed by F-Droid: part of the Fossify suite bundled into the vedotom_arm64 image. Hash and signer from F-Droid's signed index-v2."
+      },
+      {
+        "name": "org.fossify.notes_13.apk",
+        "url": "https://f-droid.org/repo/org.fossify.notes_13.apk",
+        "sha256": "5a56e0e39cc488e1f3b947d3801006d3b7450ec73c67f03195c64c5fd3b6bced",
+        "signerSha256": "affdb124d3f4720c2f98dbca9eacba0514fba4306e20a2786c861c3c0d6ff292",
+        "purpose": "Fossify Notes Beta 1.7.0 (GPL-3.0-only), signed by Fossify, distributed by F-Droid: part of the Fossify suite bundled into the vedotom_arm64 image. Hash and signer from F-Droid's signed index-v2."
+      },
+      {
+        "name": "org.fossify.paint_7.apk",
+        "url": "https://f-droid.org/repo/org.fossify.paint_7.apk",
+        "sha256": "b949ad0a1eafce616e9e6c6f5fa5b265e4b8ad426303a245be921a6e0c0def5e",
+        "signerSha256": "affdb124d3f4720c2f98dbca9eacba0514fba4306e20a2786c861c3c0d6ff292",
+        "purpose": "Fossify Paint Beta 1.4.0 (GPL-3.0-only), signed by Fossify, distributed by F-Droid: part of the Fossify suite bundled into the vedotom_arm64 image. Hash and signer from F-Droid's signed index-v2."
+      },
+      {
+        "name": "org.fossify.phone_22.apk",
+        "url": "https://f-droid.org/repo/org.fossify.phone_22.apk",
+        "sha256": "d1ad08467034e5138a6e68f03b6e150f0bb010dfcbf490ff3d2bd4822b755728",
+        "signerSha256": "affdb124d3f4720c2f98dbca9eacba0514fba4306e20a2786c861c3c0d6ff292",
+        "purpose": "Fossify Phone 1.11.1 (GPL-3.0-only), signed by Fossify, distributed by F-Droid: part of the Fossify suite bundled into the vedotom_arm64 image. Hash and signer from F-Droid's signed index-v2."
+      },
+      {
+        "name": "org.fossify.voicerecorder_21.apk",
+        "url": "https://f-droid.org/repo/org.fossify.voicerecorder_21.apk",
+        "sha256": "1b3efb263bd152299aada8bb6ed3cca4a340425cd755472f7d799c9e0e024cc8",
+        "signerSha256": "affdb124d3f4720c2f98dbca9eacba0514fba4306e20a2786c861c3c0d6ff292",
+        "purpose": "Fossify Voice Recorder Beta 1.7.4 (GPL-3.0-only), signed by Fossify, distributed by F-Droid: part of the Fossify suite bundled into the vedotom_arm64 image. Hash and signer from F-Droid's signed index-v2."
       }
     ],
     "frida": {
@@ -102,9 +243,21 @@
       "sha1": "e03e78b1d80b396f1c3358e31251cb31740e1110"
     },
     "apks": [
-      { "name": "DFRoot_4.7.apk", "url": "https://github.com/diabl0w/DFRoot/releases/download/v4.7/DFRoot_4.7.apk", "sha256": "9e193ffdaada8577e14a04fb19403256b3fa4991fae1331c7956e083c098a7b1" },
-      { "name": "KernelSU_v3.3.1_32680-release.apk", "url": "https://github.com/tiann/KernelSU/releases/download/v3.3.1/KernelSU_v3.3.1_32680-release.apk", "sha256": "b4a059ace71de2fa65cc7f12b1c58d55fc23ab25e057ee4230ce779742abe450" },
-      { "name": "Magisk-v31.1.apk", "url": "https://github.com/topjohnwu/Magisk/releases/download/v31.1/Magisk-v31.1.apk", "sha256": "89cefac0a318afa39fb3880c45c87b036c05bc1ebf02a7a715b7f8d7c26ac6e7" }
+      {
+        "name": "DFRoot_4.7.apk",
+        "url": "https://github.com/diabl0w/DFRoot/releases/download/v4.7/DFRoot_4.7.apk",
+        "sha256": "9e193ffdaada8577e14a04fb19403256b3fa4991fae1331c7956e083c098a7b1"
+      },
+      {
+        "name": "KernelSU_v3.3.1_32680-release.apk",
+        "url": "https://github.com/tiann/KernelSU/releases/download/v3.3.1/KernelSU_v3.3.1_32680-release.apk",
+        "sha256": "b4a059ace71de2fa65cc7f12b1c58d55fc23ab25e057ee4230ce779742abe450"
+      },
+      {
+        "name": "Magisk-v31.1.apk",
+        "url": "https://github.com/topjohnwu/Magisk/releases/download/v31.1/Magisk-v31.1.apk",
+        "sha256": "89cefac0a318afa39fb3880c45c87b036c05bc1ebf02a7a715b7f8d7c26ac6e7"
+      }
     ],
     "testDpcQr": {
       "name": "testdpc-qrcode.png",
