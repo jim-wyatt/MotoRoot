@@ -140,6 +140,24 @@ The device is now ready for the two tools that make a rooted phone worth having:
 
 Once this page is done, day-to-day app work belongs in Android Studio; this repository stays the bootstrap, the reference and the documentation. [Your first app in Android Studio](../develop/android-studio.md) has the hand-off details: the two `adb` copies are kept at the same version so they never fight, the Wi-Fi device shows up in Studio's device list, and with `dev_debuggable` Studio's *Attach Debugger to Android Process* lists everything.
 
+## Development-target settings
+
+Four ordinary Android settings make the phone a better target for building and testing apps. `dev\Set-DevSettings.ps1` applies them, checks each one, and exits with the number that didn't stick; `-Reset` returns every one to stock.
+
+| Setting | Value | Why |
+| --- | --- | --- |
+| Window, transition and animator duration scales | 0 (off) | Espresso and other UI tests expect animations off, and screens settle at once |
+| `verifier_verify_adb_installs` | 0 | `adb install` no longer waits for Play Protect to verify the app first |
+| `adb_allowed_connection_time` | 0 | an authorized PC stays authorized, instead of re-confirming its key after seven days without connecting (matters for ADB over Wi-Fi) |
+| `persist.logd.size` | 16M | log buffers of 16 MiB instead of the stock 256 KiB, so the log from before a crash is still there |
+
+```powershell
+.\dev\Set-DevSettings.ps1           # apply and verify
+.\dev\Set-DevSettings.ps1 -Reset    # back to stock
+```
+
+The log size needs two things on this build. Setting `persist.logd.size` takes root (the script uses `su`), and logd ignores the property at boot and on `logd --reinit`: the buffers came up at 256 KiB with it set. `logcat -G` does apply it, until the next reboot, so `dev_debuggable` 1.3 carries a `service.sh` that re-applies the stored size once boot completes. Without that module the size lasts until the next reboot.
+
 ## Living on the charger: battery protection
 
 A development device spends most of its life plugged in, and a lithium battery held at 100% ages fastest. Motorola's battery protection caps charging at 80%: **Settings → Battery → Battery protection**, switch on **Use Battery protection**, choose **Manual schedule** and set its run time to **Always**. *Smart schedule* is the wrong choice here: it learns when you unplug and tops up to 100% an hour before, which a phone that never leaves the desk doesn't need. The setting belongs to Moto Actions (`com.motorola.actions`), which no module hides; Battery Care, which `vendor-extras-debloat` does hide, only manages background apps.

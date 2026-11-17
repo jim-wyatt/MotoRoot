@@ -1,11 +1,12 @@
 {
   "id": "dev_debuggable",
   "name": "Report a userdebug build",
-  "version": "1.2",
-  "versionCode": 3,
-  "description": "Sets ro.debuggable=1 and ro.build.type=userdebug at boot (plus the SELinux rule Developer options needs on a userdebug build), as an engineering build would, so profilers such as Perfetto's heap profilers can target any app. Some apps refuse debuggable or userdebug systems. Disable and reboot to undo.",
+  "version": "1.3",
+  "versionCode": 4,
+  "description": "Sets ro.debuggable=1 and ro.build.type=userdebug at boot (plus the SELinux rule Developer options needs on a userdebug build, and the log buffer size from persist.logd.size once boot completes), as an engineering build would, so profilers such as Perfetto's heap profilers can target any app. Some apps refuse debuggable or userdebug systems. Disable and reboot to undo.",
   "scripts": {
-    "post-fs-data.sh": "dev_debuggable/post-fs-data.sh"
+    "post-fs-data.sh": "dev_debuggable/post-fs-data.sh",
+    "service.sh": "dev_debuggable/service.sh"
   },
   "sepolicy": "dev_debuggable/sepolicy.rule"
 }

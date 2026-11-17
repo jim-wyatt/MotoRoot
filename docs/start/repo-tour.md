@@ -15,6 +15,7 @@ VedoTom/
 │   ├── Enter-DevShell.ps1     per-terminal setup (dot-source it)
 │   ├── Build-Device.ps1       rebuilds and compares the device artifacts
 │   ├── Test-DevEnv.ps1        the self-test
+│   ├── Set-DevSettings.ps1    development-target settings on the phone (animations, ADB, logs)
 │   ├── Trace-Device.ps1       records a Perfetto trace into work\traces
 │   ├── Dump-DeviceInfo.ps1    hardware inventory into work\device-info (private)
 │   ├── Install-Gsi.ps1        boots Google's AOSP GSI (or your own) through DSU
@@ -79,6 +80,7 @@ And these commands:
 | `.\dev\Test-DevEnv.ps1` | Self-test everything |
 | `adbwifi` | Connect ADB to the phone over Wi-Fi ([engineering device](../device/dev-setup.md)) |
 | `Start-Frida` | Start Frida's agent on the device as root ([instrumentation](../develop/instrumentation.md)) |
+| `.\dev\Set-DevSettings.ps1` | Apply (or `-Reset`) the development-target settings ([engineering device](../device/dev-setup.md#development-target-settings)) |
 | `.\dev\Trace-Device.ps1` | Record a Perfetto system trace ([tracing](../develop/tracing.md)) |
 | `.\dev\Dump-DeviceInfo.ps1` | Dump the hardware inventory ([hardware](../device/hardware.md)) |
 | `.\dev\Install-Gsi.ps1` | Download, install, boot once and discard a GSI via DSU ([GSI](../device/gsi.md)) |
