@@ -18,7 +18,7 @@ Even so, the first build on this machine was killed by the kernel's out-of-memor
 
 ## The pin
 
-`deviceTools.aosp` in `dev/toolchain.json` names the release tag **`android-16.0.0_r4`**, the AOSP release that produced the GSI binary `BP4A.251205.006` validated on this device, so what you build is what was tested, before you change anything. The lunch target is `aosp_arm64-trunk_staging-userdebug`.
+`deviceTools.aosp` in `dev/toolchain.json` names the release tag **`android-16.0.0_r4`**, the AOSP release that produced the GSI binary `BP4A.251205.006` validated on this device, so what you build is what was tested, before you change anything. The lunch target is `vedotom_arm64-trunk_staging-userdebug`, this project's product on top of `aosp_arm64` (see *Changing something*).
 
 ## Steps
 
@@ -55,6 +55,13 @@ Then boot your build exactly like Google's, one-shot, nothing flashed:
 On the validated device (2026-11-16): the image built from the pinned tag reproduces Google's GSI build id `BP4A.251205.006`, the DSU installer accepts a test-keyed image on this unlocked device, and `adb root` works in the resulting `userdebug` system. Hardware support is identical to Google's binary, which is expected: it is the same source. The one visible defect is also shared, and now explained: `gpuservice` aborts every 30 seconds in `GpuWork::initialize()` because the Motorola kernel does not carry the GPU-work BPF program that AOSP's GPU service expects. That is a system-side crash in code you now have, so it is the natural first patch. Timing on a 32-core, 32 GB machine: 2 h 35 min including a restart; see the memory note above.
 
 ## Changing something
+
+Changes live in this repository, not only in the tree, and `apply-local.sh` (run by `sync.sh` and `build-gsi.sh`, safe to re-run) puts them into the tree:
+
+- **`dev/aosp/product/vedotom/gsi/`** is copied to `device/vedotom/gsi/` and defines the lunch target **`vedotom_arm64`**: AOSP's `aosp_arm64` with this project's settings layered on top. `aosp_arm64.mk` hides its GSI-specific settings behind a check on the product name, so the derived product repeats them, the same way AOSP's own `aosp_arm64_fullmte.mk` does. This is where product-level changes go: properties, packages, files copied into the image. The first one is `debug.sf.nobootanimation=1`, which removes the boot animation (the screen stays on the bootloader's splash until the lock screen); the makefile shows the one-line alternative for shipping your own `bootanimation.zip` instead.
+- **`dev/aosp/patches/`** holds unified diffs against upstream projects, one project per file, named `<project-path-with-dashes>-NNNN-<what>.patch`. They are applied with `git apply` and skipped when the tree already has them; a patch that no longer applies after a tag change stops the script so you rebase it deliberately. The first one fixes the `gpuservice` crash loop: `BpfMap`'s path constructor aborts the process when a pinned BPF map is missing, so the `isValid()` check in `GpuWork::getBpfMap` never ran on a kernel without the `gpu_work_period` tracepoint; the patch uses `init()`, which reports the failure, and GPU-work tracking is simply disabled.
+
+`verify-tree.sh` lists `frameworks/native` as a project with local changes and leaves it alone; that is the patch.
 
 The inner loop is: edit under `~/aosp` (in WSL; a VS Code *WSL* window is handy for that), `build-gsi.sh` again, `Install-Gsi.ps1 -Action Discard` then `-Action Install -Image …` and `-Action Boot`. Good first targets: `frameworks/base` for the framework, `packages/apps/Settings`, `packages/apps/Launcher3`, `system/sepolicy` for policy; `build/make/target/product/gsi_release.mk` and `aosp_arm64.mk` for what goes into the image. `m <module>` builds one module; `m` builds the image.
 

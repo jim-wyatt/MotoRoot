@@ -23,6 +23,8 @@ DEST_DIR="$REPO_ROOT/work/device-tools/gsi/own"
 
 cd "$AOSP_DIR"
 [ -f build/envsetup.sh ] || { echo "no AOSP tree in $AOSP_DIR; run sync.sh first" >&2; exit 1; }
+# This project's product and patches, from the repository into the tree (idempotent).
+bash "$HERE/apply-local.sh" || exit 1
 # shellcheck disable=SC1091
 source build/envsetup.sh
 echo "== lunch $LUNCH"

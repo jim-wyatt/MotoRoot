@@ -18,7 +18,9 @@ VedoTom/
 │   ├── Trace-Device.ps1       records a Perfetto trace into work\traces
 │   ├── Dump-DeviceInfo.ps1    hardware inventory into work\device-info (private)
 │   ├── Install-Gsi.ps1        boots Google's AOSP GSI (or your own) through DSU
-│   ├── aosp/                  setup.sh, sync.sh, verify-tree.sh, build-gsi.sh, build-after-sync.sh: AOSP in WSL
+│   ├── aosp/                  AOSP in WSL: setup, sync, verify-tree, apply-local, build-gsi, build-after-sync
+│   │   ├── product/vedotom/gsi/   the vedotom_arm64 product (aosp_arm64 + our settings)
+│   │   └── patches/               our diffs against upstream projects
 │   └── .tools/ .cache/ build/ .venv-docs/    generated; git-ignored
 ├── docs/                These pages, including the full device procedure
 ├── work/                YOUR files. Git-ignored in full.
