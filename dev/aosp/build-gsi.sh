@@ -21,7 +21,6 @@ cd "$AOSP_DIR"
 [ -f build/envsetup.sh ] || { echo "no AOSP tree in $AOSP_DIR; run sync.sh first" >&2; exit 1; }
 # shellcheck disable=SC1091
 source build/envsetup.sh
-export USE_CCACHE=1 CCACHE_EXEC=/usr/bin/ccache CCACHE_DIR="$HOME/.ccache-aosp"
 echo "== lunch $LUNCH"
 lunch "$LUNCH" || { echo "lunch failed; run 'lunch' in $AOSP_DIR to list this tag's targets and fix deviceTools.aosp.lunch" >&2; exit 1; }
 echo "== build started $(date)"
