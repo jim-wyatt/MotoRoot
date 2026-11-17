@@ -18,6 +18,7 @@ Now the device is a development target, here's what you can actually build and l
 Everything here is an instance of one of these, so it's worth naming up front:
 
 ```mermaid
+%%{init: {"flowchart": {"wrappingWidth": 300}}}%%
 flowchart TB
     subgraph apps [The app world]
         APK["An APK → an app process<br/>Java/Kotlin compiled to DEX,<br/>runs in the ART runtime, sandboxed"]

@@ -35,6 +35,7 @@ The QR image the procedure uses is Google's own, pinned and hash-verified in the
 When Test DPC provisions the device it becomes the **device owner** — the most privileged management role, the same one a corporate MDM holds. For a development device you own, you don't want a policy controller sitting in that seat, so the procedure's very next step **removes** it: it clears the device-owner role through Test DPC's own interface and uninstalls the app. You're left with a normally set-up device and no manager.
 
 ```mermaid
+%%{init: {"flowchart": {"wrappingWidth": 300}}}%%
 flowchart LR
     A[Setup wizard] -->|provision| B[Test DPC = device owner]
     B -->|clear-device-owner + uninstall| C[Normal device, no owner]

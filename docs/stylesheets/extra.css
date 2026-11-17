@@ -1,0 +1,8 @@
+/* Mermaid diagrams render into a closed shadow root, so page CSS cannot reach the SVG itself,
+   and Mermaid scales the SVG to the column on its own. This keeps the host element inside the
+   column should a renderer ever emit a fixed-width SVG: the diagram then scrolls sideways
+   instead of widening the page. */
+.md-typeset .mermaid {
+  max-width: 100%;
+  overflow-x: auto;
+}

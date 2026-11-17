@@ -46,6 +46,7 @@ Compress-Archive -Path hellomod\* -DestinationPath hellomod.zip
 Beyond overlaying files, a module can run scripts at defined boot points:
 
 ```mermaid
+%%{init: {"flowchart": {"wrappingWidth": 300}}}%%
 flowchart LR
     I["customize.sh<br/>once, at install"] -.-> B
     B["post-fs-data.sh<br/>early boot, before apps"] --> S["service.sh<br/>late boot, system up"]

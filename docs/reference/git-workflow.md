@@ -22,6 +22,7 @@ Two layers stop device data reaching version control:
 2. **A pre-commit hook** (`.githooks/pre-commit`, enabled by the bootstrap) blocks a commit if it contains device images, keystores, local secrets, files over 1 MiB, the private working folders, or lines that look like an IMEI or serial.
 
 ```mermaid
+%%{init: {"flowchart": {"wrappingWidth": 300}}}%%
 flowchart LR
     S[git commit] --> H{pre-commit hook}
     H -->|device image / key / IMEI-like| X[blocked]

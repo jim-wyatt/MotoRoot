@@ -11,6 +11,7 @@ That's what the project's helpers are: a few lines of Java, compiled to one DEX,
 ## The pipeline
 
 ```mermaid
+%%{init: {"flowchart": {"wrappingWidth": 300}}}%%
 flowchart LR
     SRC["Helper.java"] -->|javac| CLS["Helper.class<br/>JVM bytecode"]
     CLS -->|"r8d8 (D8)"| DEX["classes.dex<br/>Android bytecode"]

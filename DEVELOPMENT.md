@@ -43,6 +43,10 @@ Add `-AcceptAndroidSdkLicenses` only after reading Google's Android SDK terms. W
 
 `Enter-DevShell.ps1` puts you at the repository root and sets `$Work`, `$adb`, `$fb`, `$Backup` and `$py`, which the walkthrough's commands use directly. Device-side files are referenced relative to the root (`.\device\...`). It also defines `adbwifi` (connect over Wi-Fi), `Start-Frida` and `Connect-Debian` (SSH into Termux's Debian over the cable); `dev\Trace-Device.ps1` records a Perfetto trace, `dev\Dump-DeviceInfo.ps1` writes a hardware inventory to `work\device-info\` (private: it contains identifiers), and `dev\Install-Gsi.ps1` downloads (after you accept Google's terms), installs, boots once and discards the pinned AOSP GSI through DSU, or your own build with `-Image`. `dev\aosp\*.sh` run inside WSL to set up, sync (`android-16.0.0_r4`, the tag behind the validated GSI) and build AOSP's `aosp_arm64` target (`build-after-sync.sh` chains the two, logging to `work\aosp-*.log`); the tree lives on WSL's disk, never in this repo. Keep those scripts LF: WSL's bash chokes on CRLF.
 
+## Diagrams in the docs
+
+The site renders Mermaid 12 through the theme's own loader, which wraps node labels at a width far too narrow for 16 px text (labels fold into tall columns and spill past their boxes). Every `flowchart` therefore starts with `%%{init: {"flowchart": {"wrappingWidth": 300}}}%%`; copy that line into any new diagram. Sequence diagrams don't need it. `docs/stylesheets/extra.css` keeps a diagram's host element inside the content column. To check rendering without a browser session, headless Edge works (`msedge --headless=new --screenshot=... file:///.../site/<page>/index.html`); note that it clamps the viewport to 510 px, so phone widths can't be simulated that way.
+
 ## Rules for phone work
 
 - **Close Android Studio while following the walkthrough.** Studio runs its own, newer ADB server, and two server versions fighting over one device can drop the connection mid-operation.

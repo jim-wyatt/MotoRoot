@@ -14,6 +14,7 @@ And then there is:
 - `uid=0(root)` — the **superuser**. Root is exempt from the permission checks. It can read any file, write any partition, and change any setting.
 
 ```mermaid
+%%{init: {"flowchart": {"wrappingWidth": 300}}}%%
 flowchart TB
     root["uid 0 — root<br/>can do anything"]
     system["uid 1000 — system<br/>runs the framework"]
@@ -60,6 +61,7 @@ After the bootloader is unlocked, the procedure installs **Magisk** into `init_b
 - It is **reversible**: restore the original `init_boot` and Magisk is gone.
 
 ```mermaid
+%%{init: {"flowchart": {"wrappingWidth": 300}}}%%
 flowchart LR
     A[Factory device<br/>no root] -->|DFRoot| B[Temporary root<br/>survives until reboot]
     B -->|back up + unlock + install Magisk| C[Persistent root<br/>managed by Magisk app]

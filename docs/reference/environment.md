@@ -5,6 +5,7 @@ Everything the bootstrap installs, where it goes, and how the `dev/` scripts fit
 ## The scripts
 
 ```mermaid
+%%{init: {"flowchart": {"wrappingWidth": 300}}}%%
 flowchart TB
     T["dev/toolchain.json<br/>versions + hashes"]
     T --> B["Bootstrap-DevEnv.ps1<br/>installs & verifies everything"]

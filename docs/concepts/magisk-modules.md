@@ -13,9 +13,10 @@ So how do you change a system file for testing? You *don't change it*. You **ove
 Magisk mounts its modules **on top of** the real system at boot, using Linux bind mounts. The app running later sees the module's version of a file; the real partition underneath is untouched.
 
 ```mermaid
-flowchart TB
+%%{init: {"flowchart": {"wrappingWidth": 300}}}%%
+flowchart LR
     subgraph what [What an app sees at /system]
-        OVER["module's file (if any)"]
+        OVER["the module's file where one exists,<br/>otherwise the original"]
     end
     subgraph real [Actually on disk]
         SYS["/system — read-only, unmodified"]

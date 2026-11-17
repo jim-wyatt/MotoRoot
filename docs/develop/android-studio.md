@@ -22,6 +22,7 @@ Your prepared device is an ordinary debuggable Android device as far as Studio i
 3. Click **Run** (▶). Studio builds the APK, installs it, and launches it.
 
 ```mermaid
+%%{init: {"flowchart": {"wrappingWidth": 300}}}%%
 flowchart LR
     SRC["Kotlin/Java + res/"] -->|Gradle| APK["app-debug.apk"]
     APK -->|"adb install"| DEV["your device"]

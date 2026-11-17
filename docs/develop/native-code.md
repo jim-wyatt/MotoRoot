@@ -57,6 +57,7 @@ A binary built for the wrong architecture simply won't run (`adb shell` reports 
 ## Where native code shows up
 
 ```mermaid
+%%{init: {"flowchart": {"wrappingWidth": 300}}}%%
 flowchart TB
     C["C / C++"] -->|NDK clang| SO["lib*.so / executable<br/>ARM64 ELF"]
     SO --> A["inside an APK (JNI)<br/>performance-critical app code"]

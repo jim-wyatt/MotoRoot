@@ -10,6 +10,7 @@ copyright = "&copy; 2026 Jim Wyatt, MIT. An independent, non-commercial educatio
 repo_url = "https://github.com/jim-wyatt/VedoTom"
 repo_name = "jim-wyatt/VedoTom"
 edit_uri = "edit/main/docs/"
+extra_css = ["stylesheets/extra.css"]
 
 nav = [
   { "Home" = "index.md" },

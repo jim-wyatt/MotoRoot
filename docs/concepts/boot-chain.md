@@ -3,6 +3,7 @@
 Between pressing power and seeing the home screen, the device runs a chain of programs, each one starting and checking the next. Understanding this chain is what makes the preparation procedure make sense: every step either reads a link in the chain or replaces one.
 
 ```mermaid
+%%{init: {"flowchart": {"wrappingWidth": 300}}}%%
 flowchart TB
     PWR([Power on]) --> BROM["BootROM<br/>burned into the chip, immutable"]
     BROM --> PL["Preloader<br/>partition: preloader"]
@@ -30,6 +31,7 @@ flowchart TB
 Each link is cryptographically signed, and the link before it checks that signature before handing over control. The signatures live in the `vbmeta` partitions. This is **Android Verified Boot (AVB)**. Its purpose is integrity: it guarantees the device runs the exact software the vendor shipped, so a corrupted or swapped partition is caught at boot.
 
 ```mermaid
+%%{init: {"flowchart": {"wrappingWidth": 300}}}%%
 flowchart LR
     LK -- "verifies" --> BOOT[boot_a] -- "verifies" --> SYS[system]
     VB[vbmeta_a] -. "holds the hashes" .-> LK
@@ -43,15 +45,12 @@ The bootloader has a flag: **locked** or **unlocked**.
 - **Unlocked**: LK will boot images you provide, even unsigned ones. This is what a **development device** needs: it's how you run your own kernel, a patched `init_boot`, or a custom system image. Google's Pixels expose this directly as an OEM setting; it is a supported, intended capability, not a flaw.
 
 ```mermaid
-stateDiagram-v2
-    [*] --> Locked: factory
-    Locked --> Unlocked: fastboot oem unlock (ERASES device)
-    Unlocked --> Locked: fastboot oem lock (ERASES device)
-    note right of Unlocked
-        Boots images you provide.
-        Shows a warning at boot.
-        Required for system-level dev.
-    end note
+%%{init: {"flowchart": {"wrappingWidth": 300}}}%%
+flowchart TB
+    F([factory]) --> L[Locked]
+    L -- "fastboot oem unlock<br/>(ERASES device)" --> U[Unlocked]
+    U -- "fastboot oem lock<br/>(ERASES device)" --> L
+    U -.- N["Boots images you provide.<br/>Shows a warning at boot.<br/>Required for system-level development."]
 ```
 
 ### Unlocking always erases

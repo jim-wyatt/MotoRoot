@@ -27,6 +27,7 @@ Pull one off the device to look at. Every installed app has a path:
 ## Three tools, three jobs
 
 ```mermaid
+%%{init: {"flowchart": {"wrappingWidth": 300}}}%%
 flowchart LR
     APK[app.apk] --> J["jadx<br/>DEX → readable Java"]
     APK --> A["apktool<br/>decode resources + manifest → smali"]

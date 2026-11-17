@@ -11,6 +11,7 @@ On the phone they appear as block devices:
 ## The ones you'll meet
 
 ```mermaid
+%%{init: {"flowchart": {"wrappingWidth": 300}}}%%
 flowchart TB
     subgraph chain [Boot chain]
         PL[preloader] --> LK["lk_a / lk_b<br/>the bootloader"]
@@ -46,6 +47,7 @@ Most partitions in the boot chain come in pairs: `lk_a`/`lk_b`, `boot_a`/`boot_b
 The phone boots from one slot (the **active** slot). When a system update arrives, it is written to the *other* slot in the background while you keep using the phone. On the next reboot the bootloader switches slots. If the new slot fails to boot, it can fall back to the old one.
 
 ```mermaid
+%%{init: {"flowchart": {"wrappingWidth": 300}}}%%
 flowchart LR
     A["Slot A<br/>(active: you are here)"] -- "update writes here" --> B["Slot B<br/>(inactive)"]
     B -- "reboot switches" --> A2["Slot B becomes active"]
