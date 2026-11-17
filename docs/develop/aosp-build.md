@@ -14,6 +14,8 @@ The AOSP tree is 300–400 GB with its output, needs a case-sensitive Linux file
 
 Requirements that matter: 16 cores and 32 GB of RAM make the first build a matter of hours rather than a day; WSL's default memory cap is half of RAM, which gets the big link steps killed, so `%UserProfile%\.wslconfig` sets `memory=26GB` and `swap=16GB` under `[wsl2]` (apply with `wsl --shutdown`). Disk: the WSL instance here has a 1 TB virtual disk.
 
+Even so, the first build on this machine was killed by the kernel's out-of-memory handler at 76 %: the C++ phase is fine on all 32 cores, but the later phase runs R8 (dex optimisation) as one multi-gigabyte JVM per job, and 32 of them filled the 16 GB of swap. `build-gsi.sh` takes a `JOBS` override for that: `wsl -d Ubuntu -- env JOBS=12 bash dev/aosp/build-gsi.sh` (or the same for `build-after-sync.sh`) resumes the build with 12 jobs and stays inside memory. Nothing is lost by the kill; ninja continues from the steps already done.
+
 ## The pin
 
 `deviceTools.aosp` in `dev/toolchain.json` names the release tag **`android-16.0.0_r4`**, the AOSP release that produced the GSI binary `BP4A.251205.006` validated on this device, so what you build is what was tested, before you change anything. The lunch target is `aosp_arm64-trunk_staging-userdebug`.

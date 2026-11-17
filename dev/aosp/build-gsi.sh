@@ -13,6 +13,10 @@ set -o pipefail
 HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPO_ROOT="$(cd "$HERE/../.." && pwd)"
 AOSP_DIR="${AOSP_DIR:-$HOME/aosp}"
+# Parallel jobs. All cores is right for the C++ phase, but the later R8/d8 phase runs one multi-GB JVM
+# per job; on a 32-core box with WSL capped at 26 GB that filled 16 GB of swap and the kernel killed
+# ninja at 76%. JOBS=12 keeps that phase inside memory; the build resumes where it stopped.
+JOBS="${JOBS:-$(nproc)}"
 LUNCH="$(python3 -c 'import json,sys; print(json.load(open(sys.argv[1]))["deviceTools"]["aosp"]["lunch"])' "$HERE/../toolchain.json")"
 # DEST_DIR, not OUT_DIR: OUT_DIR is AOSP's own build variable and envsetup.sh uses it.
 DEST_DIR="$REPO_ROOT/work/device-tools/gsi/own"
@@ -24,7 +28,8 @@ source build/envsetup.sh
 echo "== lunch $LUNCH"
 lunch "$LUNCH" || { echo "lunch failed; run 'lunch' in $AOSP_DIR to list this tag's targets and fix deviceTools.aosp.lunch" >&2; exit 1; }
 echo "== build started $(date)"
-m -j"$(nproc)" || { echo "build failed" >&2; exit 1; }
+echo "== m -j$JOBS"
+m -j"$JOBS" || { echo "build failed" >&2; exit 1; }
 PRODUCT_OUT="$(get_build_var PRODUCT_OUT)"
 [ -f "$PRODUCT_OUT/system.img" ] || { echo "no system.img in $PRODUCT_OUT" >&2; exit 1; }
 echo "== build finished $(date)"
