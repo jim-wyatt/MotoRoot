@@ -54,9 +54,9 @@ Install one with:
 & $adb reboot
 ```
 
-## The six modules in this project
+## The seven modules in this project
 
-The project ships six modules in `device/modules/`: four that hide directories, for four different reasons, and two that set properties at boot. Each is generated from a manifest in `device/modules/manifests/` by one builder, and you can rebuild all of them with `.\dev\Build-Device.ps1`.
+The project ships seven modules in `device/modules/`: five that hide directories, for five different reasons, and two that set properties at boot. Each is generated from a manifest in `device/modules/manifests/` by one builder, and you can rebuild all of them with `.\dev\Build-Device.ps1`.
 
 ### `wifi-ota-guard` — hide a system app by overlaying nothing
 
@@ -73,6 +73,10 @@ The carrier module leaves a second layer of preinstalled software untouched: par
 ### `google-debloat` — the Google layer, once F-Droid is there
 
 The optional fourth overlay hides 28 Google packages: the Play Store and its auto-install hooks, the Google app and its hotword services, the consumer apps (Chrome, Gmail, YouTube, Maps, Photos and the rest) and the account extras. Play services, the keyboard, WebView and the apps with a system role stay. It is the one module whose installation has a prerequisite step, because the Store had updated some of these apps into `/data`; [Make it an engineering device](../device/dev-setup.md) explains that and lists everything it keeps.
+
+### `vendor-extras-debloat` — the rest of the vendor layer
+
+The fifth overlay hides the 58 carrier, partner and Motorola consumer packages that the first three left behind, plus Motorola's device-management and enterprise agents and Google's Mainline telemetry. Most were already uninstalled for the first user; hiding them keeps them from returning. The camera, audio, face unlock, launcher and every hardware service stay; the list and the reasoning are on [Make it an engineering device](../device/dev-setup.md).
 
 ### Script modules
 

@@ -130,6 +130,25 @@ foreach ($p in 'com.android.vending','com.google.android.googlequicksearchbox','
 What you'll notice afterwards: the launcher's search bar goes inert (it was the Google app), there is no browser until you install one from F-Droid (Fennec is Firefox; WebView still renders in-app pages), and the Google system apps that remain stay at their factory versions, since the Store that updated them is gone. Disable the module and reboot to get all of it back; the Store then re-applies its updates on its own.
 
 
+### The rest of the vendor layer
+
+The seventh module, `vendor-extras-debloat`, finishes the job on the Motorola side: 58 packages in `manifests/vendor-extras-debloat.json`, most of them already uninstalled for the first user by the carrier variant and therefore invisible, but still on the partitions and ready to return for a new user or after a reset.
+
+| Group | What goes |
+| --- | --- |
+| carrier-partner | AT&T, Cricket, Tracfone, Verizon, T-Mobile, Spectrum and Comcast leftovers: device help, voicemail, cloud, account apps, feeds, carrier config and settings extensions, OMA provisioning, call redirection, the AT&T Wi-Fi calling helper |
+| partner-stubs | the Facebook and Amazon installers, Glance lock-screen content, two weather stubs, the app-cloud setup stub |
+| motorola-apps | Game Mode, Moto, Spaces, Smart Feed, Guide Me, Help and Feedback Assistant, Battery Care, FM Radio, Audio Recorder, the Time & Weather widget, live wallpapers, Personalize, Secure Vault, Security Hub, FreeForm, demo mode, the factory test app, and a few regional and cloud adapters |
+| telemetry-enterprise | Motorola's 3c device-management agent (sibling of the updater that `wifi-ota-guard` hides), the ThinkShield enterprise services, Google's Mainline telemetry |
+
+What stays: the camera, Dolby and aptX audio, face unlock, the launcher and its config, Moto Secure core and the Security Hub extension, gesture and display services, the MediaTek telephony, IMS and location services, the Trustonic TEE bridge, thermal, and the settings providers. Motorola's AI services and Android System Intelligence are left installed as well; hide them with a manifest of your own if you don't want them.
+
+```powershell
+& $adb push .\device\modules\vendor-extras-debloat.zip /data/local/tmp/vendor-extras-debloat.zip
+& $adb shell su -c 'magisk --install-module /data/local/tmp/vendor-extras-debloat.zip'
+& $adb reboot
+```
+
 ## Instrumentation and tracing
 
 The device is now ready for the two tools that make a rooted phone worth having: [Frida](../develop/instrumentation.md) to hook and trace any process, and [Perfetto](../develop/tracing.md) for system-wide traces. Both are set up by the bootstrap and driven from the dev shell.
@@ -147,4 +166,5 @@ Once this page is done, day-to-day app work belongs in Android Studio; this repo
 & $adb uninstall com.termux                                           # removes Termux and its Debian
 & $adb uninstall org.fdroid.fdroid                                    # removes F-Droid (apps it installed stay)
 & $adb shell su -c 'touch /data/adb/modules/google_debloat/disable'   # Google apps and the Play Store return after a reboot
+& $adb shell su -c 'touch /data/adb/modules/vendor_extras_debloat/disable'   # carrier, partner and Motorola extras return after a reboot
 ```
