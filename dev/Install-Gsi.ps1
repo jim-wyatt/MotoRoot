@@ -73,7 +73,18 @@ $Remote = "/storage/emulated/0/Download/$($Spec.name)"
 function Verified-Zip { (Test-Path $Zip) -and ($Image -or (Sha256 $Zip) -eq $Spec.sha256) }
 
 function Sha256($p) { (Get-FileHash -LiteralPath $p -Algorithm SHA256).Hash.ToLower() }
-function Root([string]$Command) { (& $Adb shell "su -c '$Command'" 2>&1) -join "`n" }   # quoted so compound commands stay root
+# Root shell, quoted so compound commands stay root. Two su flavours: Magisk's on the stock system
+# takes -c; AOSP's userdebug su in a GSI (yours included) takes "su 0 <command>" and rejects -c
+# with "invalid uid/gid '-c'". Try Magisk's form, fall back to AOSP's, and remember which worked.
+$script:SuAosp = $false
+function Root([string]$Command) {
+    if (-not $script:SuAosp) {
+        $out = (& $Adb shell "su -c '$Command'" 2>&1) -join "`n"
+        if ($out -notmatch "invalid uid/gid") { return $out }
+        $script:SuAosp = $true
+    }
+    (& $Adb shell "su 0 sh -c '$Command'" 2>&1) -join "`n"
+}
 function Prop([string]$Name) { ((& $Adb shell getprop $Name) -join '').Trim() }
 function GsiStatus { (Root 'gsi_tool status').Trim() }
 function Require-Device {

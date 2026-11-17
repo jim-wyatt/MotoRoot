@@ -56,6 +56,12 @@ PRODUCT_PRODUCT_PROPERTIES += \
 PRODUCT_PRODUCT_PROPERTIES += \
     persist.sys.timezone=America/New_York
 
+# Charge limit in percent, as on stock with Battery protection on; 100 means no limit. Applied by
+# init.vedotom.rc (firstboot/) at boot and on every change. A value set with setprop is stored in
+# /data and wins over this default.
+PRODUCT_PRODUCT_PROPERTIES += \
+    persist.vedotom.charge_limit=80
+
 # Our look and defaults: dark theme, gesture navigation, our wallpaper (from which Material You
 # derives the system colours), Fossify Phone and Messages as the default dialer and SMS app.
 # See overlay/ (a static framework RRO).

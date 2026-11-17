@@ -108,6 +108,7 @@ $aospIcons = Sh 'pm query-activities -a android.intent.action.MAIN -c android.in
     LogBuffer   = Sh 'logcat -g -b main'
     TimeZone    = Sh 'getprop persist.sys.timezone'
     AospIcons   = if ($aospIcons) { "still in the launcher: $aospIcons" } else { 'hidden (Files, keyboard)' }
+    ChargeLimit = if ($cl = Sh "su 0 cat $State/charge-limit") { "$cl; now blocking=$(Sh 'su 0 cat /sys/module/qpnp_adaptive_charge/parameters/blocking'), battery $(Sh 'cat /sys/class/power_supply/battery/capacity')%" } else { 'not applied yet (no charge-limit file)' }
     CrashLog    = if ($crashes) { "$crashes entries: check adb logcat -b crash" } else { 'empty' }
     DataFree    = ((Sh 'df -h /data | tail -1') -split '\s+')[3]
 } | Format-List

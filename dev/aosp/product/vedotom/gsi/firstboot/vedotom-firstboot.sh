@@ -21,6 +21,30 @@ note() {
 }
 failed() { note "$* failed; will retry next boot"; failures=$((failures + 1)); }
 
+# Charge-limit mode (init.vedotom.rc starts it after boot and whenever the property changes):
+# write persist.vedotom.charge_limit to qpnp_adaptive_charge's upper_limit, the same single write
+# Motorola's health HAL makes on stock. The module's own setter validates the value (1..100 above
+# lower_limit, which stays -1: auto mode, as on stock); this checks it too. Reading parameters of
+# the vendor charger modules in bulk has panicked this phone's kernel, so this touches two named
+# files only: it writes upper_limit and never reads it (or lower_limit) back, and it checks the
+# result through blocking, a read-only parameter with its own getter, which reports 1 while the
+# module holds charging off. The result goes to the log and to $STATE/charge-limit for
+# Deploy-Image.ps1. Verified by hand on the device first (2026-11-17): at 100% on the charger,
+# blocking went 0 -> 1 and the battery status to "Not charging", as on stock with protection on.
+if [ "$1" = charge-limit ]; then
+    mod=/sys/module/qpnp_adaptive_charge/parameters
+    result() { note "charge limit: $*"; echo "$*" > "$STATE/charge-limit"; exit 0; }
+    v="$(getprop persist.vedotom.charge_limit)"
+    case "$v" in
+        ''|*[!0-9]*) result "'$v' is not a number; left unchanged" ;;
+    esac
+    { [ "$v" -lt 50 ] || [ "$v" -gt 100 ]; } && result "$v is outside 50..100; left unchanged"
+    [ -e "$mod/upper_limit" ] || result "qpnp_adaptive_charge not present; left unchanged"
+    echo "$v" > "$mod/upper_limit" 2>/dev/null || result "writing $v to upper_limit failed"
+    sleep 30    # the module re-evaluates on its next battery update
+    result "upper_limit=$v, blocking=$(cat "$mod/blocking" 2>/dev/null) (1 = holding charge off)"
+fi
+
 echo running > "$STATUS"
 note "start"
 
