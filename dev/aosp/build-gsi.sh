@@ -39,5 +39,7 @@ mkdir -p "$DEST_DIR"
 cp "$PRODUCT_OUT/system.img" "$DEST_DIR/system.img"
 [ -f "$PRODUCT_OUT/vbmeta.img" ] && cp "$PRODUCT_OUT/vbmeta.img" "$DEST_DIR/vbmeta.img"
 cp "$PRODUCT_OUT/system/build.prop" "$DEST_DIR/build.prop" 2>/dev/null || true
+# A checksum beside the image, so a copy on another machine can be verified (Get-RemoteImage.ps1).
+(cd "$DEST_DIR" && sha256sum system.img > system.img.sha256)
 echo "== image: $DEST_DIR/system.img ($(du -h "$DEST_DIR/system.img" | cut -f1))"
 echo "   fingerprint: $(grep '^ro.system.build.fingerprint=' "$DEST_DIR/build.prop" 2>/dev/null | cut -d= -f2)"

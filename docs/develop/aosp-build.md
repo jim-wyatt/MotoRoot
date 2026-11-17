@@ -89,6 +89,39 @@ Both changes were confirmed on the device the same evening: the image boots with
 
 The inner loop is: edit under `~/aosp` (in WSL; a VS Code *WSL* window is handy for that), `build-gsi.sh` again, `Install-Gsi.ps1 -Action Discard` then `-Action Install -Image …` and `-Action Boot`. Good first targets: `frameworks/base` for the framework, `packages/apps/Settings`, `packages/apps/Launcher3`, `system/sepolicy` for policy; `build/make/target/product/gsi_release.mk` and `aosp_arm64.mk` for what goes into the image. `m <module>` builds one module; `m` builds the image.
 
+## Building on one machine, installing from another
+
+The machine that builds and the machine the phone is plugged into don't have to be the same. The project's own setup builds on a desktop in another office and installs from the PC beside the phone; the two reach each other over a site-to-site VPN. The build machine runs the AOSP tree as described above. The install machine needs only the Windows bootstrap, not WSL or the tree.
+
+`build-gsi.sh` writes `system.img.sha256` beside the image. On the install machine, `dev\Get-RemoteImage.ps1` copies the newest image from the build machine over SSH, using Windows' built-in OpenSSH client:
+
+1. It reads the remote checksum first and stops if the local image already matches.
+2. It copies into a `.part` file and keeps it only when its SHA-256 matches.
+3. It keeps the image it replaces as `system.prev.img`.
+
+Then install as usual from the stock system.
+
+One-time setup on the **build machine**, in an elevated PowerShell:
+
+```powershell
+Add-WindowsCapability -Online -Name OpenSSH.Server~~~~0.0.1.0
+Set-Service sshd -StartupType Automatic; Start-Service sshd
+# Authorise the install machine's public key (~\.ssh\id_ed25519.pub there). For an account in
+# Administrators, Windows' sshd reads this one file, which must be readable by admins and SYSTEM only:
+Add-Content C:\ProgramData\ssh\administrators_authorized_keys '<the install machine''s public key line>'
+icacls C:\ProgramData\ssh\administrators_authorized_keys /inheritance:r /grant '*S-1-5-32-544:F' /grant 'SYSTEM:F'
+```
+
+The first command also creates a firewall rule that opens port 22 to any address. Narrow it to the addresses the install machine connects from, with `Set-NetFirewallRule -Name OpenSSH-Server-In-TCP -RemoteAddress ...`. Once key login works, set `PasswordAuthentication no` in `C:\ProgramData\ssh\sshd_config` and restart `sshd`, so the server accepts keys only.
+
+Then, once, on the **install machine**:
+
+```powershell
+.\dev\Get-RemoteImage.ps1 -BuildHost <address> -User <account> -RemoteRepo C:/path/to/VedoTom -Save
+```
+
+The address, account and path are saved in `work\remote-build.json`, which is git-ignored, because they describe your network rather than the project. After that, `.\dev\Get-RemoteImage.ps1` fetches and `-Check` only reports whether a new image is waiting. Images are test-keyed builds: copy them only between your own machines, never through a public service.
+
 ## Things to know
 
 - **Signing.** Your image is signed with AOSP's public test keys, not Google's. On this unlocked device the DSU installer accepted Google's image while unable to extract a trusted key, and `gsid` doesn't enforce trusted keys in the `orange` boot state, so a test-keyed image is expected to install; the first `-Action Install` confirms it. Never ship or publish a test-keyed image as if it were a release.
