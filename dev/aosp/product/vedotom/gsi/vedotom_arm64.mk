@@ -50,11 +50,10 @@ PRODUCT_PRODUCT_PROPERTIES += \
 PRODUCT_PACKAGES += \
     VedoTomFrameworkOverlay
 
-# Fossify Launcher as the home screen. Launcher3QuickStep stays installed because SystemUI binds
-# its quickstep service for gesture navigation and recents; this file makes Fossify the preferred
-# HOME activity at first boot (PackageManager reads /product/etc/preferred-apps).
-PRODUCT_PACKAGES += \
-    VedoTomPreferredApps
+# Fossify Launcher is the home screen: the first-boot service assigns it the HOME role.
+# Launcher3QuickStep stays installed because SystemUI binds its quickstep service for gesture
+# navigation and recents. (A preferred-apps file was tried first; with two equal-priority HOME
+# activities the role controller does not reliably honour it.)
 
 # The apps. Prebuilt APKs from F-Droid (hash- and signer-pinned in dev/toolchain.json, copied into
 # prebuilt/ by apply-local.sh), declared in prebuilt/Android.bp. The Fossify suite replaces AOSP's

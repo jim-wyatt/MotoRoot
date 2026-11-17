@@ -23,7 +23,20 @@ for apk in /product/etc/preload/*.apk; do
     fi
 done
 
-# 2. Fossify app icons in teal, to match the image's wallpaper and accent (the suite's default is
+# 2. Fossify Launcher as the home screen. It and AOSP's Launcher3 (which stays for SystemUI's
+#    gesture navigation and recents) answer HOME with equal priority, so the role controller's
+#    fallback picks neither and Android shows a chooser. Assign the HOME role once, explicitly; a
+#    launcher the user picks later is respected.
+if [ ! -e "$STATE/home-role" ] && pm path org.fossify.home >/dev/null 2>&1; then
+    if cmd role add-role-holder android.app.role.HOME org.fossify.home 0 >/dev/null 2>&1; then
+        touch "$STATE/home-role"
+        log -t "$TAG" "HOME role -> org.fossify.home"
+    else
+        log -t "$TAG" "HOME role assignment failed; will retry next boot"
+    fi
+fi
+
+# 3. Fossify app icons in teal, to match the image's wallpaper and accent (the suite's default is
 #    green). Inside the apps Fossify already follows the system's Material You colours on
 #    Android 12+; the launcher icon colour is a separate per-app choice, implemented as one
 #    activity-alias per colour (SplashActivity.<Colour>) plus two preferences the app reconciles

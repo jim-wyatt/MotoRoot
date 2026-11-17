@@ -122,7 +122,6 @@ android_system_image {
 
         // VedoTom (vedotom_arm64.mk)
         "VedoTomFrameworkOverlay",
-        "VedoTomPreferredApps",
         "FossifyLauncher",
         "FossifyGallery",
         "FossifyFileManager",
