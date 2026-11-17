@@ -44,6 +44,13 @@ PRODUCT_NO_BIONIC_PAGE_SIZE_MACRO := true
 PRODUCT_PRODUCT_PROPERTIES += \
     debug.sf.nobootanimation=1
 
+# Default time zone. Without a SIM the telephony suggestion is not applied (the US has several
+# offsets), and AOSP without GMS has no location time-zone provider, so the device would otherwise
+# start in GMT. A persist.* value in build.prop is only the default: a zone set in Settings or
+# detected later is stored in /data and wins. Change it here for another region.
+PRODUCT_PRODUCT_PROPERTIES += \
+    persist.sys.timezone=America/New_York
+
 # Our look and defaults: dark theme, gesture navigation, our wallpaper (from which Material You
 # derives the system colours), Fossify Phone and Messages as the default dialer and SMS app.
 # See overlay/ (a static framework RRO).
@@ -55,10 +62,12 @@ PRODUCT_PACKAGES += \
 # navigation and recents. (A preferred-apps file was tried first; with two equal-priority HOME
 # activities the role controller does not reliably honour it.)
 
-# The apps. Prebuilt APKs from F-Droid (hash- and signer-pinned in dev/toolchain.json, copied into
-# prebuilt/ by apply-local.sh), declared in prebuilt/Android.bp. The Fossify suite replaces AOSP's
-# Calendar, Camera2, Contacts, DeskClock, Dialer, Gallery2, Music, messaging and QuickSearchBox,
-# which vedotom_handheld_product.mk and vedotom_product.mk leave out.
+# The apps: the Fossify suite and nothing else on top of AOSP. Prebuilt APKs from F-Droid (hash-
+# and signer-pinned in dev/toolchain.json, copied into prebuilt/ by apply-local.sh), declared in
+# prebuilt/Android.bp. They replace AOSP's Calendar, Camera2, Contacts, DeskClock, Dialer,
+# Gallery2, Music, messaging and QuickSearchBox, which vedotom_handheld_product.mk and
+# vedotom_product.mk leave out. There is no web browser: Browser2 stays out, and WebView still
+# renders inside apps. Nothing updates these apps on the device; a new image with new pins does.
 PRODUCT_PACKAGES += \
     FossifyLauncher \
     FossifyGallery \
@@ -75,17 +84,10 @@ PRODUCT_PACKAGES += \
     FossifyCamera \
     FossifyVoiceRecorder \
     FossifyPaint \
-    FossifyKeyboard \
-    FDroid
+    FossifyKeyboard
 
-# Organic Maps and Fennec F-Droid (the browser, in place of AOSP's Browser2) ship their native
-# libraries compressed, which a system-image prebuilt cannot keep without re-signing (and a
-# re-signed app could no longer be updated by F-Droid). They are therefore carried as preloads:
-# the APKs sit in /product/etc/preload (prebuilt_etc modules; the build refuses APKs in
-# PRODUCT_COPY_FILES) and the first-boot service installs them as ordinary apps, with F-Droid
-# recorded as the installer, keeping their F-Droid signatures.
+# The first-boot service (firstboot/): HOME role for Fossify Launcher, the development settings,
+# the AOSP Files icon hidden, teal Fossify icons, and 16 MiB log buffers on every boot.
 PRODUCT_PACKAGES += \
-    OrganicMapsPreload \
-    FennecPreload \
     vedotom-firstboot \
     init.vedotom.rc

@@ -1,53 +1,74 @@
 #!/system/bin/sh
 # VedoTom first-boot service (see init.vedotom.rc). Root, after boot completes, every boot;
 # everything here checks a marker before it acts, so later boots cost nothing.
+#
+# It reports in two places that outlast the log buffers: $STATE/log gets every line with a time,
+# and $STATE/status holds one line, "running" while it works and "done failures=<n>" at the end.
+# Deploy-Image.ps1 reads both (as root: adb shell su 0 cat ...). The same lines go to logcat
+# under the tag vedotom-firstboot.
 
 TAG=vedotom-firstboot
 STATE=/data/local/vedotom-firstboot
+LOG="$STATE/log"
+STATUS="$STATE/status"
 mkdir -p "$STATE"
-log -t "$TAG" "start"
+failures=0
+restart_launcher=0
 
-# 1. Preloaded apps: APKs carried in /product/etc/preload are installed as ordinary apps on first
-#    boot, with F-Droid recorded as installer so it keeps them updated. They keep the publisher's
-#    signature, which a system-image prebuilt could not have done for an APK with compressed
-#    native libraries (Organic Maps).
-for apk in /product/etc/preload/*.apk; do
-    [ -e "$apk" ] || continue
-    marker="$STATE/$(basename "$apk").installed"
-    [ -e "$marker" ] && continue
-    if pm install -i org.fdroid.fdroid "$apk" >/dev/null 2>&1; then
-        log -t "$TAG" "installed $apk"
-        touch "$marker"
-    else
-        log -t "$TAG" "install of $apk failed; will retry next boot"
-    fi
-done
+note() {
+    log -t "$TAG" "$*"
+    echo "$(date '+%Y-%m-%d %H:%M:%S') $*" >> "$LOG"
+}
+failed() { note "$* failed; will retry next boot"; failures=$((failures + 1)); }
 
-# 2. Fossify Launcher as the home screen. It and AOSP's Launcher3 (which stays for SystemUI's
+echo running > "$STATUS"
+note "start"
+
+# 1. Fossify Launcher as the home screen. It and AOSP's Launcher3 (which stays for SystemUI's
 #    gesture navigation and recents) answer HOME with equal priority, so the role controller's
 #    fallback picks neither and Android shows a chooser. Assign the HOME role once, explicitly; a
 #    launcher the user picks later is respected.
 if [ ! -e "$STATE/home-role" ] && pm path org.fossify.home >/dev/null 2>&1; then
     if cmd role add-role-holder android.app.role.HOME org.fossify.home 0 >/dev/null 2>&1; then
         touch "$STATE/home-role"
-        log -t "$TAG" "HOME role -> org.fossify.home"
+        note "HOME role -> org.fossify.home"
     else
-        log -t "$TAG" "HOME role assignment failed; will retry next boot"
+        failed "HOME role assignment"
     fi
 fi
 
-# 2b. Fennec F-Droid (a preload from step 1) as the default browser, so links from other apps
-#     open in it without a chooser. Once, like the HOME role; a browser the user picks later wins.
-if [ ! -e "$STATE/browser-role" ] && pm path org.mozilla.fennec_fdroid >/dev/null 2>&1; then
-    if cmd role add-role-holder android.app.role.BROWSER org.mozilla.fennec_fdroid 0 >/dev/null 2>&1; then
-        touch "$STATE/browser-role"
-        log -t "$TAG" "BROWSER role -> org.mozilla.fennec_fdroid"
+# 2. Development-target settings, the same values dev\Set-DevSettings.ps1 applies on the stock
+#    system: no animations (UI tests expect it, screens settle at once), no verification scan of
+#    adb installs, and no expiry of an authorised PC's ADB key. Set once, as defaults: a value
+#    changed later in Developer options is kept. SettingsProvider has resource defaults for only
+#    two of the five in this tag, so they are all set here, in one place.
+if [ ! -e "$STATE/dev-settings" ]; then
+    ok=1
+    for kv in window_animation_scale=0 transition_animation_scale=0 animator_duration_scale=0 \
+              verifier_verify_adb_installs=0 adb_allowed_connection_time=0; do
+        k="${kv%%=*}"; v="${kv#*=}"
+        settings put global "$k" "$v" >/dev/null 2>&1
+        [ "$(settings get global "$k" 2>/dev/null)" = "$v" ] || { ok=0; note "setting $k=$v did not stick"; }
+    done
+    if [ "$ok" = 1 ]; then touch "$STATE/dev-settings"; note "development settings applied"
+    else failed "development settings"; fi
+fi
+
+# 3. Hide the AOSP Files icon. Fossify File Manager is the file app; DocumentsUI stays installed
+#    because it is the system file picker behind every open, get-content and save dialog
+#    (.picker.PickActivity), Fossify's included. Only its launcher entry, the activity-alias
+#    .LauncherActivity (not gated on any resource in this tag), is disabled. Once: the user can
+#    enable it again with pm enable.
+if [ ! -e "$STATE/files-icon" ] && pm path com.android.documentsui >/dev/null 2>&1; then
+    if pm disable com.android.documentsui/.LauncherActivity >/dev/null 2>&1; then
+        touch "$STATE/files-icon"; restart_launcher=1
+        note "AOSP Files icon hidden (DocumentsUI kept as the file picker)"
     else
-        log -t "$TAG" "BROWSER role assignment failed; will retry next boot"
+        failed "hiding the AOSP Files icon"
     fi
 fi
 
-# 3. Fossify app icons in teal, to match the image's wallpaper and accent (the suite's default is
+# 4. Fossify app icons in teal, to match the image's wallpaper and accent (the suite's default is
 #    green). Inside the apps Fossify already follows the system's Material You colours on
 #    Android 12+; the launcher icon colour is a separate per-app choice, implemented as one
 #    activity-alias per colour (SplashActivity.<Colour>) plus two preferences the app reconciles
@@ -56,13 +77,12 @@ fi
 #    colour the user picks later is never overridden.
 ICON_ALIAS=Teal
 ICON_COLOR=-16746133        # md_teal_700, #ff00796b, as the signed int Android stores
-changed=0
 for pkg in $(pm list packages org.fossify. | sed 's/^package://'); do
     marker="$STATE/$pkg.icon"
     [ -e "$marker" ] && continue
     data="/data/data/$pkg"
     [ -d "$data" ] || continue
-    pm enable "$pkg/$pkg.activities.SplashActivity.$ICON_ALIAS" >/dev/null 2>&1 || continue
+    pm enable "$pkg/$pkg.activities.SplashActivity.$ICON_ALIAS" >/dev/null 2>&1 || { failed "icon colour for $pkg"; continue; }
     pm disable "$pkg/$pkg.activities.SplashActivity.Green" >/dev/null 2>&1
     am force-stop "$pkg"
     prefs="$data/shared_prefs"; f="$prefs/Prefs.xml"; uid=$(stat -c %u "$data")
@@ -75,11 +95,13 @@ for pkg in $(pm list packages org.fossify. | sed 's/^package://'); do
     fi
     chown -R "$uid:$uid" "$prefs"; chmod 771 "$prefs"; chmod 660 "$f"
     restorecon -RF "$prefs" >/dev/null 2>&1
-    touch "$marker"; changed=1
-    log -t "$TAG" "icon colour $ICON_ALIAS for $pkg"
+    touch "$marker"; restart_launcher=1
+    note "icon colour $ICON_ALIAS for $pkg"
 done
-# The launcher caches icons; restart it so the new ones show.
-[ "$changed" = 1 ] && am force-stop org.fossify.home
 
-log -t "$TAG" "done"
+# The launcher caches icons and its app list; restart it so the changes above show.
+[ "$restart_launcher" = 1 ] && am force-stop org.fossify.home
+
+note "done failures=$failures"
+echo "done failures=$failures" > "$STATUS"
 exit 0

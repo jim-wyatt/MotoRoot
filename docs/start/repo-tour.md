@@ -19,7 +19,6 @@ VedoTom/
 │   ├── Trace-Device.ps1       records a Perfetto trace into work\traces
 │   ├── Dump-DeviceInfo.ps1    hardware inventory into work\device-info (private)
 │   ├── Install-Gsi.ps1        boots Google's AOSP GSI (or your own) through DSU
-│   ├── Push-OfflineMaps.ps1   Organic Maps regions: download, verify, push to the phone
 │   ├── Get-RemoteImage.ps1    fetch a verified image from a separate build machine over SSH
 │   ├── Deploy-Image.ps1       fetch, install and boot an image, restore maps, report
 │   ├── aosp/                  AOSP in WSL: setup, sync, verify-tree, apply-local, build-gsi, build-after-sync

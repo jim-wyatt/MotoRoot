@@ -11,3 +11,18 @@ service vedotom_firstboot /product/bin/vedotom-firstboot
 
 on property:sys.boot_completed=1
     start vedotom_firstboot
+
+# 16 MiB log buffers (logd's default is 256 KiB, which the vendor's log spam rolls over in
+# minutes). logd reads ro.logd.size / persist.logd.size at start only on automotive and desktop
+# hardware types (system/logging/logd/LogSize.cpp), so a property alone does nothing on a phone;
+# the size has to be set at runtime, as logcat -G does. logd sets logd.ready when it is up and
+# clears it when it restarts, so this runs on every boot, early, and again after a logd restart.
+service vedotom_logsize /system/bin/logcat -b main,system,crash,events,radio,kernel -G 16M
+    user root
+    group root log
+    seclabel u:r:su:s0
+    oneshot
+    disabled
+
+on property:logd.ready=true
+    start vedotom_logsize

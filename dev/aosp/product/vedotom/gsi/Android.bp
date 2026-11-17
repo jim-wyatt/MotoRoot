@@ -37,8 +37,8 @@ vedotom_gsi_symlinks = [
     },
 ]
 
-// android_gsi_defaults without Browser2, Camera2, Dialer and messaging (Fennec F-Droid, Fossify
-// Camera, Phone, Messages).
+// android_gsi_defaults without Browser2 (no browser in the image), Camera2, Dialer and messaging
+// (Fossify Camera, Phone, Messages).
 android_filesystem_defaults {
     name: "vedotom_gsi_defaults",
     defaults: [
@@ -138,9 +138,6 @@ android_system_image {
         "FossifyVoiceRecorder",
         "FossifyPaint",
         "FossifyKeyboard",
-        "FDroid",
-        "OrganicMapsPreload",
-        "FennecPreload",
         "vedotom-firstboot",
         "init.vedotom.rc",
     ] + select(product_variable("debuggable"), {

@@ -72,19 +72,9 @@ Open it, let it download the repository index, and install apps from there. From
 
 - **Android's "install unknown apps" prompt** appears the first time F-Droid installs something. That is the per-app permission F-Droid needs in order to act as an installer; granting it to F-Droid is the point.
 
-#### Installing from F-Droid without touching the screen, and offline maps over ADB
+#### Installing from F-Droid without touching the screen
 
-F-Droid has no command line, but its repository is verifiable by hand, which is how Organic Maps (offline OpenStreetMap maps, Apache-2.0) went onto the validated device: download `https://f-droid.org/repo/entry.jar`, check its signature with `jarsigner -verify` and `keytool -printcert -jarfile` against F-Droid's certificate (the same `43238d51…` as the client), download `index-v2.json` and check it against the SHA-256 the signed entry names, then take the package's APK hash and signer from the index and compare them with the downloaded APK (`sha256sum`, `apksigner verify --print-certs`). Install with `& $adb install -i org.fdroid.fdroid <apk>` so F-Droid records itself as the installer and keeps the app updated.
-
-Organic Maps keeps its region catalogue in the APK (`assets/countries.json`: ids, sizes, and the data version `v`) and serves the files from `https://cdn.organicmaps.app/maps/<v>/<id>.mwm`; they belong in `/sdcard/Android/data/app.organicmaps/files/<v>/`. Three things bite when pushing a whole country over ADB: region ids can contain spaces (`US_West Virginia`), `adb` reads standard input and empties a `while read` loop unless every call gets `</dev/null`, and the ADB shell user cannot write into another app's `Android/data` folder on Android 16, so push to `/data/local/tmp` and let root `mv` the file in and `chown` it to the app's uid with group `ext_data_rw`. The 154-file United States set (15.5 GB) went on that way in about 25 minutes; keep the downloaded files in `work\` so a second device is a push, not a download.
-
-`dev\Push-OfflineMaps.ps1` does all of it: it reads the catalogue from the pinned Organic Maps APK, downloads the named regions into `work\organicmaps\<version>\` (resumable, each file checked against the catalogue size), and pushes them with the root move, on the stock system or on this project's own image:
-
-```powershell
-.\dev\Push-OfflineMaps.ps1 -List                                 # every country with its size
-.\dev\Push-OfflineMaps.ps1 -Region 'United States of America'      # download what is missing, then push
-.\dev\Push-OfflineMaps.ps1 -Region Iceland,Norway -DownloadOnly    # fetch now, push later
-```
+F-Droid has no command line, but its repository is verifiable by hand, which is how this project pins the apps it takes from F-Droid (the client itself and the Fossify suite in `dev/toolchain.json`): download `https://f-droid.org/repo/entry.jar`, check its signature with `jarsigner -verify` and `keytool -printcert -jarfile` against F-Droid's certificate (the same `43238d51…` as the client), download `index-v2.json` and check it against the SHA-256 the signed entry names, then take the package's APK hash and signer from the index and compare them with the downloaded APK (`sha256sum`, `apksigner verify --print-certs`). Install with `& $adb install -i org.fdroid.fdroid <apk>` so F-Droid records itself as the installer and keeps the app updated.
 
 ### Hiding the Google apps
 

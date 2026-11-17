@@ -84,8 +84,6 @@ site/
 build-update/
 build-cleanup/
 release/
-# ...but not the AOSP product's release-config contribution (textproto only, no binaries).
-!dev/aosp/product/vedotom/gsi/release/
 .gradle/
 .kotlin/
 local.properties

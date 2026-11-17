@@ -5,21 +5,19 @@
 // certificate pins in dev/toolchain.json (apks.txt maps each module's file to its pinned name).
 // They are installed as they came from F-Droid: `preprocessed: true` tells Soong the APK is
 // already zip-aligned with its native libraries stored uncompressed, so it is checked and copied
-// rather than rewritten, and the publisher's signature stays intact (which is what lets F-Droid
-// update these apps later). Dex pre-optimisation is off for the same reason.
+// rather than rewritten, and the publisher's signature stays intact. Dex pre-optimisation is off
+// for the same reason.
 
 package {
     default_applicable_licenses: ["device_vedotom_gsi_prebuilt_license"],
 }
 
-// The apps are GPL-3.0 (Fossify suite, F-Droid client); the declaration here covers the build
-// glue only. Each app's own license travels inside its APK.
+// The apps are GPL-3.0 (the Fossify suite); the declaration here covers the build glue only. Each app's own license travels inside its APK.
 license {
     name: "device_vedotom_gsi_prebuilt_license",
     visibility: [":__subpackages__"],
     license_kinds: [
         "SPDX-license-identifier-GPL-3.0-only",
-        "SPDX-license-identifier-Apache-2.0",
     ],
 }
 
@@ -149,34 +147,4 @@ android_app_import {
     preprocessed: true,
     product_specific: true,
     dex_preopt: { enabled: false },
-}
-
-// Organic Maps (Apache-2.0) is not imported as an app: its native libraries are compressed and
-// Soong would have to rewrite (and so re-sign) the APK. It is carried as a plain file under
-// /product/etc/preload and installed by the first-boot service, signature intact.
-prebuilt_etc {
-    name: "OrganicMapsPreload",
-    src: "OrganicMaps.apk",
-    filename: "OrganicMaps.apk",
-    sub_dir: "preload",
-    product_specific: true,
-}
-
-android_app_import {
-    name: "FDroid",
-    apk: "FDroid.apk",
-    preprocessed: true,
-    product_specific: true,
-    dex_preopt: { enabled: false },
-}
-
-// Fennec F-Droid (MPL-2.0), F-Droid's build of Firefox for Android: the image's web browser in
-// place of AOSP's Browser2. Its native libraries are compressed too, so it is a preload for the
-// same reason as Organic Maps.
-prebuilt_etc {
-    name: "FennecPreload",
-    src: "Fennec.apk",
-    filename: "Fennec.apk",
-    sub_dir: "preload",
-    product_specific: true,
 }

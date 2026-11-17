@@ -107,9 +107,9 @@ $fp = (Select-String -Path (Join-Path $Dest 'build.prop') -Pattern '^ro.system.b
 $mb = [math]::Round((Get-Item $img).Length / 1MB)
 Write-Host "Fetched and verified: $mb MB in $([math]::Round($t.Elapsed.TotalSeconds)) s, fingerprint $fp" -ForegroundColor Green
 Write-Host @"
-Next, from the stock system (reboot first if the phone is in a DSU image). Installing replaces the image's data:
+Next, .\dev\Deploy-Image.ps1 -NoFetch does the rest. By hand, from the stock system (reboot first if the
+phone is in a DSU image); installing replaces the image's data:
   .\dev\Install-Gsi.ps1 -Action Discard
   .\dev\Install-Gsi.ps1 -Action Install -Image "$img" -UserdataGiB 24
   .\dev\Install-Gsi.ps1 -Action Boot
-  .\dev\Push-OfflineMaps.ps1 -Region 'United States of America'
 "@

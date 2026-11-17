@@ -17,6 +17,8 @@ Work these on the Legion.
 
 ## 1. Make it match the clean development baseline (priority)
 
+**Done for the next image (2026-11-17), awaiting validation on the device.** All four points below are in place. Two details differ from the suggestions: the development settings are set by the first-boot service, not a SettingsProvider overlay, because SettingsProvider has resource defaults for only two of the five in this tag; and the log size is set by an init rule running `logcat -G 16M` on `logd.ready`, because logd ignores `ro.logd.size` and `persist.logd.size` at start on a phone (it reads them only on automotive and desktop hardware types). [What's in the image](aosp-build.md#whats-in-the-image) describes the result.
+
 The stock system was reduced to a clean development baseline on 2026-11-17 (commits 5300f04 and f895d9b). The image and the deploy loop haven't caught up yet.
 
 - **Decided 2026-11-17: the image keeps only the Fossify suite on top of AOSP.** Organic Maps, Fennec F-Droid and the F-Droid client come out. That means removing:
@@ -33,6 +35,8 @@ The stock system was reduced to a clean development baseline on 2026-11-17 (comm
 - **Log buffers are 256 KiB.** On the stock system they're 16 MiB. In the image, the first-boot service's log lines had already rotated out of every buffer four minutes after boot. Set `ro.logd.size=16M` (or `persist.logd.size`) in `PRODUCT_PRODUCT_PROPERTIES`, and check with `logcat -g` that this logd honours it. On stock it didn't, which is why `dev_debuggable` 1.3 re-applies it.
 
 ## 2. Correctness
+
+**Done for the next image, awaiting validation:** the time zone (`persist.sys.timezone=America/New_York` as the product default) and the first-boot result (a `log` and a `status` file in `/data/local/vedotom-firstboot/`, which `Deploy-Image.ps1` now reads instead of logcat). The other three points are open.
 
 - **The time zone is GMT.** Auto time zone is on, but with no SIM the telephony suggestion (MCC 310, `America/New_York`, match type 2: the US has several offsets) isn't applied, and there's no location time-zone provider (`mGeoDetectionSupported=false`). Ship a default `persist.sys.timezone` (product property) or let first boot set it. Location time-zone detection needs a provider, which AOSP doesn't ship without GMS.
 - **The first-boot result relies on logcat.** `Deploy-Image.ps1` waits for `vedotom-firstboot: done` in logcat, and its report counts preloads and icons from logcat too. With 256 KiB buffers and vendor log spam (below), those lines can roll out within minutes: here they already had. Have the script also append to `/data/local/vedotom-firstboot/log` and set a property when it's done, then make Deploy-Image read those.

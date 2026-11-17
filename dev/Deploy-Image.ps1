@@ -1,6 +1,6 @@
 <#
 .SYNOPSIS
-    Puts the newest VedoTom image on the phone in one run: fetch, reboot to stock, discard, install, boot, maps, check.
+    Puts the newest VedoTom image on the phone in one run: fetch, reboot to stock, discard, install, boot, check.
 
 .DESCRIPTION
     This is the delivery loop for the install machine, the PC the phone is plugged into, when images
@@ -14,25 +14,25 @@
        recognised by ro.product.name instead.
     3. Install-Gsi.ps1 discards the installed image, installs the new one with a -UserdataGiB data
        partition, and boots it.
-    4. It waits for the first-boot service to log "done".
-    5. Push-OfflineMaps.ps1 restores the maps, unless you pass -NoMaps.
-    6. It reports the fingerprint, the HOME and BROWSER role holders, what the first-boot service
-       did, and whether anything is in the crash log.
+    4. It waits for the first-boot service to finish. The service writes its result to
+       /data/local/vedotom-firstboot/status and every step to .../log, read here as root
+       (su 0, which a userdebug image has), so the result does not depend on the log buffers.
+    5. It reports the fingerprint, the HOME role holder, what the first-boot service did, the
+       defaults the image sets (animations, log buffers, time zone, AOSP Files icon), and
+       whether anything is in the crash log.
 
-    Step 3 deletes the installed image's data: its apps' data, settings and pushed maps. So the
-    script asks before it starts. -Confirm:$false skips the question.
+    Step 3 deletes the installed image's data: its apps' data and settings. So the script asks
+    before it starts. -Confirm:$false skips the question.
 
 .EXAMPLE
     .\dev\Deploy-Image.ps1
 .EXAMPLE
-    .\dev\Deploy-Image.ps1 -NoFetch -NoMaps -Confirm:$false
+    .\dev\Deploy-Image.ps1 -NoFetch -Confirm:$false
 #>
 [CmdletBinding(SupportsShouldProcess, ConfirmImpact = 'High')]
 param(
     [switch]$NoFetch,
-    [switch]$NoMaps,
-    [int]$UserdataGiB = 24,
-    [string[]]$Region = @('United States of America')
+    [int]$UserdataGiB = 24
 )
 $ErrorActionPreference = 'Stop'
 $Root = Split-Path -Parent $PSScriptRoot
@@ -87,25 +87,27 @@ if ((Sh 'getprop ro.product.name') -notlike 'vedotom*') { throw "The phone did n
 
 # ---- 4. first-boot service
 Step 'Waiting for the first-boot service'
+$State = '/data/local/vedotom-firstboot'
 $t = 0
-while ($t -lt 300 -and -not ((& $Adb logcat -d -s vedotom-firstboot 2>$null) -match ': done$')) { Start-Sleep 5; $t += 5 }
-$fb = & $Adb logcat -d -s vedotom-firstboot 2>$null | Select-String 'vedotom-firstboot: ' | ForEach-Object { ($_.Line -split 'vedotom-firstboot: ', 2)[1] }
-if (-not ($fb -contains 'done')) { Write-Warning "The first-boot service had not logged 'done' after $t s." }
+while ($t -lt 300 -and (Sh "su 0 cat $State/status") -notlike 'done*') { Start-Sleep 5; $t += 5 }
+$status = Sh "su 0 cat $State/status"
+$fb = @((Sh "su 0 cat $State/log") -split "`r?`n" | Where-Object { $_ } | ForEach-Object { ($_ -split ' ', 3)[2] })
+if ($status -notlike 'done*') { Write-Warning "The first-boot service had not finished after $t s (status: '$status')." }
+$fb | Where-Object { $_ -like '*failed*' -or $_ -like '*did not stick*' } | ForEach-Object { Write-Warning "first boot: $_" }
 
-# ---- 5. maps
-if (-not $NoMaps) {
-    Step 'Restoring the offline maps'
-    & (Join-Path $PSScriptRoot 'Push-OfflineMaps.ps1') -Region $Region
-}
-
-# ---- 6. report
+# ---- 5. report
 Step 'Result'
 $crashes = @(& $Adb logcat -d -b crash 2>$null | Select-String ' F libc|FATAL EXCEPTION').Count
+$scales = @('window_animation_scale', 'transition_animation_scale', 'animator_duration_scale' | ForEach-Object { Sh "settings get global $_" }) -join '/'
+$filesIcon = Sh 'pm query-activities -a android.intent.action.MAIN -c android.intent.category.LAUNCHER --components | grep com.android.documentsui'
 [pscustomobject]@{
     Fingerprint = Sh 'getprop ro.build.fingerprint'
     Home        = Sh 'cmd role get-role-holders android.app.role.HOME'
-    Browser     = Sh 'cmd role get-role-holders android.app.role.BROWSER'
-    FirstBoot   = "$(@($fb | Where-Object { $_ -like 'installed *' }).Count) preloads installed, $(@($fb | Where-Object { $_ -like 'icon colour *' }).Count) icons set, failures: $(@($fb | Where-Object { $_ -like '*failed*' }).Count)"
+    FirstBoot   = "$status; $(@($fb | Where-Object { $_ -like 'icon colour *' }).Count) icons set"
+    Animations  = "$scales (want 0/0/0)"
+    LogBuffer   = Sh 'logcat -g -b main'
+    TimeZone    = Sh 'getprop persist.sys.timezone'
+    FilesIcon   = if ($filesIcon) { "still in the launcher: $filesIcon" } else { 'hidden' }
     CrashLog    = if ($crashes) { "$crashes entries: check adb logcat -b crash" } else { 'empty' }
     DataFree    = ((Sh 'df -h /data | tail -1') -split '\s+')[3]
 } | Format-List
