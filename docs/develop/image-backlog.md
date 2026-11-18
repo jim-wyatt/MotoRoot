@@ -54,6 +54,27 @@ The stock system was reduced to a clean development baseline on 2026-11-17 (comm
 - **WebView is AOSP's 140.0.7339.4 from the tag.** Nothing updates it in this image, so it ages with the tag. With Fennec gone, it's the only web engine on the device.
 - **Security patch level 2025-11-05** (tag android-16.0.0_r4) under a 2026-04-01 vendor patch level. Move the tag when a newer Android 16 QPR release is out, and expect the `Android.bp` mirror and the patches to need rebasing.
 
+## 4. Open after build 4 (2026-11-17 night)
+
+Build 4 (18:45, from 1c5ab2b, SHA-256 `e7c32863…ee18`) is validated: see [validation](../device/validation.md). The vibrator fix, the charge limit, the hidden keyboard icon and the AVF and PhotoTable removals all hold on the device. This section is a hand-off from the install PC's session, written while the build machine's session couldn't be reached. It lists what to do next, in order. The user is away until morning, and anything that changes policy (item 3's adb auth, Google endpoints, WebView, tag move, the system-partition mirror) waits for them.
+
+1. **Faster image transfer: publish the image in parts.** Benchmark from the install PC (256 MB each, tunnel up, ping 10/10):
+
+   | Method | Time | Speed |
+   | --- | --- | --- |
+   | scp (as today) | 118.3 s | 2.16 MB/s |
+   | scp aes128-gcm | 130.3 s | 1.96 MB/s |
+   | sftp -R 256 -B 262144, gcm | 101.8 s | 2.52 MB/s |
+   | scp gcm, 4 parallel parts | 48.2 s | 5.31 MB/s |
+   | scp gcm, 8 parallel parts | 38.8 s | 6.59 MB/s |
+
+   The joined 8 parts hash correctly. Single-stream tuning gains almost nothing, and parallel streams scale, so the limit is per connection in the tunnel. The path goes through the OVH VPS: 10.99.0.1 (about 22 ms), then 10.99.0.2 (about 46 ms). The tunnel MTU can't be probed, because 10.99.0.2 answers don't-fragment pings of every size with "port unreachable". So: `build-gsi.sh` publishes `system.img.partNN` beside the image, and `Get-RemoteImage.ps1` gets `-Streams` (default 8; try 12 and 16, because 8 hadn't levelled off), joins the parts, keeps the SHA-256 check over the joined file, and falls back to the single file when there are no parts. Expected: 1.8 GB in about 4.5 minutes instead of 13.
+2. **Make `Deploy-Image.ps1` wait for the charge-limit file** (up to about 60 s) before its report. On build 4 it reported "not applied yet" because the service waits 30 s first. The file appeared 30 s later with `upper_limit=80, blocking=1`.
+3. **Pin down what limit 100 does.** Setting `persist.vedotom.charge_limit` to 100 re-applied (`upper_limit=100` in the file), but `blocking` stayed 1 and the battery "Not charging" for 3 minutes at a steady 100%. Confirm the resume condition in `qpnp_adaptive_charge.c`'s `update()`. If it resumes only when capacity drops below the limit, document "100 lifts the limit once the level next falls". Propose any other way to clear the suspend before trying it: no new kinds of write without the user. Never read `upper_limit` or `lower_limit` back. `blocking` is the safe check.
+4. **Watch the SystemUI crash.** Once, 7 s into build 4's first boot: SIGSEGV with pc `0x0011c70000000000`, from `nterp_helper` in `androidx.compose.runtime.SnapshotStateKt` (snapshotFlow lambda), then `SnapshotKt.advanceGlobalSnapshot`, then `Recomposer.composeInitial`, then a LazyLayout subcompose. It restarted and stayed up. It wasn't seen on earlier images, and isn't reproduced. In the next image, check the dalvik-cache and odrefresh status for system_ext apps: CompOS left in this build, so look at whether SystemUI now runs interpreted at first boot, and at the tagged-address setting in the crash (`tagged_addr_ctrl: PR_TAGGED_ADDR_ENABLE`).
+5. **Build 5** with points 1 to 3, then the install PC deploys and validates it.
+6. **Draft, don't build,** the item-3 policy proposals for the user to decide in the morning: `ro.adb.secure=1`; which captive-portal and NTP servers replace Google's; how WebView stays current; moving the AOSP tag; mirroring the system partition to drop the remaining unused apps.
+
 ## Vendor noise (only fixable outside the image)
 
 - `MotWlc_AIDL` logged 499 errors in four minutes, polling a missing `wireless/device/wlc_st_changed` node. `mtkpower@impl: [setMode] unknown type` logged 87, because the GSI's PowerHAL modes don't match MediaTek's. These two are the main reason a 256 KiB buffer rolls over so fast. A bigger buffer makes it bearable.
