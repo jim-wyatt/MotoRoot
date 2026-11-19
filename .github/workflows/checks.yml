@@ -38,6 +38,9 @@ jobs:
         run: |
           for f in $(git ls-files '*.sh' '.githooks/*'); do bash -n "$f" || exit 1; done
 
+      - name: Pre-commit hook blocks device data, keys and traces (and passes ordinary files)
+        run: bash .githooks/test-pre-commit.sh
+
       - name: ShellCheck (errors only)
         run: |
           git ls-files '*.sh' '.githooks/*' | xargs shellcheck --severity=error --shell=bash

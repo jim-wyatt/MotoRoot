@@ -50,6 +50,10 @@ vendor*.img
 keystore.properties
 .env
 .env.*
+# adb: a machine's private key, and trusted-key lists built into images (work/adb_keys)
+adbkey
+adb_keys
+wifi.json
 
 # --- Third-party binaries and device inputs (downloaded and hash-pinned, never committed)
 *.apk
