@@ -15,7 +15,8 @@ VedoTom/
 │   ├── Enter-DevShell.ps1     per-terminal setup (dot-source it)
 │   ├── VedoTom.psm1           device helpers the phone scripts share (root with either su, boot waits)
 │   ├── Build-Device.ps1       rebuilds and compares the device artifacts
-│   ├── Test-DevEnv.ps1        the self-test
+│   ├── Test-DevEnv.ps1        the self-test (PC side; never touches the phone)
+│   ├── Test-Device.ps1        the phone-side smoke test: root, logs, NDK, Perfetto, Frida, scrcpy
 │   ├── Set-DevSettings.ps1    development-target settings on the phone (animations, ADB, logs)
 │   ├── Trace-Device.ps1       records a Perfetto trace into work\traces
 │   ├── Dump-DeviceInfo.ps1    hardware inventory into work\device-info (private)
@@ -77,7 +78,8 @@ And these commands:
 | `apktool ...` | Decode or rebuild an APK's resources |
 | `r8d8 ...` | Google's D8 compiler: `.class` → `.dex` (the exact version the helpers were built with) |
 | `.\dev\Build-Device.ps1` | Rebuild the helpers and modules and compare with the committed copies |
-| `.\dev\Test-DevEnv.ps1` | Self-test everything |
+| `.\dev\Test-DevEnv.ps1` | Self-test everything on the PC |
+| `.\dev\Test-Device.ps1` | Check every development workflow against the connected phone |
 | `adbwifi` | Connect ADB to the phone over Wi-Fi ([engineering device](../device/dev-setup.md)) |
 | `Start-Frida` | Start Frida's agent on the device as root ([instrumentation](../develop/instrumentation.md)) |
 | `.\dev\Set-DevSettings.ps1` | Apply (or `-Reset`) the development-target settings ([engineering device](../device/dev-setup.md#development-target-settings)) |

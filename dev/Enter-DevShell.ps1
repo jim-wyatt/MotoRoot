@@ -129,4 +129,4 @@ Get-ToolVersion 'jadx'        { jadx --version }
 Get-ToolVersion 'gh'          { gh --version }
 if ($Problems) { $Problems | ForEach-Object { Write-Warning $_ }; Write-Warning 'Run .\dev\Bootstrap-DevEnv.ps1 to fix.' }
 else { Write-Host 'Device inputs: verified' -ForegroundColor Green }
-Write-Host 'Variables: $Work $adb $fb $Backup $py   Commands: docs, apktool, r8d8, adbwifi, Start-Frida, Stop-Frida, Invoke-RootShell, .\dev\Set-DevSettings.ps1, .\dev\Trace-Device.ps1, .\dev\Build-Device.ps1, .\dev\Test-DevEnv.ps1'
+Write-Host 'Variables: $Work $adb $fb $Backup $py   Commands: docs, apktool, r8d8, adbwifi, Start-Frida, Stop-Frida, Invoke-RootShell, .\dev\Set-DevSettings.ps1, .\dev\Trace-Device.ps1, .\dev\Build-Device.ps1, .\dev\Test-DevEnv.ps1, .\dev\Test-Device.ps1'
