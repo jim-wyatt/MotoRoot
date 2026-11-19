@@ -58,6 +58,7 @@ android_filesystem_defaults {
         "preinstalled-packages-handheld-system-ext.xml",
         // telephony packages
         "CarrierConfig",
+        "preinstalled-packages-gsi-system-ext.xml", // new in android-17.0.0_r1
 
         // gsi_release
         "gsi_skip_mount.cfg",
@@ -76,6 +77,15 @@ android_filesystem_defaults {
         "LatinIME",
         "apns-full-conf.xml",
         "frameworks-base-overlays",
+        "preinstalled-packages-base-product.xml", // new in android-17.0.0_r1
+
+        // New in android-17.0.0_r1 (gsi_release.mk adds them for devices that shipped at API 34
+        // or older; this vendor is API 33).
+        // PRODUCT_PACKAGES_SHIPPING_API_LEVEL_33
+        "wificond",
+        // PRODUCT_PACKAGES_SHIPPING_API_LEVEL_34
+        "hwservicemanager",
+        "android.hidl.allocator@1.0-service",
     ],
     multilib: {
         // No lib64 com.android.compos (AVF): vedotom_arm64.mk doesn't inherit the
@@ -96,13 +106,14 @@ android_system_image {
     deps: [
         // handheld_system_ext
         "AccessibilityMenu",
+        "AvatarPicker", // android-17.0.0_r1 lists it here, not under handheld_product
         "WallpaperCropper",
 
         // telephony_system_ext
         "EmergencyInfo",
+        "preinstalled-packages-platform-telephony-system-ext.xml", // new in android-17.0.0_r1
 
         // handheld_product (vedotom_handheld_product.mk)
-        "AvatarPicker",
         "preinstalled-packages-platform-handheld-product.xml",
         "SettingsIntelligence",
         "frameworks-base-overlays",
@@ -110,6 +121,7 @@ android_system_image {
         // telephony_product without Dialer (vedotom_product.mk)
         "ImsServiceEntitlement",
         "preinstalled-packages-platform-telephony-product.xml",
+        "preinstalled-packages-telephony-system-ext.xml", // new in android-17.0.0_r1
 
         // more AOSP packages (vedotom_product.mk), without PhotoTable
         "initial-package-stopped-states-aosp.xml",
