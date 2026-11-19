@@ -95,7 +95,7 @@ The inner loop is: edit under `~/aosp` (in WSL; a VS Code *WSL* window is handy 
 
 ## Building on one machine, installing from another
 
-The machine that builds and the machine the phone is plugged into don't have to be the same. The project's own setup builds on a desktop in another office and installs from the PC beside the phone; the two reach each other over a site-to-site VPN. The build machine runs the AOSP tree as described above. The install machine needs only the Windows bootstrap, not WSL or the tree.
+The machine that builds and the machine the phone is plugged into don't have to be the same. The project's own setup builds on a desktop in another office and installs from the PC beside the phone; the two reach each other over a site-to-site VPN. The build machine runs the AOSP tree as described above. The install machine needs only the Windows bootstrap, run once as `.\dev\Bootstrap-DevEnv.ps1 -InstallPc`, not WSL or the tree. That skips the downloads only image builds use (the Fossify APKs, marked `buildOnly` in `toolchain.json`); everything the build needs, the AOSP sync included, downloads on the build machine. Any GSI to test, Google's included, is downloaded on the build machine too and fetched from there.
 
 `build-gsi.sh` writes `system.img.sha256` beside the image. On the install machine, `dev\Get-RemoteImage.ps1` copies the newest image from the build machine over SSH, using Windows' built-in OpenSSH client:
 

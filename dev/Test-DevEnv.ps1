@@ -128,7 +128,11 @@ Check 'inputs' 'Motorola driver installer signed + pinned' { $s = Get-Authentico
 Check 'inputs' 'Motorola driver installed' { $d = Get-ItemProperty HKLM:\Software\Microsoft\Windows\CurrentVersion\Uninstall\*, HKLM:\Software\WOW6432Node\Microsoft\Windows\CurrentVersion\Uninstall\* -ErrorAction SilentlyContinue | Where-Object DisplayName -match 'Motorola Mobile Drivers' | Select-Object -First 1; if ($d) { "$($d.DisplayName)" } else { $false } }
 
 # ---------------- device tools (work\device-tools, work\.venv-frida)
-foreach ($Dl in $Spec.deviceTools.downloads) { Check 'devtools' "$($Dl.name) pin" { (Sha256 (Join-Path $Work "device-tools\$($Dl.name)")) -eq $Dl.sha256 } }
+# On an install PC (work\install-pc, set by Bootstrap-DevEnv.ps1 -InstallPc) the build-only inputs are
+# deliberately absent: the build machine has them.
+$InstallPc = Test-Path (Join-Path $Work 'install-pc')
+$DevDownloads = @($Spec.deviceTools.downloads | Where-Object { -not ($InstallPc -and $_.buildOnly) })
+foreach ($Dl in $DevDownloads) { Check 'devtools' "$($Dl.name) pin" { (Sha256 (Join-Path $Work "device-tools\$($Dl.name)")) -eq $Dl.sha256 } }
 Check 'devtools' 'frida-server extracted from the pinned archive' {
     $fr = $Spec.deviceTools.downloads | Where-Object extract -eq 'frida-server'
     $st = Join-Path $Work 'device-tools\frida-server.pinned-sha256'
@@ -137,7 +141,7 @@ Check 'devtools' 'frida-server extracted from the pinned archive' {
 # APKs that carry a signerSha256 pin: the signing certificate inside the file must be the publisher's. The hash
 # pins the bytes; this pins the identity, so re-pinning a newer version cannot silently accept a differently
 # signed build.
-foreach ($Dl in ($Spec.deviceTools.downloads | Where-Object { $_.signerSha256 })) {
+foreach ($Dl in ($DevDownloads | Where-Object { $_.signerSha256 })) {
     Check 'devtools' "$($Dl.name) signing certificate" {
         $o = & "$Sdk\build-tools\36.1.0\apksigner.bat" verify --print-certs (Join-Path $Work "device-tools\$($Dl.name)") 2>&1 | Out-String
         if ($o -match 'certificate SHA-256 digest: ([0-9a-f]{64})' -and $Matches[1] -eq $Dl.signerSha256) { $Matches[1].Substring(0, 16) + '...' } else { $false }
