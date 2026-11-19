@@ -14,10 +14,6 @@ on:
 permissions:
   contents: read
 
-concurrency:
-  group: pages
-  cancel-in-progress: false
-
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -35,6 +31,10 @@ jobs:
   deploy:
     if: github.event_name != 'pull_request'
     needs: build
+    # Only deployments take the Pages lock, so PR builds never queue behind one.
+    concurrency:
+      group: pages
+      cancel-in-progress: false
     runs-on: ubuntu-latest
     permissions:
       pages: write
