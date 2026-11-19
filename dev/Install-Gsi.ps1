@@ -73,24 +73,15 @@ $Remote = "/storage/emulated/0/Download/$($Spec.name)"
 function Verified-Zip { (Test-Path $Zip) -and ($Image -or (Sha256 $Zip) -eq $Spec.sha256) }
 
 function Sha256($p) { (Get-FileHash -LiteralPath $p -Algorithm SHA256).Hash.ToLower() }
-# Root shell, quoted so compound commands stay root. Two su flavours: Magisk's on the stock system
-# takes -c; AOSP's userdebug su in a GSI (yours included) takes "su 0 <command>" and rejects -c
-# with "invalid uid/gid '-c'". Try Magisk's form, fall back to AOSP's, and remember which worked.
-$script:SuAosp = $false
-function Root([string]$Command) {
-    if (-not $script:SuAosp) {
-        $out = (& $Adb shell "su -c '$Command'" 2>&1) -join "`n"
-        if ($out -notmatch "invalid uid/gid") { return $out }
-        $script:SuAosp = $true
-    }
-    (& $Adb shell "su 0 sh -c '$Command'" 2>&1) -join "`n"
-}
+# Root, the one-device check, gsi_tool and the reboot wait come from the shared module; Root works
+# with Magisk's su on the stock system and AOSP's in a DSU image.
+Import-Module (Join-Path $PSScriptRoot 'VedoTom.psm1')
+function Root([string]$Command) { Invoke-RootShell $Command }
 function Prop([string]$Name) { ((& $Adb shell getprop $Name) -join '').Trim() }
-function GsiStatus { (Root 'gsi_tool status').Trim() }
+function GsiStatus { Get-GsiStatus }
 function Require-Device {
-    $d = @(& $Adb devices | Select-Object -Skip 1 | Where-Object { $_ -match '\sdevice$' })
-    if ($d.Count -ne 1) { throw "Connect exactly one authorized device (found $($d.Count))." }
-    if ((Root 'id') -notmatch 'uid=0') { throw 'Root (su) is required on the device.' }
+    Assert-OneDevice
+    if (-not (Test-DeviceRoot)) { throw 'Root (su) is required on the device.' }
 }
 
 switch ($Action) {
@@ -115,10 +106,10 @@ switch ($Action) {
     'Install' {
         Require-Device
         if (-not (Verified-Zip)) { throw "Run -Action Download first (missing or unverified: $Zip)." }
+        if (Test-GsiRunning) { throw 'A GSI is running right now. Reboot into the normal system first.' }
         $st = GsiStatus
         if ($st -ne 'normal') { throw "DSU state is '$st', not 'normal'. Use -Action Status / -Action Discard first." }
         foreach ($p in 'ro.boot.dynamic_partitions') { if ((Prop $p) -ne 'true') { throw "$p is not true; DSU needs dynamic partitions." } }
-        if ((Prop 'ro.gsid.image_running') -eq '1') { throw 'A GSI is running right now. Reboot into the normal system first.' }
         Write-Host "Pushing $($Spec.name) to the device (this takes a minute) ..."
         & $Adb push $Zip $Remote | Out-Null
         if ($LASTEXITCODE -ne 0) { throw 'push failed' }
@@ -157,21 +148,20 @@ switch ($Action) {
         Write-Host (Root 'gsi_tool enable --single-boot')
         Write-Host 'Rebooting into the GSI for ONE boot. First boot can take several minutes. If it never reaches the home screen, hold Power to reboot: the next boot is the normal system.' -ForegroundColor Cyan
         & $Adb reboot
-        & $Adb wait-for-device
-        $t = 0; while ($t -lt 600) { if (((& $Adb shell getprop sys.boot_completed 2>$null) -join '').Trim() -eq '1') { break }; Start-Sleep 5; $t += 5 }
+        $t = Wait-DeviceBoot -AfterReboot
         Start-Sleep 5
-        Write-Host "booted after ~${t}s: image_running=$(Prop 'ro.gsid.image_running') build=$(Prop 'ro.build.display.id') fingerprint=$(Prop 'ro.build.fingerprint')"
+        Write-Host "booted after ~${t}s: GSI running=$(Test-GsiRunning) build=$(Prop 'ro.build.display.id') fingerprint=$(Prop 'ro.build.fingerprint')"
     }
     'Status' {
         Require-Device
         "gsi_tool status:      $(GsiStatus)"
-        "ro.gsid.image_running: $(Prop 'ro.gsid.image_running')   (1 = a GSI is running right now)"
+        "GSI running now:      $(Test-GsiRunning)   (gsi_tool's first line; ro.gsid.image_running is empty on this phone)"
         "build running:        $(Prop 'ro.build.display.id')"
         "zip on PC:            " + $(if ($Image) { "own build: $Zip" } elseif (Test-Path $Zip) { if ((Sha256 $Zip) -eq $Spec.sha256) { 'present, verified' } else { 'present, HASH MISMATCH' } } else { 'not downloaded' })
     }
     'Discard' {
         Require-Device
-        if ((Prop 'ro.gsid.image_running') -eq '1') { throw 'A GSI is running. Reboot into the normal system first, then discard.' }
+        if (Test-GsiRunning) { throw 'A GSI is running. Reboot into the normal system first, then discard.' }
         $st = GsiStatus
         if ($st -eq 'normal') { Write-Host 'Nothing installed.'; return }
         Write-Host (Root 'gsi_tool disable')

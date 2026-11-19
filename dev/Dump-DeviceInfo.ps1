@@ -30,17 +30,16 @@ $ErrorActionPreference = 'Stop'
 $Root = Split-Path -Parent $PSScriptRoot
 $Work = Join-Path $Root 'work'
 $Adb  = Join-Path $Work 'platform-tools\adb.exe'
-if (-not (Test-Path $Adb)) { throw 'platform-tools missing. Run .\dev\Bootstrap-DevEnv.ps1.' }
-$devices = @(& $Adb devices | Select-Object -Skip 1 | Where-Object { $_ -match '\sdevice$' })
-if ($devices.Count -ne 1) { throw "Connect exactly one authorized device (found $($devices.Count))." }
+Import-Module (Join-Path $PSScriptRoot 'VedoTom.psm1')   # Assert-OneDevice, Invoke-RootShell (Magisk or AOSP su)
+Assert-OneDevice
 
 $Out = Join-Path $Work ('device-info\' + (Get-Date -Format 'yyyyMMdd-HHmmss') + $(if ($Label) { "-$Label" }))
 New-Item -ItemType Directory -Force $Out | Out-Null
 
 function Shell([string]$Command) { (& $Adb shell $Command 2>&1) -join "`n" }
 function Prop([string]$Name) { (Shell "getprop $Name").Trim() }
-$HaveRoot = (Shell 'su -c id') -match 'uid=0'
-function Root([string]$Command) { if ($HaveRoot) { (& $Adb shell su -c "`"$Command`"" 2>&1) -join "`n" } else { '(no root)' } }
+$HaveRoot = Test-DeviceRoot
+function Root([string]$Command) { if ($HaveRoot) { Invoke-RootShell $Command } else { '(no root)' } }
 function Save([string]$File, [string]$Text) { Set-Content -LiteralPath (Join-Path $Out $File) -Value $Text -Encoding utf8 }
 
 # ---- raw dumps (private) ----------------------------------------------------------------------

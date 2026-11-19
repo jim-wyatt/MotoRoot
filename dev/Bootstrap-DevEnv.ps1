@@ -241,13 +241,18 @@ if (-not $SkipInputs) {
         Get-PinnedFile $Dl.url $File 'SHA256' $Dl.sha256
         if ($Dl.extract) {
             # .xz archives: 7-Zip extracts the single inner file; rename it to the documented name.
+            # A stamp beside it records which pinned archive it came from, so bumping the pin
+            # replaces it instead of leaving the old binary in place.
             $Extracted = Join-Path $ToolDir $Dl.extract
-            if (-not (Test-Path $Extracted)) {
+            $Stamp = "$Extracted.pinned-sha256"
+            if (-not (Test-Path $Extracted) -or -not (Test-Path $Stamp) -or (Get-Content -Raw $Stamp).Trim() -ne $Dl.sha256) {
                 $SevenZip = Join-Path $env:ProgramFiles '7-Zip\7z.exe'
                 if (-not (Test-Path $SevenZip)) { throw '7-Zip not found; re-run without -SkipWinget.' }
+                Remove-Item -LiteralPath $Extracted, $Stamp -Force -ErrorAction SilentlyContinue
                 & $SevenZip e -y "-o$ToolDir" $File | Out-Null
                 if ($LASTEXITCODE -ne 0) { throw "7-Zip failed to extract $($Dl.name)" }
                 Move-Item (Join-Path $ToolDir ($Dl.name -replace '\.xz$', '')) $Extracted
+                Set-Content -LiteralPath $Stamp -Value $Dl.sha256
             }
             Write-Ok "$($Dl.extract) extracted"
         }

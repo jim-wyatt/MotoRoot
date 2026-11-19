@@ -39,10 +39,8 @@ param([switch]$Reset)
 $ErrorActionPreference = 'Stop'
 $Root = Split-Path -Parent $PSScriptRoot
 $Adb  = Join-Path $Root 'work\platform-tools\adb.exe'
-if (-not (Test-Path $Adb)) { throw 'platform-tools missing. Run .\dev\Bootstrap-DevEnv.ps1.' }
-
-$devices = @(& $Adb devices | Select-Object -Skip 1 | Where-Object { $_ -match '\sdevice$' })
-if ($devices.Count -ne 1) { throw "Connect exactly one authorized device (found $($devices.Count))." }
+Import-Module (Join-Path $PSScriptRoot 'VedoTom.psm1')   # Assert-OneDevice, Invoke-RootShell (Magisk or AOSP su)
+Assert-OneDevice
 
 function Sh([string]$Cmd) { ((& $Adb shell $Cmd) -join "`n").Trim() }
 
@@ -65,14 +63,17 @@ foreach ($k in $Global.Keys) {
     else { Write-Warning "$k is '$got', expected '$want'"; $failed++ }
 }
 
-$haveRoot = (Sh "su -c id 2>/dev/null") -match 'uid=0'
+$haveRoot = Test-DeviceRoot
 if ($Reset) {
-    if ($haveRoot) { Sh "su -c 'resetprop -p -d persist.logd.size'" | Out-Null }   # Magisk: delete it, persistent copy too
+    # Magisk's resetprop deletes the property and its persistent copy. A DSU image built from
+    # source has no resetprop; there an empty value is the reset (and init.vedotom.rc sets 16 MiB
+    # at every boot regardless).
+    if ($haveRoot) { Invoke-RootShell 'if command -v resetprop >/dev/null; then resetprop -p -d persist.logd.size; else setprop persist.logd.size ""; fi' | Out-Null }
     Sh 'logcat -G 256K' | Out-Null
     Write-Host "  ok    log buffers back to 256 KiB$(if (-not $haveRoot) { ' (no root: persist.logd.size left as it was)' })" -ForegroundColor Green
 } else {
     if ($haveRoot) {
-        Sh "su -c 'setprop persist.logd.size $LogSize'" | Out-Null
+        Invoke-RootShell "setprop persist.logd.size $LogSize" | Out-Null
         $p = Sh 'getprop persist.logd.size'
         if ($p -ne $LogSize) { Write-Warning "persist.logd.size is '$p', expected $LogSize"; $failed++ }
     } else {

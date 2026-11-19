@@ -129,7 +129,11 @@ Check 'inputs' 'Motorola driver installed' { $d = Get-ItemProperty HKLM:\Softwar
 
 # ---------------- device tools (work\device-tools, work\.venv-frida)
 foreach ($Dl in $Spec.deviceTools.downloads) { Check 'devtools' "$($Dl.name) pin" { (Sha256 (Join-Path $Work "device-tools\$($Dl.name)")) -eq $Dl.sha256 } }
-Check 'devtools' 'frida-server extracted' { Test-Path (Join-Path $Work 'device-tools\frida-server') }
+Check 'devtools' 'frida-server extracted from the pinned archive' {
+    $fr = $Spec.deviceTools.downloads | Where-Object extract -eq 'frida-server'
+    $st = Join-Path $Work 'device-tools\frida-server.pinned-sha256'
+    (Test-Path (Join-Path $Work 'device-tools\frida-server')) -and (Test-Path $st) -and ((Get-Content -Raw $st).Trim() -eq $fr.sha256)
+}
 # APKs that carry a signerSha256 pin: the signing certificate inside the file must be the publisher's. The hash
 # pins the bytes; this pins the identity, so re-pinning a newer version cannot silently accept a differently
 # signed build.
@@ -140,14 +144,15 @@ foreach ($Dl in ($Spec.deviceTools.downloads | Where-Object { $_.signerSha256 })
     }
 }
 Check 'devtools' "frida-tools venv = server $($Spec.deviceTools.frida.version)" { $v = (& (Join-Path $Work '.venv-frida\Scripts\frida.exe') --version 2>&1) -as [string]; if ($v.Trim() -eq $Spec.deviceTools.frida.version) { $v.Trim() } else { throw "frida $v, server pin $($Spec.deviceTools.frida.version)" } }
-Check 'devtools' 'every dev\ and device\ PowerShell script parses' {
+Check 'devtools' 'every dev\ and device\ PowerShell script and module parses' {
     $bad = @()
-    foreach ($f in (Get-ChildItem $PSScriptRoot -Filter *.ps1) + (Get-ChildItem (Join-Path $Root 'device\scripts') -Filter *.ps1)) {
+    $files = @(Get-ChildItem -Path (Join-Path $PSScriptRoot '*') -Include *.ps1, *.psm1 -File) + @(Get-ChildItem (Join-Path $Root 'device\scripts') -Filter *.ps1)
+    foreach ($f in $files) {
         $errs = $null; [System.Management.Automation.Language.Parser]::ParseFile($f.FullName, [ref]$null, [ref]$errs) | Out-Null
         if ($errs) { $bad += "$($f.Name): $(($errs | ForEach-Object Message) -join '; ')" }
     }
     if ($bad) { throw ($bad -join ' | ') }
-    "$((Get-ChildItem $PSScriptRoot -Filter *.ps1).Count + 1) scripts"
+    "$($files.Count) files"
 }
 Check 'devtools' 'GSI pin is complete (not downloaded by the bootstrap)' { $g = $Spec.deviceTools.gsi; if ($g.name -and $g.url -and $g.sha256 -match '^[0-9a-f]{64}$' -and $g.url.EndsWith($g.name)) { $g.build } else { throw 'deviceTools.gsi is incomplete' } }
 Check 'devtools' 'AOSP pin is complete and dev\aosp scripts are valid bash' {

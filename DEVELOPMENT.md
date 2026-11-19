@@ -22,7 +22,7 @@ Add `-AcceptAndroidSdkLicenses` only after reading Google's Android SDK terms. W
 
 | Folder | Contents |
 | --- | --- |
-| `device/` | Files the procedure sends to the device: `helpers/` (two `app_process` programs, source and DEX), `modules/` (three Magisk modules, their manifests, and `build_modules.py`), `scripts/Prepare-MagiskImage.ps1`. Generic to the model, never to a unit. |
+| `device/` | Files the procedure sends to the device: `helpers/` (two `app_process` programs, source and DEX), `modules/` (seven Magisk modules, their manifests, and `build_modules.py`), `scripts/Prepare-MagiskImage.ps1`. Generic to the model, never to a unit. |
 | `dev/` | The PC side: `toolchain.json`, bootstrap, dev shell, self-test, `Build-Device.ps1`. Generated tool folders inside it are git-ignored. |
 | `docs/` | The documentation site. `docs/device/` is the authoritative procedure. |
 | `work/` | Downloads, venvs, backups, outputs. Git-ignored in full and blocked by the hook. |
@@ -41,7 +41,7 @@ Add `-AcceptAndroidSdkLicenses` only after reading Google's Android SDK terms. W
 | Python | `work\.venv` with val-protocol's requirements and pyasn1; `work\.venv-frida` with `frida`/`frida-tools`; `dev\.venv-docs` for the site |
 | Safety | `.githooks/pre-commit` blocks device images, keys, logs, files over 1 MiB, the private working folders, and lines that look like IMEIs or serials |
 
-`Enter-DevShell.ps1` puts you at the repository root and sets `$Work`, `$adb`, `$fb`, `$Backup` and `$py`, which the walkthrough's commands use directly. Device-side files are referenced relative to the root (`.\device\...`). It also defines `adbwifi` (connect over Wi-Fi), and `Start-Frida`; `dev\Set-DevSettings.ps1` applies the development-target settings on the phone, `dev\Trace-Device.ps1` records a Perfetto trace, `dev\Dump-DeviceInfo.ps1` writes a hardware inventory to `work\device-info\` (private: it contains identifiers), and `dev\Install-Gsi.ps1` downloads (after you accept Google's terms), installs, boots once and discards the pinned AOSP GSI through DSU, or your own build with `-Image`; `dev\Deploy-Image.ps1` takes a delivered image of your own all the way onto the phone. `dev\aosp\*.sh` run inside WSL to set up, sync (`android-16.0.0_r4`, the tag behind the validated GSI) and build AOSP's `aosp_arm64` target (`build-after-sync.sh` chains the two, logging to `work\aosp-*.log`); the tree lives on WSL's disk, never in this repo. Keep those scripts LF: WSL's bash chokes on CRLF.
+`Enter-DevShell.ps1` puts you at the repository root and sets `$Work`, `$adb`, `$fb`, `$Backup` and `$py`, which the walkthrough's commands use directly. Device-side files are referenced relative to the root (`.\device\...`). It also defines `adbwifi` (connect over Wi-Fi), `Start-Frida` and `Stop-Frida`, and imports `dev\VedoTom.psm1`, the device helpers every phone script shares: `Assert-OneDevice`, `Invoke-RootShell` (Magisk's `su -c` on stock, AOSP's `su 0` in a DSU image; never write `su -c` by hand in a script), `Wait-DeviceBoot -AfterReboot` and `Test-GsiRunning`; `dev\Set-DevSettings.ps1` applies the development-target settings on the phone, `dev\Trace-Device.ps1` records a Perfetto trace, `dev\Dump-DeviceInfo.ps1` writes a hardware inventory to `work\device-info\` (private: it contains identifiers), and `dev\Install-Gsi.ps1` downloads (after you accept Google's terms), installs, boots once and discards the pinned AOSP GSI through DSU, or your own build with `-Image`; `dev\Get-RemoteImage.ps1` fetches a verified image from a separate build machine, and `dev\Deploy-Image.ps1` takes it all the way onto the phone. `dev\aosp\*.sh` run inside WSL to set up, sync (`android-16.0.0_r4`, the tag behind the validated GSI) and build this project's `vedotom_arm64` target, AOSP's `aosp_arm64` plus `dev\aosp\product` and `dev\aosp\patches` (`build-after-sync.sh` chains the two, logging to `work\aosp-*.log`); the tree lives on WSL's disk, never in this repo. Keep those scripts LF: WSL's bash chokes on CRLF.
 
 ## Diagrams in the docs
 
@@ -61,7 +61,7 @@ The site renders Mermaid 12 through the theme's own loader, which wraps node lab
 
 ## Rebuilding the device artifacts
 
-`Build-Device.ps1` rebuilds the two helper DEX files and the three module ZIPs into `dev/build/` and reports whether each matches the committed copy in `device/`. Module builds are deterministic (fixed entry order and timestamps), so they are compared by hash; helpers are compared byte for byte, and a mismatch there usually means a different `javac` build changed the debug line tables, not the behaviour. `-Promote` copies the rebuilt files over the committed ones; review `git diff` and commit the source and artifact together.
+`Build-Device.ps1` rebuilds the two helper DEX files and the seven module ZIPs into `dev/build/` and reports whether each matches the committed copy in `device/`. Module builds are deterministic (fixed entry order and timestamps), so they are compared by hash; helpers are compared byte for byte, and a mismatch there usually means a different `javac` build changed the debug line tables, not the behaviour. `-Promote` copies the rebuilt files over the committed ones; review `git diff` and commit the source and artifact together.
 
 ## The modules
 

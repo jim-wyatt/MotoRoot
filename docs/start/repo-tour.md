@@ -13,6 +13,7 @@ VedoTom/
 │   ├── toolchain.json     every version and hash, in one place
 │   ├── Bootstrap-DevEnv.ps1   installs everything
 │   ├── Enter-DevShell.ps1     per-terminal setup (dot-source it)
+│   ├── VedoTom.psm1           device helpers the phone scripts share (root with either su, boot waits)
 │   ├── Build-Device.ps1       rebuilds and compares the device artifacts
 │   ├── Test-DevEnv.ps1        the self-test
 │   ├── Set-DevSettings.ps1    development-target settings on the phone (animations, ADB, logs)
@@ -20,11 +21,11 @@ VedoTom/
 │   ├── Dump-DeviceInfo.ps1    hardware inventory into work\device-info (private)
 │   ├── Install-Gsi.ps1        boots Google's AOSP GSI (or your own) through DSU
 │   ├── Get-RemoteImage.ps1    fetch a verified image from a separate build machine over SSH
-│   ├── Deploy-Image.ps1       fetch, install and boot an image, restore maps, report
+│   ├── Deploy-Image.ps1       fetch, install and boot an image, then report
 │   ├── aosp/                  AOSP in WSL: setup, sync, verify-tree, apply-local, build-gsi, build-after-sync
 │   │   ├── product/vedotom/gsi/   the vedotom_arm64 product: makefiles, framework overlay, prebuilt app list,
-│   │   │                          first-boot service, release-flag override (APKs come from
-│   │   │                          work/, never committed)
+│   │   │                          first-boot service (APKs come from work/, never
+│   │   │                          committed)
 │   │   └── patches/               our diffs against upstream projects
 │   └── .tools/ .cache/ build/ .venv-docs/    generated; git-ignored
 ├── docs/                These pages, including the full device procedure

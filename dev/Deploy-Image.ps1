@@ -40,17 +40,11 @@ $Work = Join-Path $Root 'work'
 $Adb  = Join-Path $Work 'platform-tools\adb.exe'
 $Img  = Join-Path $Work 'device-tools\gsi\own\system.img'
 
+Import-Module (Join-Path $PSScriptRoot 'VedoTom.psm1')   # Assert-OneDevice, Wait-DeviceBoot
 function Sh([string]$cmd) { (& $Adb shell $cmd 2>$null | Out-String).Trim() }
-function Wait-Boot([int]$limit = 600) {
-    & $Adb wait-for-device
-    $t = 0
-    while ($t -lt $limit) { if ((Sh 'getprop sys.boot_completed') -eq '1') { return $t }; Start-Sleep 5; $t += 5 }
-    throw "The phone did not finish booting within $limit s."
-}
 function Step([string]$text) { Write-Host "== $text" -ForegroundColor Cyan }
 
-$devs = @(& $Adb devices | Select-String "`tdevice$")
-if ($devs.Count -ne 1) { throw "Connect exactly one authorized device (found $($devs.Count))." }
+Assert-OneDevice
 
 # ---- 1. fetch
 if (-not $NoFetch) {
@@ -70,8 +64,7 @@ if (-not $PSCmdlet.ShouldProcess('the phone', "replace the installed image and i
 if ((Sh 'getprop ro.product.name') -like 'vedotom*') {
     Step 'The phone is in a VedoTom image: rebooting to the stock system'
     & $Adb reboot
-    Start-Sleep 15
-    $s = Wait-Boot
+    $s = Wait-DeviceBoot -AfterReboot
     Write-Host "  stock system up after ~${s}s ($(Sh 'getprop ro.build.display.id'))"
 }
 

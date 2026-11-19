@@ -75,6 +75,18 @@ Build 4 (18:45, from 1c5ab2b, SHA-256 `e7c32863…ee18`) is validated: see [vali
 5. **Build 5** with points 1 to 3, then the install PC deploys and validates it.
 6. **Draft, don't build,** the item-3 policy proposals for the user to decide in the morning: `ro.adb.secure=1`; which captive-portal and NTP servers replace Google's; how WebView stays current; moving the AOSP tag; mirroring the system partition to drop the remaining unused apps.
 
+## 5. From the repository review (2026-11-19)
+
+The install PC's side is fixed and pushed: `dev\VedoTom.psm1` now holds root for either su (`Invoke-RootShell`), the one-device check, `Wait-DeviceBoot -AfterReboot` (`adb wait-for-disconnect` first, so the old system's `boot_completed` isn't read as the new one's) and `Test-GsiRunning` (the first line of `gsi_tool status`, because `ro.gsid.image_running` is empty here). Install-Gsi, Deploy-Image, Set-DevSettings, Dump-DeviceInfo, Trace-Device and `Start-Frida` use it, and all of them were tested on build 4. These are for the build machine, and they fit into build 5:
+
+1. **Stale sidecar files.** When `build.prop` or `vbmeta.img` isn't fetched, the previous build's copy stays next to the new `system.img`, and `Install-Gsi.ps1 -Image` packs it into the DSU zip. This happens in three places: `Get-RemoteImage.ps1` (the `try/catch` around the two pulls; fold this into the parts work in section 4, item 1), `build-gsi.sh` (`cp … build.prop … || true` and the `vbmeta` copy into `DEST_DIR`), and its `PUBLISH_DIR` loop (`continue` on a missing file). Remove each target before copying, and treat a missing `build.prop` as an error.
+2. **`apply-local.sh` always exits 0.** It runs with no `set -e`, and `rsync … && echo` and `git apply … && echo` swallow failures, so `build-gsi.sh`'s `|| exit 1` never fires. Add `|| exit 1` to both.
+3. **A tag bump is ignored on an existing tree.** `sync.sh` runs `repo init` only when `.repo` is missing. Run `repo init -u "$MANIFEST" -b "$TAG"` every time (it's idempotent), and take `MANIFEST` from `toolchain.json` like the tag.
+4. **`build-after-sync.sh` reads old results.** `work/aosp-sync.log` is appended across runs. Any old `sync exit:` line skips the wait, and `grep -q '^sync exit: 0'` accepts an old success after a new failure. Truncate the log, or record its size, at start, and judge by the last line only (`tail -1`).
+5. **A charge-limit change can be dropped.** The service sleeps 30 s after writing, and init's `start` does nothing for a oneshot that's still running, so a second `setprop` within 30 s is lost (the property says 85, the module keeps 80). After the sleep, re-read `persist.vedotom.charge_limit` and write again if it changed. Keep to the same two named files: write `upper_limit`, check through `blocking`, and never read limits back. Also remove `$STATE/charge-limit` when the service starts. It survives reboots in `/data`, so Deploy-Image's report (section 4, item 2) could read the previous boot's result.
+
+Smaller, when convenient: patch file names map every dash to a slash, which breaks for projects with dashes in their path (`prebuilts/build-tools`). `JOBS` and the tree directory (`treeDir` in `toolchain.json` is unused) could come from one place.
+
 ## Vendor noise (only fixable outside the image)
 
 - `MotWlc_AIDL` logged 499 errors in four minutes, polling a missing `wireless/device/wlc_st_changed` node. `mtkpower@impl: [setMode] unknown type` logged 87, because the GSI's PowerHAL modes don't match MediaTek's. These two are the main reason a 256 KiB buffer rolls over so fast. A bigger buffer makes it bearable.

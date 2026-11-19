@@ -20,6 +20,7 @@ flowchart TB
 | --- | --- | --- |
 | `Bootstrap-DevEnv.ps1` | once per machine (re-runnable) | Installs the toolchain, downloads and hash-checks the device inputs and device tools, creates the three venvs, enables the git hook. |
 | `Enter-DevShell.ps1` | every terminal (`. .\dev\Enter-DevShell.ps1`) | Moves to the repo root, sets `$Work $adb $fb $Backup $py`, puts tools on PATH, defines `docs`/`apktool`/`r8d8`/`adbwifi`/`Start-Frida`, prints status. |
+| `VedoTom.psm1` | imported by the dev shell and the phone scripts | Device helpers: `Assert-OneDevice`, `Invoke-RootShell` (Magisk's `su -c` on stock, AOSP's `su 0` in a DSU image), `Wait-DeviceBoot -AfterReboot`, `Test-GsiRunning`. |
 | `Build-Device.ps1` | when changing helpers/modules | Rebuilds the two helper DEX files and the seven module ZIPs in `device/` from source and compares them with the committed copies. |
 | `Test-DevEnv.ps1` | to verify | Exercises every tool and re-checks every pin. Exit code = failures. |
 | `Trace-Device.ps1` | when profiling | Records a Perfetto trace on the device and pulls it into `work\traces\` ([tracing](../develop/tracing.md)). |

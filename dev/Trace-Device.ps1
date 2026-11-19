@@ -37,12 +37,11 @@ $ErrorActionPreference = 'Stop'
 $Root = Split-Path -Parent $PSScriptRoot
 $Work = Join-Path $Root 'work'
 $Adb  = Join-Path $Work 'platform-tools\adb.exe'
-if (-not (Test-Path $Adb)) { throw 'platform-tools missing. Run .\dev\Bootstrap-DevEnv.ps1.' }
 if ($Seconds -lt 1 -or $Seconds -gt 600) { throw 'Seconds must be between 1 and 600.' }
 if ($Name -notmatch '^[A-Za-z0-9._-]+$') { throw 'Name may contain only letters, digits, dot, underscore and dash.' }
 
-$devices = @(& $Adb devices | Select-Object -Skip 1 | Where-Object { $_ -match '\sdevice$' })
-if ($devices.Count -ne 1) { throw "Connect exactly one authorized device (found $($devices.Count))." }
+Import-Module (Join-Path $PSScriptRoot 'VedoTom.psm1')
+Assert-OneDevice
 
 $ConfigText = if ($Config) { Get-Content -Raw -LiteralPath $Config } else { @"
 buffers: { size_kb: 65536 fill_policy: RING_BUFFER }

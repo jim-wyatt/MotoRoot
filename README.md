@@ -31,7 +31,7 @@ One script installs and hash-verifies the full stack: JDK, Android SDK, NDK, pla
 | Folder | What it is |
 | --- | --- |
 | [`device/`](device/) | What goes to the device: two helper programs, seven reversible Magisk modules (five overlays that hide system apps, two development switches) with the manifests and builder that generate them, and the Magisk image preparation script. |
-| [`dev/`](dev/) | The PC side: bootstrap, per-shell setup, self-test, and the artifact rebuild. |
+| [`dev/`](dev/) | The PC side: bootstrap, per-shell setup, self-test, the artifact rebuild, and the `vedotom_arm64` system image: its AOSP product and patches, the WSL build, and the scripts that fetch it and boot it on the phone through DSU. |
 | [`docs/`](docs/) | The documentation site ([Zensical](https://zensical.org/)), published to GitHub Pages. The full device procedure lives here. |
 | `work/` | Your downloads, backups, and build outputs. **Git-ignored in full.** |
 
