@@ -21,7 +21,7 @@ LUNCH="$(python3 -c 'import json,sys; print(json.load(open(sys.argv[1]))["device
 # DEST_DIR, not OUT_DIR: OUT_DIR is AOSP's own build variable and envsetup.sh uses it.
 DEST_DIR="$REPO_ROOT/work/device-tools/gsi/own"
 
-cd "$AOSP_DIR"
+cd "$AOSP_DIR" || exit 1
 [ -f build/envsetup.sh ] || { echo "no AOSP tree in $AOSP_DIR; run sync.sh first" >&2; exit 1; }
 # This project's product and patches, from the repository into the tree (idempotent).
 bash "$HERE/apply-local.sh" || exit 1
@@ -35,25 +35,46 @@ m -j"$JOBS" || { echo "build failed" >&2; exit 1; }
 PRODUCT_OUT="$(get_build_var PRODUCT_OUT)"
 [ -f "$PRODUCT_OUT/system.img" ] || { echo "no system.img in $PRODUCT_OUT" >&2; exit 1; }
 echo "== build finished $(date)"
+[ -f "$PRODUCT_OUT/system/build.prop" ] || { echo "no system/build.prop in $PRODUCT_OUT" >&2; exit 1; }
 mkdir -p "$DEST_DIR"
-cp "$PRODUCT_OUT/system.img" "$DEST_DIR/system.img"
-[ -f "$PRODUCT_OUT/vbmeta.img" ] && cp "$PRODUCT_OUT/vbmeta.img" "$DEST_DIR/vbmeta.img"
-cp "$PRODUCT_OUT/system/build.prop" "$DEST_DIR/build.prop" 2>/dev/null || true
+# The previous build's files go first, so none of them (vbmeta.img when this build has none, say)
+# stays beside the new image, where Install-Gsi.ps1 -Image would pack it into the DSU zip.
+rm -f "$DEST_DIR"/system.img "$DEST_DIR"/vbmeta.img "$DEST_DIR"/build.prop "$DEST_DIR"/system.img.sha256
+cp "$PRODUCT_OUT/system.img" "$DEST_DIR/system.img" || { echo "copying system.img failed" >&2; exit 1; }
+cp "$PRODUCT_OUT/system/build.prop" "$DEST_DIR/build.prop" || { echo "copying build.prop failed" >&2; exit 1; }
+if [ -f "$PRODUCT_OUT/vbmeta.img" ]; then
+  cp "$PRODUCT_OUT/vbmeta.img" "$DEST_DIR/vbmeta.img" || { echo "copying vbmeta.img failed" >&2; exit 1; }
+fi
 # A checksum beside the image, so a copy on another machine can be verified (Get-RemoteImage.ps1).
 (cd "$DEST_DIR" && sha256sum system.img > system.img.sha256)
 # Optional second copy for another machine to pull, e.g. a chrooted SFTP folder on WSL's own disk
 # (see "Building on one machine, installing from another" in docs/develop/aosp-build.md). Each file
 # is written under a temporary name and renamed, and the checksum goes last, so a pull that
 # overlaps a build never sees a half-written image paired with the new checksum.
+# The image is also published in PARTS pieces (system.img.part00 ...), listed with their SHA-256
+# in system.img.parts: the VPN path to the install PC limits each connection, not the total, so
+# Get-RemoteImage.ps1 pulls the parts over parallel streams (8 streams: 1.8 GB in ~4.5 min instead
+# of 13) and joins them. The full system.img stays for pullers that don't use parts.
+PARTS="${PARTS:-16}"
 if [ -n "${PUBLISH_DIR:-}" ]; then
   mkdir -p "$PUBLISH_DIR" || { echo "cannot create PUBLISH_DIR $PUBLISH_DIR" >&2; exit 1; }
-  rm -f "$PUBLISH_DIR/system.img.sha256"
-  for f in system.img vbmeta.img build.prop system.img.sha256; do
-    [ -f "$DEST_DIR/$f" ] || continue
+  publish_failed() { echo "publishing $1 to $PUBLISH_DIR failed" >&2; exit 1; }
+  # Checksum and parts list first (a puller then sees no image at all, not a mismatched one), and
+  # every old file, so nothing of the previous build stays published beside this one.
+  rm -f "$PUBLISH_DIR/system.img.sha256" "$PUBLISH_DIR/system.img.parts" "$PUBLISH_DIR"/system.img.part[0-9]* \
+        "$PUBLISH_DIR"/.system.img.part[0-9]* "$PUBLISH_DIR/vbmeta.img" "$PUBLISH_DIR/build.prop"
+  for f in system.img vbmeta.img build.prop; do
+    [ -f "$DEST_DIR/$f" ] || continue    # only vbmeta.img can be missing here; its old copy is gone
     cp "$DEST_DIR/$f" "$PUBLISH_DIR/.$f.part" && chmod 644 "$PUBLISH_DIR/.$f.part" && mv -f "$PUBLISH_DIR/.$f.part" "$PUBLISH_DIR/$f" \
-      || { echo "publishing $f to $PUBLISH_DIR failed" >&2; exit 1; }
+      || publish_failed "$f"
   done
-  echo "== published to $PUBLISH_DIR"
+  ( cd "$PUBLISH_DIR" && split -n "$PARTS" -d -a 2 system.img .system.img.part \
+      && for p in .system.img.part[0-9]*; do chmod 644 "$p" && mv -f "$p" "${p#.}" || exit 1; done \
+      && sha256sum system.img.part[0-9]* > .system.img.parts && chmod 644 .system.img.parts \
+      && mv -f .system.img.parts system.img.parts ) || publish_failed "the image parts"
+  cp "$DEST_DIR/system.img.sha256" "$PUBLISH_DIR/.system.img.sha256.part" && chmod 644 "$PUBLISH_DIR/.system.img.sha256.part" \
+    && mv -f "$PUBLISH_DIR/.system.img.sha256.part" "$PUBLISH_DIR/system.img.sha256" || publish_failed system.img.sha256
+  echo "== published to $PUBLISH_DIR ($PARTS parts)"
 fi
 echo "== image: $DEST_DIR/system.img ($(du -h "$DEST_DIR/system.img" | cut -f1))"
 echo "   fingerprint: $(grep '^ro.system.build.fingerprint=' "$DEST_DIR/build.prop" 2>/dev/null | cut -d= -f2)"

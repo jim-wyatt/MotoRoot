@@ -39,6 +39,7 @@ param(
     [string]$User,
     [string]$RemoteRepo,
     [ValidateRange(1, 65535)][int]$Port,
+    [ValidateRange(1, 32)][int]$Streams = 8,   # parallel scp connections for the parts; try 12 or 16
     [switch]$Save,
     [switch]$Check
 )
@@ -92,16 +93,62 @@ if ($Check) {
 }
 
 # ---- fetch, verify, swap in
+# In parts over parallel streams when the build machine published them (system.img.parts lists
+# each part with its SHA-256): the VPN path limits each connection, not the total. Otherwise the
+# single file. Either way the joined image must match system.img.sha256.
+function Pull-Parts([string]$to) {
+    $list = Join-Path $Dest 'remote.parts'
+    & scp.exe @sshOpts -q "${target}:$remoteDir/system.img.parts" $list 2>$null
+    if ($LASTEXITCODE -ne 0) { Remove-Item -Force -ErrorAction SilentlyContinue $list; return $false }
+    $parts = Get-Content $list | Where-Object { $_ -match '^[0-9a-f]{64}\s+\*?system\.img\.part\d+$' } | ForEach-Object {
+        $h, $n = $_ -split '\s+\*?', 2; [pscustomobject]@{ Name = $n; Hash = $h; File = Join-Path $Dest ".$n" }
+    }
+    Remove-Item $list
+    if (-not $parts) { return $false }
+    Write-Host "  $(@($parts).Count) parts, $Streams streams"
+    $scpArgs = { param($p) (@($sshOpts) + @('-q', "${target}:$remoteDir/$($p.Name)", "`"$($p.File)`"")) }
+    foreach ($attempt in 1, 2) {
+        $todo = @($parts | Where-Object { -not (Test-Path $_.File) -or (Get-FileHash -Algorithm SHA256 $_.File).Hash.ToLower() -ne $_.Hash })
+        if (-not $todo) { break }
+        if ($attempt -gt 1) { Write-Warning "$($todo.Count) part(s) failed or mismatched; fetching them again" }
+        $running = @()
+        foreach ($p in $todo) {
+            while (@($running | Where-Object { -not $_.HasExited }).Count -ge $Streams) { Start-Sleep -Milliseconds 200 }
+            $running += Start-Process scp.exe -ArgumentList (& $scpArgs $p) -NoNewWindow -PassThru
+        }
+        $running | ForEach-Object { $_.WaitForExit() }
+    }
+    $bad = @($parts | Where-Object { -not (Test-Path $_.File) -or (Get-FileHash -Algorithm SHA256 $_.File).Hash.ToLower() -ne $_.Hash })
+    if ($bad) {
+        $parts | ForEach-Object { Remove-Item -Force -ErrorAction SilentlyContinue $_.File }
+        throw "Parts still missing or mismatched after a retry: $($bad.Name -join ', '). Nothing was replaced."
+    }
+    $out = [IO.File]::Create($to)
+    try { foreach ($p in $parts) { $in = [IO.File]::OpenRead($p.File); try { $in.CopyTo($out) } finally { $in.Dispose() } } }
+    finally { $out.Dispose() }
+    $parts | ForEach-Object { Remove-Item -Force $_.File }
+    return $true
+}
+
 $part = "$img.part"
 Write-Host "Fetching system.img from $($conf.host) ..."
 $t = [Diagnostics.Stopwatch]::StartNew()
-Pull 'system.img' $part
+if (-not (Pull-Parts $part)) { Write-Host '  no parts published; fetching the single file'; Pull 'system.img' $part }
 $got = (Get-FileHash -Algorithm SHA256 $part).Hash.ToLower()
 if ($got -ne $remoteHash) { Remove-Item -Force $part; throw "Checksum mismatch: got $got, expected $remoteHash. Nothing was replaced." }
+# The sidecars come before the swap, and the previous build's copies go, so Install-Gsi.ps1 -Image
+# never packs an old build.prop or vbmeta.img with the new image. build.prop is required;
+# vbmeta.img is published only when the build made one.
+$propPart = Join-Path $Dest 'build.prop.part'; $vbPart = Join-Path $Dest 'vbmeta.img.part'
+try { Pull 'build.prop' $propPart } catch { Remove-Item -Force $part; throw "build.prop not fetched; nothing was replaced. $_" }
+& scp.exe @sshOpts -q "${target}:$remoteDir/vbmeta.img" $vbPart 2>$null
+$haveVb = $LASTEXITCODE -eq 0
+foreach ($f in 'build.prop', 'vbmeta.img') { Remove-Item -Force -ErrorAction SilentlyContinue (Join-Path $Dest $f) }
 if (Test-Path $img) { Move-Item -Force $img (Join-Path $Dest 'system.prev.img') }
 Move-Item -Force $part $img
+Move-Item -Force $propPart (Join-Path $Dest 'build.prop')
+if ($haveVb) { Move-Item -Force $vbPart (Join-Path $Dest 'vbmeta.img') } else { Remove-Item -Force -ErrorAction SilentlyContinue $vbPart; Write-Host '  (no vbmeta.img published)' }
 Set-Content -Encoding ascii (Join-Path $Dest 'system.img.sha256') "$remoteHash  system.img"
-foreach ($f in 'build.prop', 'vbmeta.img') { try { Pull $f (Join-Path $Dest $f) } catch { Write-Warning "$f not fetched: $_" } }
 
 $fp = (Select-String -Path (Join-Path $Dest 'build.prop') -Pattern '^ro.system.build.fingerprint=' -ErrorAction SilentlyContinue).Line -replace '^[^=]*=', ''
 $mb = [math]::Round((Get-Item $img).Length / 1MB)

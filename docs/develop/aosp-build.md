@@ -100,8 +100,9 @@ The machine that builds and the machine the phone is plugged into don't have to 
 `build-gsi.sh` writes `system.img.sha256` beside the image. On the install machine, `dev\Get-RemoteImage.ps1` copies the newest image from the build machine over SSH, using Windows' built-in OpenSSH client:
 
 1. It reads the remote checksum first and stops if the local image already matches.
-2. It copies into a `.part` file and keeps it only when its SHA-256 matches.
-3. It keeps the image it replaces as `system.prev.img`.
+2. It copies into a `.part` file and keeps it only when its SHA-256 matches. When the build machine published the image in parts (`build-gsi.sh` with `PUBLISH_DIR` writes 16 `system.img.partNN` files and a `system.img.parts` list of their SHA-256), it pulls them over `-Streams` parallel connections (default 8) and joins them: a VPN that limits each connection goes several times faster. Without parts it pulls the single file.
+3. It fetches `build.prop` (required) and `vbmeta.img` (if published) before swapping anything in, and removes the previous build's copies, so an old sidecar never travels with a new image.
+4. It keeps the image it replaces as `system.prev.img`.
 
 Then install as usual from the stock system.
 

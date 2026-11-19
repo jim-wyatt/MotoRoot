@@ -29,7 +29,8 @@ for p in "$HERE"/product/*/; do
   mkdir -p "device/$name"
   # --delete keeps the tree copy identical to the repository copy, removed files included; the
   # APKs copied below are the one thing the tree has that the repository does not.
-  rsync -a --delete --exclude '*.apk' "$p" "device/$name/" && echo "   device/$name <- dev/aosp/product/$name"
+  rsync -a --delete --exclude '*.apk' "$p" "device/$name/" || { echo "   copying dev/aosp/product/$name failed" >&2; exit 1; }
+  echo "   device/$name <- dev/aosp/product/$name"
 done
 
 echo "== prebuilt APKs"
@@ -55,7 +56,8 @@ for patch in "$HERE"/patches/*.patch; do
   if git -C "$project" apply --reverse --check "$patch" 2>/dev/null; then
     echo "   $file: already applied"
   elif git -C "$project" apply --check "$patch" 2>/dev/null; then
-    git -C "$project" apply "$patch" && echo "   $file: applied"
+    git -C "$project" apply "$patch" || { echo "   $file: git apply failed in $project" >&2; exit 1; }
+    echo "   $file: applied"
   else
     echo "   $file: does not apply to $project; rebase it against this tag" >&2; exit 1
   fi

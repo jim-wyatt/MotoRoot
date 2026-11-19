@@ -88,6 +88,11 @@ $fb = @((Sh "su 0 cat $State/log") -split "`r?`n" | Where-Object { $_ } | ForEac
 if ($status -notlike 'done*') { Write-Warning "The first-boot service had not finished after $t s (status: '$status')." }
 $fb | Where-Object { $_ -like '*failed*' -or $_ -like '*did not stick*' } | ForEach-Object { Write-Warning "first boot: $_" }
 
+# The charge-limit service writes its result 30 s after boot completes (the module re-evaluates on its
+# next battery update), and removes the previous boot's file when it starts.
+$w = 0
+while ($w -lt 60 -and -not (Sh "su 0 cat $State/charge-limit")) { Start-Sleep 5; $w += 5 }
+
 # ---- 5. report
 Step 'Result'
 $crashes = @(& $Adb logcat -d -b crash 2>$null | Select-String ' F libc|FATAL EXCEPTION').Count

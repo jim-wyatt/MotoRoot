@@ -31,17 +31,29 @@ failed() { note "$* failed; will retry next boot"; failures=$((failures + 1)); }
 # module holds charging off. The result goes to the log and to $STATE/charge-limit for
 # Deploy-Image.ps1. Verified by hand on the device first (2026-11-17): at 100% on the charger,
 # blocking went 0 -> 1 and the battery status to "Not charging", as on stock with protection on.
+#
+# init's `start` does nothing for a oneshot that is still running, so a setprop during the 30 s
+# wait would be lost. After the wait the property is read again, and a changed value is applied
+# in turn. The result file is removed first: it lives in /data and outlasts reboots, and
+# Deploy-Image.ps1 must not read the previous boot's result as this one's.
 if [ "$1" = charge-limit ]; then
     mod=/sys/module/qpnp_adaptive_charge/parameters
+    rm -f "$STATE/charge-limit"
     result() { note "charge limit: $*"; echo "$*" > "$STATE/charge-limit"; exit 0; }
     v="$(getprop persist.vedotom.charge_limit)"
-    case "$v" in
-        ''|*[!0-9]*) result "'$v' is not a number; left unchanged" ;;
-    esac
-    { [ "$v" -lt 50 ] || [ "$v" -gt 100 ]; } && result "$v is outside 50..100; left unchanged"
-    [ -e "$mod/upper_limit" ] || result "qpnp_adaptive_charge not present; left unchanged"
-    echo "$v" > "$mod/upper_limit" 2>/dev/null || result "writing $v to upper_limit failed"
-    sleep 30    # the module re-evaluates on its next battery update
+    while :; do
+        case "$v" in
+            ''|*[!0-9]*) result "'$v' is not a number; left unchanged" ;;
+        esac
+        { [ "$v" -lt 50 ] || [ "$v" -gt 100 ]; } && result "$v is outside 50..100; left unchanged"
+        [ -e "$mod/upper_limit" ] || result "qpnp_adaptive_charge not present; left unchanged"
+        echo "$v" > "$mod/upper_limit" 2>/dev/null || result "writing $v to upper_limit failed"
+        sleep 30    # the module re-evaluates on its next battery update
+        now="$(getprop persist.vedotom.charge_limit)"
+        [ "$now" = "$v" ] && break
+        note "charge limit: property changed to '$now' while $v was applied; applying it"
+        v="$now"
+    done
     result "upper_limit=$v, blocking=$(cat "$mod/blocking" 2>/dev/null) (1 = holding charge off)"
 fi
 
