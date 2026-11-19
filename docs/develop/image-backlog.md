@@ -106,6 +106,44 @@ These answer section 4's item 6 and the matching points in section 3. Items 1 an
 4. **Moving the AOSP tag: plan it** as a separate project, for the next Android 16 QPR tag. The image's security patch level is 2025-11-05. That means a sync of the new tag, rebasing the three patches and the `Android.bp` mirror, and a full re-validation. Not part of build 6.
 5. **Removing the remaining unused system apps: no.** Mirroring the ~600 lines of upstream system-image definitions to drop BasicDreams, `com.android.egg`, Bips, PrintSpooler, HtmlViewer, BookmarkProvider, CallLogBackup and WallpaperBackup costs more upkeep on every tag move than the space is worth.
 
+## 7. Plan: moving the AOSP tag (drafted 2026-11-19, not started)
+
+**Where things stand.** The image is built from `android-16.0.0_r4` (BP4A.251205.006, security patch 2025-12-05). The AOSP manifest has no later Android 16 tag: the only newer one is **`android-17.0.0_r1`** (CP2A.260605.016, Android 17, security patch 2026-06-05). So "moving the tag" means **moving to Android 17**, a major version, not a patch bump. Android 17's QPR releases (QPR1 to QPR3 beta, patches up to 2026-10) exist only as Google's GSI binaries, not as source.
+
+**The main risk: the vendor layer is Android 13.** On the device: `ro.vndk.version=33`, `ro.board.api_level=33`, VINTF `target-level="7"`, while the system is Android 16. The image works because it still ships `com.android.vndk.v31` to `v34` and `compatibility_matrix.7.xml`. If Android 17 dropped VNDK v33 or FCM level 7, the vendor's HALs wouldn't start. Nothing else in the plan matters until that's tested, so step 0 is a cheap test that changes nothing in the repository.
+
+**0. Test: does Google's Android 17 GSI run on this vendor?** About an hour, reversible.
+- Image: `aosp_arm64-exp-CP2A.260605.012-15430684-8e545e1e.zip`, SHA-256 `8e545e1e1e977c3b43b4e54a3af463f3e7d1c3177b120e772138334e15f48f75`, from `https://dl.google.com/developers/android/cinnamonbun/images/gsi/` (the stable Android 17 GSI, same release as the tag), under Google's GSI terms.
+- Install it with `Install-Gsi.ps1 -Image <zip>` from stock. That discards the installed VedoTom image and its data; keep a copy of build 8's `system.img` as the known-good image to return to.
+- Check what [gsi.md](../device/gsi.md) checked for Android 16: boot, Wi-Fi, display at 120 Hz, audio, both cameras, sensors, fingerprint, vibrator, USB debugging, `lshal` count against the 100 HALs on build 7, the `qpnp_adaptive_charge` parameters directory (check that it exists only; don't read the parameters), `gpuservice`, and SELinux denials. Capture it with `Dump-DeviceInfo.ps1 -Label gsi17`.
+- **Go:** it boots and the hardware list matches Android 16's. **No go:** stay on `android-16.0.0_r4` and re-test with each new Android 17 source drop.
+
+**1. Second tree, on a branch.** Do the move on a git branch `aosp-17`, so `main` keeps building Android 16 for fixes. The Legion syncs the new tag into a separate tree (`AOSP_DIR=~/aosp17`; about 335 GB used, 622 GB free on WSL's disk), with `sync.sh` reading the branch's `toolchain.json`. Keep `~/aosp` until Android 17 has run for a week.
+
+**2. Port this project's changes.** Each item names its own check.
+- `lunch`: the release configuration name (`trunk_staging`) may change; `lunch` with no arguments lists the tag's targets.
+- Product makefiles: diff upstream `aosp_arm64.mk`, `aosp_product.mk`, `handheld_product.mk` and `telephony_product.mk` against `vedotom_*.mk`, and carry over what moved upstream.
+- `Android.bp` mirror of `aosp_system_image` and `android_gsi_defaults`: filelistdiff names every drift. Re-check the VNDK APEX list (`v31` to `v34`); keep `v33`, which this vendor needs.
+- The three patches in `dev/aosp/patches`: the build/soong `build_prop` visibility, the frameworks/base vibrator amplitude fix, and the frameworks/native gpuservice BpfMap abort. Drop any patch the new tag already fixes upstream; rebase the rest.
+- Overlays: the framework resource names (`config_ntpServers`, `config_defaultDialer`, `config_defaultSms`, `config_defaultNightMode`, `config_navBarInteractionMode`), and NetworkStack's overlayable list for `config_captive_portal_http[s]_urls`, `config_captive_portal_http[s]_url` and `config_captive_portal_fallback_urls`.
+- `PRODUCT_ADB_KEYS` and the release flag `RELEASE_BUILD_PURGE_PRODUCT_ADB_KEYS` (false for userdebug in `android-16.0.0_r4`; check its value in the new tag).
+- The first-boot service: `cmd role`, `settings`, `pm enable/disable`, the Fossify alias names and `seclabel u:r:su:s0`. The charge-limit module is vendor-side and doesn't change.
+- Fossify APKs: re-check that the pinned versions install on Android 17 (target and minimum SDK); bump the pins if needed.
+- WebView comes with the tag, so it updates for free (section 6, item 3).
+
+**3. Build, deploy, validate.** Re-run every check that builds 4 to 8 passed (the [validation](../device/validation.md) rows), plus step 0's hardware list. Compare against build 8, item by item.
+
+**4. Switch over.** Merge `aosp-17` into `main`. Then:
+- move `deviceTools.aosp.tag` and the `deviceTools.gsi` pin to Android 17;
+- update [aosp-build.md](aosp-build.md), [gsi.md](../device/gsi.md) and the validation page;
+- after a week without problems, delete `~/aosp`.
+
+**Going back** is possible at any step: `main` still builds Android 16, and `Deploy-Image.ps1 -NoFetch` with build 8's saved `system.img` restores the current image.
+
+**Timing.** Google has published AOSP source less often since 2025 (this tag is the "26Q2" release). If a newer Android 17 source drop is close, waiting for it might save a second port, but this plan doesn't assume a date. Step 0 is worth doing now either way: if the Android 13 vendor can't run Android 17, the rest is moot.
+
+**Effort.** Step 0 takes about an hour on the install PC. Step 1 is a sync of a few hours on the Legion. Step 2 is one to three working sessions. Step 3 is a first full build (about 2.5 h on the Legion) plus deploy and validation.
+
 ## Vendor noise (only fixable outside the image)
 
 - `MotWlc_AIDL` logged 499 errors in four minutes, polling a missing `wireless/device/wlc_st_changed` node. `mtkpower@impl: [setMode] unknown type` logged 87, because the GSI's PowerHAL modes don't match MediaTek's. These two are the main reason a 256 KiB buffer rolls over so fast. A bigger buffer makes it bearable.
