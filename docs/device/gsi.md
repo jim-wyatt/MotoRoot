@@ -9,7 +9,7 @@ Android is built in two halves: the **system** (the framework, the apps, everyth
 What stays the same while the GSI runs: the bootloader, the kernel and vendor modules, `init_boot` (so Magisk is still in the boot chain), and your real `/data`. What changes: the whole system partition, so expect an AOSP launcher, no Motorola apps, no Google apps (this is the plain AOSP image, not the "+GMS" one), and rough edges wherever the generic image has no tuning for MediaTek hardware (camera quality, fingerprint, maybe audio routing). Wi-Fi normally works, because it's a vendor-side service.
 
 !!! warning "Experimental on this device"
-    DSU was designed for exactly this, but this unit is the first time it's been tried on this model; the [validation page](validation.md) records the outcome. The [disclaimer](../reference/disclaimer.md) applies. The script boots the GSI for **one boot only**: whatever happens, the next reboot (even a forced one by holding Power) returns to the installed system.
+    DSU was designed for exactly this, but this unit is the first time it's been tried on this model; the [validation page](validation.md) records the outcome. The [disclaimer](../reference/disclaimer.md) applies. `Install-Gsi.ps1 -Action Boot` boots the GSI for **one boot only**: whatever happens, the next reboot (even a forced one by holding Power) returns to the installed system. This project's own images are the exception: `Deploy-Image.ps1` boots them with `-Persistent`, so the image stays the phone's system across reboots, and `.\dev\Install-Gsi.ps1 -Action Stock` disables it (still installed) and reboots to the stock system on slot A, which DSU never touches. Use `Deploy-Image.ps1 -SingleBoot` for a one-boot trial of an untested image.
 
 ## The image
 

@@ -9,11 +9,12 @@
 
     1. Get-RemoteImage.ps1 fetches and verifies the newest image. Skip this with -NoFetch to install
        the image already in work\device-tools\gsi\own\.
-    2. If the phone is running a VedoTom image, it reboots to the stock system. The DSU installer
-       works only from there. ro.gsid.image_running reads empty on this device, so the image is
-       recognised by ro.product.name instead.
+    2. If the phone is running a DSU image (gsi_tool status; ro.gsid.image_running reads empty on
+       this device), Install-Gsi.ps1 -Action Stock disables it and reboots to the stock system.
+       The DSU installer works only from there.
     3. Install-Gsi.ps1 discards the installed image, installs the new one with a -UserdataGiB data
-       partition, and boots it.
+       partition, and boots it persistently: it stays the phone's system across reboots until
+       -Action Stock (-SingleBoot boots it once only).
        With work\wifi.json present (private, git-ignored), the image then joins that Wi-Fi network.
     4. It waits for the first-boot service to finish. The service writes its result to
        /data/local/vedotom-firstboot/status and every step to .../log, read here as root
@@ -38,6 +39,7 @@
 param(
     [switch]$NoFetch,
     [switch]$KeepImage,   # keep the fetched image on this PC after the install (by default it is removed)
+    [switch]$SingleBoot,  # boot the new image once only (by default it stays enabled across reboots)
     [int]$UserdataGiB = 24
 )
 $ErrorActionPreference = 'Stop'
@@ -67,21 +69,23 @@ if ((Test-Path $sidecar) -and (((Get-Content $sidecar -TotalCount 1) -split '\s+
 if (-not $PSCmdlet.ShouldProcess('the phone', "replace the installed image and its data with $($hash.Substring(0,12))... ($UserdataGiB GB data partition)")) { return }
 
 # ---- 2. stock system first
-if ((Sh 'getprop ro.product.name') -like 'vedotom*') {
-    Step 'The phone is in a VedoTom image: rebooting to the stock system'
-    & $Adb reboot
-    $s = Wait-DeviceBoot -AfterReboot
-    Write-Host "  stock system up after ~${s}s ($(Sh 'getprop ro.build.display.id'))"
+# A persistent image comes back on a plain reboot, so the GSI is disabled first (Install-Gsi -Action
+# Stock); for a single-boot GSI that is harmless, and the reboot returns to stock either way.
+$gsi = Join-Path $PSScriptRoot 'Install-Gsi.ps1'
+if (Test-GsiRunning) {
+    Step "The phone is in a DSU image ($(Sh 'getprop ro.product.name')): back to the stock system"
+    & $gsi -Action Stock
 }
 
 # ---- 3. discard, install, boot
-$gsi = Join-Path $PSScriptRoot 'Install-Gsi.ps1'
 Step 'Discarding the installed image'
 & $gsi -Action Discard
 Step 'Installing the new image'
 & $gsi -Action Install -Image $Img -UserdataGiB $UserdataGiB
 Step 'Booting it'
-& $gsi -Action Boot
+# Persistent by default: the image stays the phone's system across reboots, with stock untouched on
+# slot A and one command away (.\dev\Install-Gsi.ps1 -Action Stock). -SingleBoot boots it once.
+& $gsi -Action Boot -Persistent:(-not $SingleBoot)
 if ((Sh 'getprop ro.product.name') -notlike 'vedotom*') { throw "The phone did not come up in the VedoTom image (product $(Sh 'getprop ro.product.name'))." }
 # The image is on the phone now, and the build machine keeps every build, so this PC drops its copy
 # (about 1.8 GB). A re-deploy fetches it again. -KeepImage keeps it, e.g. to re-install offline.
