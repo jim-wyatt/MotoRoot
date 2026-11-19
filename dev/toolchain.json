@@ -217,9 +217,9 @@
     "aosp": {
       "_note": "Source for building your own GSI in WSL (dev/aosp/*.sh, docs/develop/aosp-build.md). The tag is the AOSP release that produced the pinned GSI binary above (BP4A.251205.006 = android-16.0.0_r4 per source.android.com/docs/setup/reference/build-numbers), so what you build matches what was validated. The lunch target is verified against `lunch` after the first sync.",
       "manifest": "https://android.googlesource.com/platform/manifest",
-      "tag": "android-16.0.0_r4",
+      "tag": "android-17.0.0_r1",
       "lunch": "vedotom_arm64-trunk_staging-userdebug",
-      "treeDir": "~/aosp"
+      "treeDir": "~/aosp17"
     }
   },
   "inputs": {
