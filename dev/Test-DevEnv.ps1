@@ -42,10 +42,11 @@ Check 'env' 'ANDROID_HOME (user) exists' { Test-Path ([Environment]::GetEnvironm
 
 # ---------------- Android SDK
 $Sdk = $env:ANDROID_HOME
+$BtVer = ($Spec.androidSdk.packages | Where-Object { $_ -like 'build-tools/*' }) -replace '^build-tools/'   # the pinned build-tools
 Check 'sdk' 'android.exe CLI' { (& "$Sdk\cmdline-tools\latest\bin\android.exe" --no-metrics --version 2>&1 | Select-Object -First 1) }
 Check 'sdk' 'platforms/android-36 android.jar' { Test-Path "$Sdk\platforms\android-36\android.jar" }
-Check 'sdk' 'build-tools 36.1.0 d8' { $v = & "$Sdk\build-tools\36.1.0\d8.bat" --version 2>&1 | Select-Object -First 1; if ($LASTEXITCODE -eq 0) { "$v" } else { $false } }
-Check 'sdk' 'build-tools 36.1.0 aapt2' { $v = & "$Sdk\build-tools\36.1.0\aapt2.exe" version 2>&1 | Select-Object -First 1; if ($LASTEXITCODE -eq 0) { "$v" } else { $false } }
+Check 'sdk' "build-tools $BtVer d8" { $v = & "$Sdk\build-tools\$BtVer\d8.bat" --version 2>&1 | Select-Object -First 1; if ($LASTEXITCODE -eq 0) { "$v" } else { $false } }
+Check 'sdk' "build-tools $BtVer aapt2" { $v = & "$Sdk\build-tools\$BtVer\aapt2.exe" version 2>&1 | Select-Object -First 1; if ($LASTEXITCODE -eq 0) { "$v" } else { $false } }
 $NdkVer = ($Spec.androidSdk.packages | Where-Object { $_ -like 'ndk/*' }) -replace '^ndk/'
 Check 'sdk' "ndk $NdkVer" { Test-Path "$Sdk\ndk\$NdkVer\source.properties" }
 
@@ -63,7 +64,9 @@ Check 'tools' 'scrcpy + bundled adb = 37.0.1' { $d = Split-Path (Get-Command scr
 Check 'tools' 'SDK platform-tools adb = pinned adb (no server fights with Studio)' { $sdkV = (& "$Sdk\platform-tools\adb.exe" version)[1]; $pinV = (& $adb version)[1]; if ($sdkV -eq $pinV) { "$sdkV" } else { throw "SDK ${sdkV} vs pinned ${pinV}: decline the platform-tools update in Studio, or move the pin" } }
 Check 'tools' 'gh CLI' { (gh --version | Select-Object -First 1) }
 Check 'tools' '7-Zip' { (Get-Command 7z -ErrorAction Stop).Source }
-Check 'tools' 'Android Studio' { Test-Path "$env:ProgramFiles\Android\Android Studio\bin\studio64.exe" }
+# Optional (Bootstrap -AndroidStudio): a warning, not a failure, when it isn't installed.
+if (Test-Path "$env:ProgramFiles\Android\Android Studio\bin\studio64.exe") { Check 'tools' 'Android Studio' { $true } }
+else { Warn 'tools' 'Android Studio' 'not installed (optional: .\dev\Bootstrap-DevEnv.ps1 -AndroidStudio)' }
 
 # ---------------- functional builds
 # Build-Device prints one Identical=True/False row per artifact: 2 helper DEX files + one ZIP per manifest.
@@ -87,6 +90,11 @@ Check 'build' 'module scripts are LF, no BOM, executable in the ZIPs' {
         } finally { $zip.Dispose() }
     }
     $true
+}
+Check 'build' 'module builder unit tests (device\modules\test_build_modules.py)' {
+    $o = & $py -m unittest discover -s (Join-Path $Root 'device\modules') -p 'test_*.py' 2>&1 | Out-String
+    if ($LASTEXITCODE -ne 0) { throw $o.Trim() }
+    ([regex]::Match($o, 'Ran \d+ tests')).Value
 }
 Check 'build' 'jadx decompiles UpdateHelper.dex' {
     & jadx --quiet -d (Join-Path $Tmp 'jadx') (Join-Path $Root 'device\helpers\UpdateHelper.dex') 2>&1 | Out-Null
@@ -128,7 +136,11 @@ Check 'inputs' 'Motorola driver installer signed + pinned' { $s = Get-Authentico
 Check 'inputs' 'Motorola driver installed' { $d = Get-ItemProperty HKLM:\Software\Microsoft\Windows\CurrentVersion\Uninstall\*, HKLM:\Software\WOW6432Node\Microsoft\Windows\CurrentVersion\Uninstall\* -ErrorAction SilentlyContinue | Where-Object DisplayName -match 'Motorola Mobile Drivers' | Select-Object -First 1; if ($d) { "$($d.DisplayName)" } else { $false } }
 
 # ---------------- device tools (work\device-tools, work\.venv-frida)
-foreach ($Dl in $Spec.deviceTools.downloads) { Check 'devtools' "$($Dl.name) pin" { (Sha256 (Join-Path $Work "device-tools\$($Dl.name)")) -eq $Dl.sha256 } }
+# On an install PC (work\install-pc, set by Bootstrap-DevEnv.ps1 -InstallPc) the build-only inputs are
+# deliberately absent: the build machine has them.
+$InstallPc = Test-Path (Join-Path $Work 'install-pc')
+$DevDownloads = @($Spec.deviceTools.downloads | Where-Object { -not ($InstallPc -and $_.buildOnly) })
+foreach ($Dl in $DevDownloads) { Check 'devtools' "$($Dl.name) pin" { (Sha256 (Join-Path $Work "device-tools\$($Dl.name)")) -eq $Dl.sha256 } }
 Check 'devtools' 'frida-server extracted from the pinned archive' {
     $fr = $Spec.deviceTools.downloads | Where-Object extract -eq 'frida-server'
     $st = Join-Path $Work 'device-tools\frida-server.pinned-sha256'
@@ -137,9 +149,9 @@ Check 'devtools' 'frida-server extracted from the pinned archive' {
 # APKs that carry a signerSha256 pin: the signing certificate inside the file must be the publisher's. The hash
 # pins the bytes; this pins the identity, so re-pinning a newer version cannot silently accept a differently
 # signed build.
-foreach ($Dl in ($Spec.deviceTools.downloads | Where-Object { $_.signerSha256 })) {
+foreach ($Dl in ($DevDownloads | Where-Object { $_.signerSha256 })) {
     Check 'devtools' "$($Dl.name) signing certificate" {
-        $o = & "$Sdk\build-tools\36.1.0\apksigner.bat" verify --print-certs (Join-Path $Work "device-tools\$($Dl.name)") 2>&1 | Out-String
+        $o = & "$Sdk\build-tools\$BtVer\apksigner.bat" verify --print-certs (Join-Path $Work "device-tools\$($Dl.name)") 2>&1 | Out-String
         if ($o -match 'certificate SHA-256 digest: ([0-9a-f]{64})' -and $Matches[1] -eq $Dl.signerSha256) { $Matches[1].Substring(0, 16) + '...' } else { $false }
     }
 }

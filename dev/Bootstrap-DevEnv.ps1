@@ -23,9 +23,17 @@ Also install Android Studio (large; not needed for the device procedure or helpe
 Accept the Android SDK licenses non-interactively. Without it, sdkmanager asks you
 to review them in this console (which requires an interactive window).
 
+.PARAMETER InstallPc
+This PC only installs and validates images (the phone is plugged in here); another machine builds
+them. Skips the downloads only image builds use (toolchain.json entries marked buildOnly, the
+Fossify APKs) and deletes copies already here. Remembered in work\install-pc, so later runs and
+Test-DevEnv.ps1 keep to it; delete that file to make this a build machine again.
+
 .EXAMPLE
 Set-ExecutionPolicy -Scope Process Bypass
 .\dev\Bootstrap-DevEnv.ps1
+.EXAMPLE
+.\dev\Bootstrap-DevEnv.ps1 -InstallPc      # the PC beside the phone, when a separate machine builds
 #>
 [CmdletBinding()]
 param(
@@ -33,7 +41,8 @@ param(
     [switch]$AcceptAndroidSdkLicenses,
     [switch]$SkipWinget,
     [switch]$SkipSdk,
-    [switch]$SkipInputs
+    [switch]$SkipInputs,
+    [switch]$InstallPc
 )
 $ErrorActionPreference = 'Stop'
 $ProgressPreference = 'SilentlyContinue'   # Invoke-WebRequest is far faster without the progress bar
@@ -47,6 +56,11 @@ $Tools = Join-Path $PSScriptRoot '.tools'
 New-Item -ItemType Directory -Force -Path $Cache, $Tools | Out-Null
 
 if ($Root -like '\\*') { throw "Run from a local NTFS folder, not a network/WSL path ($Root)." }
+
+# Install-PC mode: set once with -InstallPc, kept in work\install-pc.
+$InstallPcMarker = Join-Path $Work 'install-pc'
+if ($InstallPc -and -not (Test-Path $InstallPcMarker)) { Set-Content -LiteralPath $InstallPcMarker -Value 'This PC installs and validates images; the build machine downloads and builds.' }
+$InstallPc = Test-Path $InstallPcMarker
 
 function Write-Step($Text) { Write-Host "`n== $Text" -ForegroundColor Cyan }
 function Write-Ok($Text)   { Write-Host "   OK  $Text" -ForegroundColor Green }
@@ -238,6 +252,11 @@ if (-not $SkipInputs) {
     New-Item -ItemType Directory -Force -Path $ToolDir | Out-Null
     foreach ($Dl in $Spec.deviceTools.downloads) {
         $File = Join-Path $ToolDir $Dl.name
+        if ($InstallPc -and $Dl.buildOnly) {
+            # An image-build input: the build machine downloads it, this PC never needs it.
+            if (Test-Path -LiteralPath $File) { Remove-Item -LiteralPath $File -Force; Write-Note "$($Dl.name) removed (build-only; install PC)" }
+            continue
+        }
         Get-PinnedFile $Dl.url $File 'SHA256' $Dl.sha256
         if ($Dl.extract) {
             # .xz archives: 7-Zip extracts the single inner file; rename it to the documented name.

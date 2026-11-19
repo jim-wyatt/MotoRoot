@@ -41,7 +41,7 @@ Get-Content $Work\aosp-sync.log -Tail 5; Get-Content $Work\aosp-build.log -Tail 
 
 `sync.sh` uses a partial clone (`--partial-clone --clone-filter=blob:limit=10M --depth=1`), which keeps the first download to roughly a quarter of a full checkout and is resumable: re-run it after an interruption. After every sync it runs `verify-tree.sh`, because an interruption *during a checkout* leaves a project with the right HEAD and a half-written work tree, which the next `repo sync` reports as fine; the first build then fails far from the cause (`unrecognized module type "llvm_prebuilt_library_static"` was `prebuilts/clang/host/linux-x86` missing its `soong/` directory and 38,979 other files). The verifier finds projects whose only differences from HEAD are missing files and resets them; a project with any edit of yours is listed and left alone. It refuses to start without `git-lfs`: several prebuilts projects (`prebuilts/jdk/jdk8`, `prebuilts/tools`, `prebuilts/bundletool`, `prebuilts/bazel/common`) store their binaries in Git LFS, and without the filter they fail with `Cannot initialize work tree` while the rest of the sync continues. `build-gsi.sh` sources `build/envsetup.sh`, runs `lunch` with the pinned target and `m` with all cores, and copies `system.img` (plus `vbmeta.img` and `build.prop`) to `work\device-tools\gsi\own\`. A second build after a change is incremental: minutes, not hours.
 
-Then boot your build exactly like Google's, one-shot, nothing flashed:
+Then boot your build exactly like Google's, nothing flashed (one boot here; `Deploy-Image.ps1`, below, boots it persistently):
 
 ```powershell
 .\dev\Install-Gsi.ps1 -Action Install -Image "$Work\device-tools\gsi\own\system.img"   # wraps it in a zip for the DSU installer (enter the PIN on the phone if it asks)
@@ -95,7 +95,7 @@ The inner loop is: edit under `~/aosp` (in WSL; a VS Code *WSL* window is handy 
 
 ## Building on one machine, installing from another
 
-The machine that builds and the machine the phone is plugged into don't have to be the same. The project's own setup builds on a desktop in another office and installs from the PC beside the phone; the two reach each other over a site-to-site VPN. The build machine runs the AOSP tree as described above. The install machine needs only the Windows bootstrap, not WSL or the tree.
+The machine that builds and the machine the phone is plugged into don't have to be the same. The project's own setup builds on a desktop in another office and installs from the PC beside the phone; the two reach each other over a site-to-site VPN. The build machine runs the AOSP tree as described above. The install machine needs only the Windows bootstrap, run once as `.\dev\Bootstrap-DevEnv.ps1 -InstallPc`, not WSL or the tree. That skips the downloads only image builds use (the Fossify APKs, marked `buildOnly` in `toolchain.json`); everything the build needs, the AOSP sync included, downloads on the build machine. Any GSI to test, Google's included, is downloaded on the build machine too and fetched from there.
 
 `build-gsi.sh` writes `system.img.sha256` beside the image. On the install machine, `dev\Get-RemoteImage.ps1` copies the newest image from the build machine over SSH, using Windows' built-in OpenSSH client:
 
@@ -162,7 +162,28 @@ To take a delivered image all the way onto the phone, run this on the install ma
 .\dev\Deploy-Image.ps1
 ```
 
-It fetches the newest image and reboots the phone to the stock system if a VedoTom image is running. Then it discards the installed image, installs and boots the new one, and waits for the first-boot service's `status` file. It ends with the fingerprint, the HOME role holder, what the first-boot service did, the defaults it checks (animation scales, log buffer size, time zone, the hidden Files icon) and the crash log. It asks before starting, because the install deletes the old image's data. `-NoFetch` installs the image already on this PC.
+It runs the whole delivery loop, and on this setup it needs no one at the phone:
+
+1. **Fetch.** `Get-RemoteImage.ps1` pulls the image in 16 parts over 8 parallel streams (the VPN path limits each connection, not the total), checks every part and the joined image against the build machine's SHA-256, and retries a part that fails. SSH keep-alives end a stream that dies silently in the tunnel. `-NoFetch` uses the image already here.
+2. **Back to stock.** If a DSU image is running, `Install-Gsi.ps1 -Action Stock` disables it and reboots to the phone's own system, where the DSU installer works.
+3. **Discard, install, boot.** The old image and its data go (so the script asks first; `-Confirm:$false` skips that), the new one is installed and booted **persistently**: it stays the phone's system across reboots (see *Living with the image* below; `-SingleBoot` boots it once only). The DSU installer asks for the screen-lock PIN only on a phone with a secure lock screen. This PC's copy of the image is then deleted (`-KeepImage` keeps it); the build machine keeps every build.
+4. **USB debugging.** Images set `ro.adb.secure=1`, and every fresh install starts with no authorised computer. Builds made with a `work/adb_keys` file on the build machine (git-ignored: one `adbkey.pub` line per PC, never a private `adbkey`) trust those PCs from the first boot. Any other PC gets the usual *Allow USB debugging?* prompt, and the script says so while it waits.
+5. **Wi-Fi.** With a private `work\wifi.json` on the install PC (`{"ssid": ..., "security": "wpa2", "passphrase": ...}`; git-ignored and blocked by the hook), the image joins that network, so the network checks run.
+6. **Report.** The first-boot service's result, the HOME role, the defaults the image sets, the charge limit, the network (validated or not, which hosts the captive-portal probes used, the NTP server) and the crash log.
+7. **Development workflows.** `Test-Device.ps1` checks root, logs, an NDK binary, an app built and installed from this PC, a Perfetto trace, Frida and scrcpy on the new image (`-SkipDeviceTest` leaves it out).
+
+## Living with the image
+
+The image is the phone's everyday system until you switch back. Stock stays untouched on slot A the whole time, with its own data:
+
+```powershell
+.\dev\Install-Gsi.ps1 -Action Status                # which system is running, and what DSU holds
+.\dev\Install-Gsi.ps1 -Action Stock                 # to the phone's own system; the image stays installed
+.\dev\Install-Gsi.ps1 -Action Boot -Persistent      # back into the image, its data as you left it
+.\dev\Test-Device.ps1                               # are the development workflows fine right now?
+```
+
+A plain `adb reboot` comes back into the image. Measured on build 8: a reboot into the image takes about 45 s, and either switch about 55 s. If an image ever won't start at all, the DSU loader falls back to the phone's own system after a failed boot; from there, `-Action Discard` removes the image, and a deploy puts a working one back.
 
 ## Open work
 

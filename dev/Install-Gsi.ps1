@@ -15,7 +15,11 @@ dev\toolchain.json (deviceTools.gsi).
                      The phone shows a confirmation; after you accept, installation takes a few
                      minutes and the script waits for `gsi_tool status` to report it installed.
   -Action Boot       Enable the installed GSI for ONE boot and reboot into it. The next reboot,
-                     however it happens, returns to the installed system.
+                     however it happens, returns to the installed system. With -Persistent it
+                     stays enabled: every reboot comes back to the GSI until -Action Stock.
+  -Action Stock      From a running GSI: disable it (it stays installed) and reboot to the
+                     phone's own system. Needs root in the GSI (AOSP userdebug su 0, as in
+                     this project's images); a plain reboot only works for a single-boot GSI.
   -Action Status     Show the DSU state and whether a GSI is running right now.
   -Action Discard    Remove the installed GSI and its userdata (run from the normal system).
 
@@ -35,8 +39,9 @@ too. No hash pin applies to your own build.
 #>
 [CmdletBinding()]
 param(
-    [ValidateSet('Download', 'Install', 'Boot', 'Status', 'Discard')][string]$Action = 'Status',
+    [ValidateSet('Download', 'Install', 'Boot', 'Stock', 'Status', 'Discard')][string]$Action = 'Status',
     [switch]$AcceptGoogleGsiTerms,
+    [switch]$Persistent,
     [int]$UserdataGiB = 8,
     [string]$Image
 )
@@ -122,17 +127,20 @@ switch ($Action) {
         # images in /data. KEY_USERDATA_SIZE is in bytes. VerificationActivity asks for the screen-lock
         # PIN, pattern or password first only when the phone has a secure lock screen; without one
         # (as on the tested unit, 2026-11-19) the installation starts with no prompt at all.
-        & $Adb shell am start-activity -n com.android.dynsystem/com.android.dynsystem.VerificationActivity `
-            -a android.os.image.action.START_INSTALL -d "file://$Remote" --el KEY_USERDATA_SIZE $userdata | Out-Null
-        Write-Host 'Installing (if the phone has a secure lock screen, it asks for the PIN, pattern or password first). Waiting for it to finish (up to 30 min) ...' -ForegroundColor Cyan
         # gsi_tool lists partitions as "installed" as soon as they are created, while the installer is
         # still writing them, so the installer's own status in logcat is what to wait for:
         # NOT_STARTED -> IN_PROGRESS (with a progress fraction) -> READY, or an error cause.
-        & $Adb logcat -c 2>$null
+        # Only lines from now on count: the phone's clock is read before the installer starts and
+        # logcat -T reads from there, so earlier installs' lines are ignored and the phone's log
+        # buffers (evidence if something goes wrong) are left alone instead of cleared.
+        $since = ((& $Adb shell "date '+%m-%d %H:%M:%S.000'") -join '').Trim()
+        & $Adb shell am start-activity -n com.android.dynsystem/com.android.dynsystem.VerificationActivity `
+            -a android.os.image.action.START_INSTALL -d "file://$Remote" --el KEY_USERDATA_SIZE $userdata | Out-Null
+        Write-Host 'Installing (if the phone has a secure lock screen, it asks for the PIN, pattern or password first). Waiting for it to finish (up to 30 min) ...' -ForegroundColor Cyan
         $t = 0; $state = 'NOT_STARTED'; $lastShown = ''
         while ($t -lt 1800) {
             Start-Sleep 10; $t += 10
-            $line = (& $Adb logcat -d 2>$null | Select-String -Pattern 'DynamicSystemInstallationService: status: (\w+), cause: (\w+)' | Select-Object -Last 1)
+            $line = (& $Adb logcat -d -T $since 2>$null | Select-String -Pattern 'DynamicSystemInstallationService: status: (\w+), cause: (\w+)' | Select-Object -Last 1)
             if ($line) {
                 $state = $line.Matches[0].Groups[1].Value
                 $progress = [regex]::Match($line.Line, 'total_progress: (\d+%)').Groups[1].Value
@@ -151,12 +159,29 @@ switch ($Action) {
         Require-Device
         $st = GsiStatus
         if ($st -notmatch 'installed|enabled') { throw "No installed GSI (status '$st'). Run -Action Install first." }
-        Write-Host (Root 'gsi_tool enable --single-boot')
-        Write-Host 'Rebooting into the GSI for ONE boot. First boot can take several minutes. If it never reaches the home screen, hold Power to reboot: the next boot is the normal system.' -ForegroundColor Cyan
+        if ($Persistent) {
+            Write-Host (Root 'gsi_tool enable')
+            Write-Host 'Rebooting into the GSI; it stays enabled, so every later reboot comes back to it until .\dev\Install-Gsi.ps1 -Action Stock. First boot can take several minutes.' -ForegroundColor Cyan
+        } else {
+            Write-Host (Root 'gsi_tool enable --single-boot')
+            Write-Host 'Rebooting into the GSI for ONE boot. First boot can take several minutes. If it never reaches the home screen, hold Power to reboot: the next boot is the normal system.' -ForegroundColor Cyan
+        }
         & $Adb reboot
         $t = Wait-DeviceBoot -AfterReboot
         Start-Sleep 5
         Write-Host "booted after ~${t}s: GSI running=$(Test-GsiRunning) build=$(Prop 'ro.build.display.id') fingerprint=$(Prop 'ro.build.fingerprint')"
+        if ($Persistent -and (Test-GsiRunning)) { Write-Host "DSU status: $((GsiStatus) -replace "`n", ' ') (persistent)" }
+    }
+    'Stock' {
+        Require-Device
+        if (-not (Test-GsiRunning)) { Write-Host "Already on the phone's own system ($(Prop 'ro.build.display.id'))."; return }
+        # disable keeps the GSI installed but stops init from booting it; the next boot is the
+        # phone's own system. -Action Boot enables it again, without reinstalling.
+        Write-Host (Root 'gsi_tool disable')
+        & $Adb reboot
+        $t = Wait-DeviceBoot -AfterReboot
+        if (Test-GsiRunning) { throw "Still in the GSI after the reboot (status '$(GsiStatus)')." }
+        Write-Host "Stock system up after ~${t}s ($(Prop 'ro.build.display.id')); the GSI is still installed: $((GsiStatus) -replace "`n", ' ')" -ForegroundColor Green
     }
     'Status' {
         Require-Device

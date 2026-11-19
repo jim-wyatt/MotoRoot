@@ -66,7 +66,11 @@ if ($Save) {
 }
 $target = "$($conf.user)@$($conf.host)"
 $remoteDir = "$($conf.repo.TrimEnd('/'))/work/device-tools/gsi/own"
-$sshOpts = @('-o', 'BatchMode=yes', '-o', 'StrictHostKeyChecking=accept-new', '-o', 'ConnectTimeout=10')
+# Keep-alives: a connection that dies silently in the VPN tunnel (no reset) would otherwise leave
+# scp waiting forever (seen 2026-11-19: all 8 part streams stalled at a few MB). With these, scp
+# exits after about 60 s without an answer, and Pull-Parts' retry fetches that part again.
+$sshOpts = @('-o', 'BatchMode=yes', '-o', 'StrictHostKeyChecking=accept-new', '-o', 'ConnectTimeout=10',
+             '-o', 'ServerAliveInterval=15', '-o', 'ServerAliveCountMax=4')
 if ($conf.port) { $sshOpts += @('-P', "$($conf.port)") }   # scp takes the port as -P
 
 function Pull([string]$name, [string]$to) {
@@ -89,7 +93,15 @@ if ($localHash -eq $remoteHash) {
     return
 }
 if ($Check) {
-    Write-Host "A different image is waiting on $($conf.host) ($($remoteHash.Substring(0,12))...). Run without -Check to fetch it." -ForegroundColor Yellow
+    # Deploy-Image deletes the local copy after installing and keeps its hash in deployed.sha256,
+    # so "no local image" usually means "already on the phone", not "something new is waiting".
+    $deployedFile = Join-Path $Dest 'deployed.sha256'
+    $deployed = if (Test-Path $deployedFile) { ((Get-Content $deployedFile -TotalCount 1) -split '\s+')[0].ToLower() } else { '' }
+    if ($deployed -eq $remoteHash) {
+        Write-Host "Nothing new: the build machine's newest ($($remoteHash.Substring(0,12))...) is the image last deployed to the phone (its local copy was removed after the install)." -ForegroundColor Green
+    } else {
+        Write-Host "A new image is waiting on $($conf.host) ($($remoteHash.Substring(0,12))...; last deployed: $(if ($deployed) { $deployed.Substring(0,12) + '...' } else { 'none recorded' })). Run without -Check to fetch it." -ForegroundColor Yellow
+    }
     return
 }
 
@@ -108,10 +120,12 @@ function Pull-Parts([string]$to) {
     if (-not $parts) { return $false }
     Write-Host "  $(@($parts).Count) parts, $Streams streams"
     $scpArgs = { param($p) (@($sshOpts) + @('-q', "${target}:$remoteDir/$($p.Name)", "`"$($p.File)`"")) }
-    foreach ($attempt in 1, 2) {
+    # Up to three retries of whatever failed, with a pause that grows each time: on a congested
+    # link (seen 2026-11-19) parts fail in bursts, and a retry straight away often fails the same way.
+    foreach ($attempt in 1..4) {
         $todo = @($parts | Where-Object { -not (Test-Path $_.File) -or (Get-FileHash -Algorithm SHA256 $_.File).Hash.ToLower() -ne $_.Hash })
         if (-not $todo) { break }
-        if ($attempt -gt 1) { Write-Warning "$($todo.Count) part(s) failed or mismatched; fetching them again" }
+        if ($attempt -gt 1) { Write-Warning "$($todo.Count) part(s) failed or mismatched; fetching them again in $(15 * ($attempt - 1)) s (retry $($attempt - 1) of 3)"; Start-Sleep (15 * ($attempt - 1)) }
         $running = @()
         foreach ($p in $todo) {
             while (@($running | Where-Object { -not $_.HasExited }).Count -ge $Streams) { Start-Sleep -Milliseconds 200 }
@@ -121,8 +135,10 @@ function Pull-Parts([string]$to) {
     }
     $bad = @($parts | Where-Object { -not (Test-Path $_.File) -or (Get-FileHash -Algorithm SHA256 $_.File).Hash.ToLower() -ne $_.Hash })
     if ($bad) {
-        $parts | ForEach-Object { Remove-Item -Force -ErrorAction SilentlyContinue $_.File }
-        throw "Parts still missing or mismatched after a retry: $($bad.Name -join ', '). Nothing was replaced."
+        # Keep the parts that verified: the next run checks each against system.img.parts again and
+        # fetches only what is missing, so it resumes instead of starting over.
+        $bad | ForEach-Object { Remove-Item -Force -ErrorAction SilentlyContinue $_.File }
+        throw "Parts still missing or mismatched after 3 retries: $($bad.Name -join ', '). Nothing was replaced; the $(@($parts).Count - $bad.Count) verified parts are kept, so running again resumes."
     }
     # Each part goes as soon as it is joined, so the parts and the joined image never both sit on disk
     # in full. A failed join leaves nothing: the full SHA-256 check would reject it anyway.

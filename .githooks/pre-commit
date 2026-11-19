@@ -9,12 +9,19 @@ block() { echo "pre-commit: BLOCKED $1" >&2; fail=1; }
 
 while IFS= read -r -d '' f; do
   case "$f" in
-    work/*|*/private-backups/*|private-backups/*|backups/*|diagnostics/*|private/*|lk-analysis/*|lk-patch-analysis/*|magisk-patch-files/*|dev/.cache/*|dev/.tools/*|dev/build/*|dev/.venv-docs/*|site/*)
+    work/*|*/private-backups/*|private-backups/*|backups/*|diagnostics/*|private/*|lk-analysis/*|lk-patch-analysis/*|magisk-patch-files/*|dev/.cache/*|dev/.tools/*|dev/build/*|dev/.venv-docs/*|site/*|\
+    traces/*|*/traces/*|blobs/*|*/blobs/*|extracted/*|*/extracted/*|captures/*|*/captures/*|screenshots/*|*/screenshots/*|.venv*/*|*/.venv*/*)
       block "$f (private or generated folder)"; continue ;;
   esac
   case "${f,,}" in
-    *.img|*.bin|*.apk|*.aab|*.msi|*.log|*.tar|*.csv|*.pem|*.key|*.pk8|*.p12|*.der|*.jks|*.keystore|*unlock-key*|.env|*/.env|*keystore.properties|*local.properties)
+    *.img|*.bin|*.apk|*.aab|*.msi|*.log|*.tar|*.csv|*.pem|*.key|*.pk8|*.p12|*.der|*.jks|*.keystore|*unlock-key*|.env|*/.env|.env.*|*/.env.*|*keystore.properties|*local.properties)
       block "$f (device image, installer, log, key material, or local secrets)"; continue ;;
+    # adb's private key (adbkey, never adbkey.pub's twin) and trusted-key lists (adb_keys) are per machine.
+    adbkey|*/adbkey|adb_keys|*/adb_keys|*wifi.json)
+      block "$f (adb key material or Wi-Fi credentials)"; continue ;;
+    # Traces, recordings and native libraries pulled from a device: app names, logs, vendor blobs.
+    *.pftrace|*.perfetto-trace|*.mp4|*.mkv|*.so)
+      block "$f (trace, screen recording or native library: may hold device data or vendor code)"; continue ;;
   esac
   size=$(git cat-file -s ":$f" 2>/dev/null || echo 0)
   if [ "$size" -gt "$max_bytes" ]; then

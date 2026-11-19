@@ -112,7 +112,7 @@ These answer section 4's item 6 and the matching points in section 3. Items 1 an
 
 **The main risk: the vendor layer is Android 13.** On the device: `ro.vndk.version=33`, `ro.board.api_level=33`, VINTF `target-level="7"`, while the system is Android 16. The image works because it still ships `com.android.vndk.v31` to `v34` and `compatibility_matrix.7.xml`. If Android 17 dropped VNDK v33 or FCM level 7, the vendor's HALs wouldn't start. Nothing else in the plan matters until that's tested, so step 0 is a cheap test that changes nothing in the repository.
 
-**0. Test: does Google's Android 17 GSI run on this vendor?** About an hour, reversible.
+**0. Test: does Google's Android 17 GSI run on this vendor?** About an hour, reversible. **Done 2026-11-19: go.** It boots and the hardware matches Android 16 (see the [validation](../device/validation.md) row). Keep the vibrator patch; check whether the gpuservice patch is still needed. Step 1 (the `aosp-17` branch and `~/aosp17` sync) started on the Legion the same day.
 - Image: `aosp_arm64-exp-CP2A.260605.012-15430684-8e545e1e.zip`, SHA-256 `8e545e1e1e977c3b43b4e54a3af463f3e7d1c3177b120e772138334e15f48f75`, from `https://dl.google.com/developers/android/cinnamonbun/images/gsi/` (the stable Android 17 GSI, same release as the tag), under Google's GSI terms.
 - Install it with `Install-Gsi.ps1 -Image <zip>` from stock. That discards the installed VedoTom image and its data; keep a copy of build 8's `system.img` as the known-good image to return to.
 - Check what [gsi.md](../device/gsi.md) checked for Android 16: boot, Wi-Fi, display at 120 Hz, audio, both cameras, sensors, fingerprint, vibrator, USB debugging, `lshal` count against the 100 HALs on build 7, the `qpnp_adaptive_charge` parameters directory (check that it exists only; don't read the parameters), `gpuservice`, and SELinux denials. Capture it with `Dump-DeviceInfo.ps1 -Label gsi17`.
@@ -130,6 +130,25 @@ These answer section 4's item 6 and the matching points in section 3. Items 1 an
 - The first-boot service: `cmd role`, `settings`, `pm enable/disable`, the Fossify alias names and `seclabel u:r:su:s0`. The charge-limit module is vendor-side and doesn't change.
 - Fossify APKs: re-check that the pinned versions install on Android 17 (target and minimum SDK); bump the pins if needed.
 - WebView comes with the tag, so it updates for free (section 6, item 3).
+
+**Step 2 checklist (upstream diff, `android-16.0.0_r4` vs `android-17.0.0_r1`, read file by file from android.googlesource.com on 2026-11-19; no tree needed).**
+
+| What we carry | Android 17 | Action on `aosp-17` |
+| --- | --- | --- |
+| `vedotom_product.mk`, `vedotom_handheld_product.mk` (mirrors of `aosp_product.mk`, `handheld_product.mk`, `telephony_product.mk`); `vedotom_arm64.mk` (from `aosp_arm64.mk`) | all four upstream files **unchanged** | none |
+| `media_product.mk` (inherited) | adds `preinstalled-packages-media-product.xml` | nothing in the makefiles; add it to the `Android.bp` mirror if filelistdiff asks |
+| `gsi_release.mk` (inherited) | `PRODUCT_SHIPPING_API_LEVEL` follows the platform; 16 KB `PRODUCT_MAX_PAGE_SIZE_SUPPORTED`; adds `hwservicemanager`, `android.hidl.allocator@1.0-service`, `android.hidl.memory@1.0-impl`, `wificond` for devices that shipped at API 34 or older (this one: vendor API 33) | inherited, nothing to port; keep `PRODUCT_NO_BIONIC_PAGE_SIZE_MACRO` (now also set upstream) |
+| `generic_system.mk` (inherited) | drops the HIDL `android.hardware.radio@1.0`-`1.4`, `radio.config@1.0`, `radio.deprecated@1.0` and `biometrics.fingerprint@2.1` packages; `ro.product.system.name`/`model` become `generic_system` / `Generic System` | inherited. On this vendor, calls, data, SMS and SIM are AIDL (`radio.voice/.data/.messaging/.modem/.network/.sim`, plus MediaTek's `mtkradioex`); the only HIDL radio entry is `@1.2::ISap` (Bluetooth SIM Access), so at most SAP is lost. Fingerprint is HIDL `@2.1`: Google's 17 GSI still found it (`FingerprintProvider/defaultHIDL`), but **check it on our first build** |
+| `Android.bp`: the mirror of `android_gsi_defaults` and `aosp_system_image` | `android_gsi_defaults` adds `preinstalled-packages-gsi-system-ext.xml`, `preinstalled-packages-base-product.xml`, `wificond`, `hwservicemanager`, `android.hidl.allocator@1.0-service`; `aosp_system_image` moves `AvatarPicker` from handheld_product to the handheld_system_ext group, and adds `preinstalled-packages-platform-telephony-system-ext.xml` and `preinstalled-packages-telephony-system-ext.xml`. VNDK `v31`-`v34` stay (this vendor needs `v33`); `com.android.compos` and `android.hidl.memory@1.0-impl` are where they were | **add all seven** to `vedotom_gsi_defaults` / `vedotom_system_image`; filelistdiff confirms |
+| `build-soong-0001-build-prop-visibility-for-device-vedotom.patch` | `system_ext-build.prop` and `product-build.prop` keep the same visibility lists | **keep**: `git apply --check` passes on 17 |
+| `frameworks-base-0001-vibrator-no-unknown-amplitude-to-hal.patch` | `VintfHalVibrator.java` changed in 54 lines elsewhere; the bug is still there (Google's 17 GSI logged 11 `setAmplitude` IllegalArgumentExceptions) | **keep**: applies cleanly on 17 |
+| `frameworks-native-0001-gpuservice-no-abort-without-gpuwork-bpf.patch` | **fixed upstream**: `getBpfMap()` now uses `map.init()` ("BpfMap ctor calls abort() on failure"), which is why the 17 GSI's gpuservice stayed up | **delete** on `aosp-17`: it no longer applies, and `apply-local.sh` stops at a patch that doesn't apply |
+| `VedoTomFrameworkOverlay`: `config_defaultNightMode`, `config_navBarInteractionMode`, `config_defaultDialer`, `config_defaultSms`, `config_ntpServers` | all five present, same types | none |
+| `VedoTomNetworkStackOverlay`: the probe URLs and `NetworkStackConfig` overlayable | NetworkStack `config.xml` and `overlayable.xml` **unchanged** | none |
+| Lunch target `vedotom_arm64-trunk_staging-userdebug` | the `trunk_staging` release config still exists | expected to carry over; `lunch` confirms |
+| `PRODUCT_ADB_KEYS` (build 8 on) | the `adb_keys` module and the `RELEASE_BUILD_PURGE_PRODUCT_ADB_KEYS` declaration (MANUAL_BUILD_VARIANT) are identical | expected to carry over; **check** `/product/etc/security/adb_keys` in the first build's output |
+| Fossify APK pins (minimum SDK 21-26, target 34-36) | installs on 17 (target SDK floor is far below) | none; revisit if a pin's target falls behind the platform's minimum |
+| First-boot service (`cmd role`, `settings`, `pm`, `seclabel u:r:su:s0`) | not diffed (shell interfaces); the 17 GSI's `cmd wifi`, `settings` and `pm` behaved normally | covered by the first build's validation |
 
 **3. Build, deploy, validate.** Re-run every check that builds 4 to 8 passed (the [validation](../device/validation.md) rows), plus step 0's hardware list. Compare against build 8, item by item.
 

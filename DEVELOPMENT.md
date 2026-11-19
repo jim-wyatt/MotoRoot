@@ -10,6 +10,7 @@ Set-ExecutionPolicy -Scope Process Bypass
 . .\dev\Enter-DevShell.ps1                      # in every new window
 .\dev\Build-Device.ps1                          # rebuild helpers + modules, compare with the committed copies
 .\dev\Test-DevEnv.ps1                           # end-to-end self-test; exit code = failures
+.\dev\Test-Device.ps1                           # the same for the phone: root, logs, NDK, app install, Perfetto, Frida, scrcpy
 ```
 
 `Test-DevEnv.ps1` exercises every tool, not just its version. It compiles and dexes the helpers, decompiles with jadx, cross-compiles an aarch64 Android 16 binary with the NDK, builds the docs site, imports val-protocol, re-verifies every pinned input, and checks the git safety settings (hook active, private paths ignored, no-reply commit email). It reports `origin`'s visibility but doesn't require it to be private: the repository is public by design, and the ignore rules plus the hook are what keep device data out of it. It never talks to the phone and never starts an ADB server.
@@ -65,7 +66,7 @@ The site renders Mermaid 12 through the theme's own loader, which wraps node lab
 
 ## The modules
 
-All seven modules are generated from `device/modules/manifests/*.json` by `device/modules/build_modules.py`. Two kinds: **overlay** modules list `packages` (the builder validates every path and refuses anything outside `/product` and `/system_ext` app directories), and **script** modules name Magisk lifecycle scripts under `device/modules/scripts/` (packed as LF, no BOM, mode 755 regardless of how git checked them out; the self-test verifies that). To hide a different set of apps, add a manifest: find each package's APK with `& $adb shell pm path <package>`, record its directory as `hidden_directory`, rebuild, and reinstall. Each ZIP carries its manifest as `manifest.json`, so a module found later is self-describing. The two development modules (`dev_debuggable`, `dev_adb_tcp`) are documented in `docs/device/dev-setup.md`.
+All seven modules are generated from `device/modules/manifests/*.json` by `device/modules/build_modules.py`. Two kinds: **overlay** modules list `packages` (the builder validates every path and refuses anything outside `/product` and `/system_ext` app directories), and **script** modules name Magisk lifecycle scripts under `device/modules/scripts/` (packed as LF, no BOM, mode 755 regardless of how git checked them out; the self-test verifies that). To hide a different set of apps, add a manifest: find each package's APK with `& $adb shell pm path <package>`, record its directory as `hidden_directory`, rebuild, and reinstall. Each ZIP carries its manifest as `manifest.json`, so a module found later is self-describing. `device/modules/test_build_modules.py` (standard-library `unittest`) checks that every committed ZIP holds exactly what its manifest builds (entry by entry: names, timestamps, modes, contents; the deflate bytes can differ between zlib builds, so not the archive hash) and that malformed manifests are refused; it runs in the self-test and in CI (`.github/workflows/checks.yml`, which also syntax-checks every shell and PowerShell script). The two development modules (`dev_debuggable`, `dev_adb_tcp`) are documented in `docs/device/dev-setup.md`.
 
 ## Legal
 

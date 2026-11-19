@@ -46,7 +46,9 @@ In both cases the manifest travels inside the ZIP as manifest.json, so a module 
 is self-describing.
 
 Builds are deterministic: entry order and timestamps are fixed, so the same manifest and
-scripts always produce a byte-identical ZIP and the committed ZIPs can be verified by hash.
+scripts always produce a byte-identical ZIP on the same platform, and the committed ZIPs can be
+verified by hash there (dev/Build-Device.ps1). Across platforms the deflate stream can differ
+between zlib builds while every entry is identical, so test_build_modules.py compares entries.
 
 This script runs on the PC only. It never communicates with or modifies a phone.
 """
@@ -54,6 +56,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import re
 import sys
 import zipfile
 from pathlib import Path
@@ -78,6 +81,7 @@ ALLOWED_SCRIPTS = ("customize.sh", "post-fs-data.sh", "service.sh", "uninstall.s
 FIXED_DATE_TIME = (1980, 1, 1, 0, 0, 0)
 
 REQUIRED_MODULE_KEYS = {"id", "name", "version", "versionCode", "description"}
+MODULE_ID = re.compile(r"[a-z][a-z0-9_]{1,63}")
 REQUIRED_PACKAGE_KEYS = {"package", "label", "hidden_directory"}
 
 
@@ -89,6 +93,8 @@ def _validate_packages(name: str, packages: list) -> None:
     seen_packages: set[str] = set()
     seen_dirs: set[str] = set()
     for item in packages:
+        if not isinstance(item, dict):
+            raise ManifestError(f"{name}: package entries must be objects, got {item!r}")
         missing = REQUIRED_PACKAGE_KEYS - item.keys()
         if missing:
             raise ManifestError(f"{name}: package entry missing {sorted(missing)}: {item}")
@@ -138,8 +144,15 @@ def load_manifest(path: Path) -> dict:
     missing = REQUIRED_MODULE_KEYS - data.keys()
     if missing:
         raise ManifestError(f"{path.name}: missing keys {sorted(missing)}")
-    if not isinstance(data["versionCode"], int):
+    if not isinstance(data["versionCode"], int) or isinstance(data["versionCode"], bool):
         raise ManifestError(f"{path.name}: versionCode must be an integer")
+    # The id names the ZIP and Magisk's /data/adb/modules/<id> directory: keep it a plain identifier.
+    if not isinstance(data["id"], str) or not MODULE_ID.fullmatch(data["id"]):
+        raise ManifestError(f"{path.name}: id {data['id']!r} must match {MODULE_ID.pattern}")
+    # module.prop is one key=value per line: a line break in a value would inject another key.
+    for key in ("name", "version", "description"):
+        if not isinstance(data[key], str) or "\n" in data[key] or "\r" in data[key]:
+            raise ManifestError(f"{path.name}: {key} must be a single-line string")
     packages = data.get("packages")
     scripts = data.get("scripts")
     if not packages and not scripts:
