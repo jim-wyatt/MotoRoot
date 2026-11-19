@@ -9,4 +9,8 @@
     <!-- Default holders of the DIALER and SMS roles: the Fossify apps bundled in the image. -->
     <string name="config_defaultDialer" translatable="false">org.fossify.phone</string>
     <string name="config_defaultSms" translatable="false">org.fossify.messages</string>
+    <!-- Network time from the NTP Pool Project instead of time.android.com. -->
+    <string-array name="config_ntpServers" translatable="false">
+        <item>ntp://pool.ntp.org</item>
+    </string-array>
 </resources>

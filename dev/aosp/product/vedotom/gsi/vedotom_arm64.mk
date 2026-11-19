@@ -62,11 +62,27 @@ PRODUCT_PRODUCT_PROPERTIES += \
 PRODUCT_PRODUCT_PROPERTIES += \
     persist.vedotom.charge_limit=80
 
+# ADB authorisation on, as on a user build: a PC must be allowed on the phone's screen before adb
+# works. For userdebug the build sets no ro.adb.secure on the system partition (gen_build_prop.py
+# sets it only for user), so this product value is the only one. Each DSU install starts with
+# empty userdata and no /data/misc/adb/adb_keys, so every deploy asks once; Wait-DeviceBoot
+# (dev/VedoTom.psm1) says so. No PC's key is built in: keys belong to machines, and this
+# repository is public.
+PRODUCT_PRODUCT_PROPERTIES += \
+    ro.adb.secure=1
+
 # Our look and defaults: dark theme, gesture navigation, our wallpaper (from which Material You
 # derives the system colours), Fossify Phone and Messages as the default dialer and SMS app.
 # See overlay/ (a static framework RRO).
 PRODUCT_PACKAGES += \
     VedoTomFrameworkOverlay
+
+# No Google endpoints for connectivity checks: NetworkStack's captive-portal probes go to
+# GrapheneOS's public endpoints, which return the same 204 for any client (overlay/networkstack/,
+# a static RRO on com.android.networkstack's NetworkStackConfig overlayable). Time comes from
+# pool.ntp.org instead of time.android.com (config_ntpServers in the framework overlay).
+PRODUCT_PACKAGES += \
+    VedoTomNetworkStackOverlay
 
 # Fossify Launcher is the home screen: the first-boot service assigns it the HOME role.
 # Launcher3QuickStep stays installed because SystemUI binds its quickstep service for gesture

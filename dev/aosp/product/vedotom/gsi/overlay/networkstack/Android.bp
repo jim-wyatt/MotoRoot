@@ -1,0 +1,15 @@
+// VedoTom's NetworkStack overlay: captive-portal (connectivity) probes go to GrapheneOS's public
+// endpoints instead of Google's. A static runtime resource overlay on the product partition,
+// targeting the NetworkStackConfig overlayable of com.android.networkstack (the NetworkStack
+// priv-app this GSI installs; MODULE_BUILD_FROM_SOURCE, so not Google's com.google.android
+// variant). NetworkMonitor reads Settings.Global captive_portal_* first, then these resources,
+// then its Google defaults, so a value set with `settings put global` still wins.
+
+package {
+    default_applicable_licenses: ["device_vedotom_gsi_license"],
+}
+
+runtime_resource_overlay {
+    name: "VedoTomNetworkStackOverlay",
+    product_specific: true,
+}

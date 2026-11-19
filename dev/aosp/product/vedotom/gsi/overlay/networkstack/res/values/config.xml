@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Connectivity-check endpoints for the VedoTom image. Names and meanings are those of
+     packages/modules/NetworkStack/res/values/config.xml (android-16.0.0_r4). GrapheneOS runs these
+     for any client; they answer 204 like Google's connectivitycheck.gstatic.com. -->
+<resources>
+    <string name="config_captive_portal_http_url" translatable="false">http://connectivitycheck.grapheneos.network/generate_204</string>
+    <string name="config_captive_portal_https_url" translatable="false">https://connectivitycheck.grapheneos.network/generate_204</string>
+    <!-- No literal commas: NetworkMonitor joins and splits this list on them. -->
+    <string-array name="config_captive_portal_fallback_urls" translatable="false">
+        <item>http://grapheneos.online/gen_204</item>
+    </string-array>
+</resources>

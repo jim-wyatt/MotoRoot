@@ -37,9 +37,25 @@ function Invoke-RootShell([Parameter(Mandatory)][string]$Command) {
 
 function Test-DeviceRoot { (Invoke-RootShell 'id') -match 'uid=0\(' }
 
+# VedoTom images set ro.adb.secure=1 and every DSU install starts with empty userdata, so no PC is
+# authorised yet: adb sees the phone as "unauthorized" until someone taps Allow on its screen.
+# adb wait-for-device would block on that silently; this says what it is waiting for, once.
+function Wait-DeviceAuthorized {
+    $told = $false
+    while ($true) {
+        $state = ((& $script:Adb get-state 2>&1) -join ' ').Trim()
+        if ($state -eq 'device') { return }
+        if ($state -match 'unauthorized' -and -not $told) {
+            Write-Host '  >> Tap "Allow" on the phone''s "Allow USB debugging?" prompt (tick "Always allow from this computer"). Waiting ...' -ForegroundColor Yellow
+            $told = $true
+        }
+        Start-Sleep 2
+    }
+}
+
 function Wait-DeviceBoot([int]$TimeoutSec = 600, [switch]$AfterReboot) {
     if ($AfterReboot) { & $script:Adb wait-for-disconnect }
-    & $script:Adb wait-for-device
+    Wait-DeviceAuthorized
     $t = 0
     while ($t -lt $TimeoutSec) {
         if (((& $script:Adb shell getprop sys.boot_completed 2>$null) -join '').Trim() -eq '1') { return $t }
@@ -52,4 +68,4 @@ function Get-GsiStatus { (Invoke-RootShell 'gsi_tool status').Trim() }
 
 function Test-GsiRunning { ((Get-GsiStatus) -split "`r?`n")[0].Trim() -eq 'running' }
 
-Export-ModuleMember -Function Assert-OneDevice, Invoke-RootShell, Test-DeviceRoot, Wait-DeviceBoot, Get-GsiStatus, Test-GsiRunning
+Export-ModuleMember -Function Assert-OneDevice, Invoke-RootShell, Test-DeviceRoot, Wait-DeviceAuthorized, Wait-DeviceBoot, Get-GsiStatus, Test-GsiRunning
