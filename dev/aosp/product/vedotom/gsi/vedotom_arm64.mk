@@ -62,6 +62,15 @@ PRODUCT_PRODUCT_PROPERTIES += \
 PRODUCT_PRODUCT_PROPERTIES += \
     persist.vedotom.charge_limit=80
 
+# Every app debuggable over JDWP (and ptrace), so Android Studio's "Attach debugger to Android
+# process" and `adb jdwp` reach any process, system_server and SystemUI included, without a
+# debuggable APK. Zygote reads it once at start (Zygote.applyDebuggerSystemProperty), and only on
+# userdebug (Build.IS_USERDEBUG); a user build ignores it. A persist.* default: setting it to 0 on
+# the phone and rebooting turns it off. No access beyond what adb root already gives an
+# authorised PC.
+PRODUCT_PRODUCT_PROPERTIES += \
+    persist.debug.dalvik.vm.jdwp.enabled=1
+
 # ADB authorisation on, as on a user build: a PC must be allowed on the phone's screen before adb
 # works. The GSI's system_ext build.prop sets ro.adb.secure=0 (build/make/target/board/
 # gsi_system_ext.prop); init loads the product partition's build.prop last, so this value wins
