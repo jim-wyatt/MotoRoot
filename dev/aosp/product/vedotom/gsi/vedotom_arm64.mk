@@ -63,13 +63,21 @@ PRODUCT_PRODUCT_PROPERTIES += \
     persist.vedotom.charge_limit=80
 
 # ADB authorisation on, as on a user build: a PC must be allowed on the phone's screen before adb
-# works. For userdebug the build sets no ro.adb.secure on the system partition (gen_build_prop.py
-# sets it only for user), so this product value is the only one. Each DSU install starts with
-# empty userdata and no /data/misc/adb/adb_keys, so every deploy asks once; Wait-DeviceBoot
-# (dev/VedoTom.psm1) says so. No PC's key is built in: keys belong to machines, and this
-# repository is public.
+# works. The GSI's system_ext build.prop sets ro.adb.secure=0 (build/make/target/board/
+# gsi_system_ext.prop); init loads the product partition's build.prop last, so this value wins
+# (validated on build 6). Each DSU install starts with empty userdata and no
+# /data/misc/adb/adb_keys, so a PC not trusted below is asked about once per deploy;
+# Wait-DeviceBoot (dev/VedoTom.psm1) says so.
 PRODUCT_PRODUCT_PROPERTIES += \
     ro.adb.secure=1
+
+# PCs trusted in advance: the public keys in work/adb_keys (git-ignored; apply-local.sh copies it
+# to device/vedotom/gsi/adb_keys in the tree and removes the copy when the file is gone). Installed
+# at /product/etc/security/adb_keys, which /adb_keys links to, and adbd trusts it alongside
+# /data/misc/adb/adb_keys, so those PCs need no tap after a deploy. Kept for userdebug builds
+# (RELEASE_BUILD_PURGE_PRODUCT_ADB_KEYS is false there). No key is in the repository, which is
+# public; an image built with keys is specific to these machines, so it stays on them.
+PRODUCT_ADB_KEYS := $(wildcard device/vedotom/gsi/adb_keys)
 
 # Our look and defaults: dark theme, gesture navigation, our wallpaper (from which Material You
 # derives the system colours), Fossify Phone and Messages as the default dialer and SMS app.

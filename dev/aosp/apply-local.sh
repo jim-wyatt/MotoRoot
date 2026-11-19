@@ -29,7 +29,7 @@ for p in "$HERE"/product/*/; do
   mkdir -p "device/$name"
   # --delete keeps the tree copy identical to the repository copy, removed files included; the
   # APKs copied below are the one thing the tree has that the repository does not.
-  rsync -a --delete --exclude '*.apk' "$p" "device/$name/" || { echo "   copying dev/aosp/product/$name failed" >&2; exit 1; }
+  rsync -a --delete --exclude '*.apk' --exclude '/gsi/adb_keys' "$p" "device/$name/" || { echo "   copying dev/aosp/product/$name failed" >&2; exit 1; }
   echo "   device/$name <- dev/aosp/product/$name"
 done
 
@@ -45,6 +45,23 @@ for list in "$HERE"/product/*/*/prebuilt/apks.txt; do
     echo "   $dir/$module <- $pinned"
   done < "$list"
 done
+
+echo "== trusted adb keys"
+# work/adb_keys (git-ignored, never in the repository): the public keys of this project's own PCs,
+# one "<base64> user@host" line each, from %USERPROFILE%\.android\adbkey.pub. vedotom_arm64.mk
+# builds them in through PRODUCT_ADB_KEYS (/product/etc/security/adb_keys), so those PCs need no
+# "Allow USB debugging?" tap after a fresh DSU install. Without the file the image trusts no PC.
+keys_src="$REPO_ROOT/work/adb_keys"; keys_dst="device/vedotom/gsi/adb_keys"
+if [ -f "$keys_src" ]; then
+  tr -d '\r' < "$keys_src" | grep -v '^[[:space:]]*$' > "$keys_dst.new"
+  if grep -qv '^QAAAA[A-Za-z0-9+/=]* [^ ]*$' "$keys_dst.new" || [ ! -s "$keys_dst.new" ]; then
+    rm -f "$keys_dst.new"; echo "   work/adb_keys: every line must be one adbkey.pub line (QAAAA... user@host)" >&2; exit 1
+  fi
+  if cmp -s "$keys_dst.new" "$keys_dst"; then rm -f "$keys_dst.new"; else mv -f "$keys_dst.new" "$keys_dst"; fi
+  echo "   $keys_dst <- work/adb_keys ($(wc -l < "$keys_dst") keys: $(awk '{print $2}' "$keys_dst" | paste -sd' '))"
+else
+  rm -f "$keys_dst"; echo "   (no work/adb_keys: no PC is trusted in advance)"
+fi
 
 echo "== patches"
 for patch in "$HERE"/patches/*.patch; do
