@@ -66,7 +66,11 @@ if ($Save) {
 }
 $target = "$($conf.user)@$($conf.host)"
 $remoteDir = "$($conf.repo.TrimEnd('/'))/work/device-tools/gsi/own"
-$sshOpts = @('-o', 'BatchMode=yes', '-o', 'StrictHostKeyChecking=accept-new', '-o', 'ConnectTimeout=10')
+# Keep-alives: a connection that dies silently in the VPN tunnel (no reset) would otherwise leave
+# scp waiting forever (seen 2026-11-19: all 8 part streams stalled at a few MB). With these, scp
+# exits after about 60 s without an answer, and Pull-Parts' retry fetches that part again.
+$sshOpts = @('-o', 'BatchMode=yes', '-o', 'StrictHostKeyChecking=accept-new', '-o', 'ConnectTimeout=10',
+             '-o', 'ServerAliveInterval=15', '-o', 'ServerAliveCountMax=4')
 if ($conf.port) { $sshOpts += @('-P', "$($conf.port)") }   # scp takes the port as -P
 
 function Pull([string]$name, [string]$to) {
