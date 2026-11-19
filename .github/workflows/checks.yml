@@ -1,0 +1,55 @@
+name: Checks
+
+# Fast checks that need no Android SDK, device or AOSP tree: the Magisk module builder and its
+# committed ZIPs, every shell script (syntax, ShellCheck errors, LF line endings) and every
+# PowerShell script (parse). The full self-test (dev\Test-DevEnv.ps1) still runs on a set-up PC.
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  checks:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Module builder tests (committed ZIPs rebuild byte-identically)
+        run: python -m unittest discover -s device/modules -p "test_*.py" -v
+
+      - name: toolchain.json is valid JSON
+        run: python -c "import json; json.load(open('dev/toolchain.json'))"
+
+      - name: Shell scripts use LF line endings
+        run: |
+          bad=$(git ls-files '*.sh' '.githooks/*' | xargs grep -l $'\r' || true)
+          if [ -n "$bad" ]; then echo "CRLF line endings (bash and Android's sh choke on them):"; echo "$bad"; exit 1; fi
+
+      - name: Shell scripts parse (bash -n)
+        run: |
+          for f in $(git ls-files '*.sh' '.githooks/*'); do bash -n "$f" || exit 1; done
+
+      - name: ShellCheck (errors only)
+        run: |
+          git ls-files '*.sh' '.githooks/*' | xargs shellcheck --severity=error --shell=bash
+
+      - name: PowerShell scripts parse
+        shell: pwsh
+        run: |
+          $bad = @()
+          foreach ($f in git ls-files '*.ps1' '*.psm1') {
+            $errs = $null
+            [void][System.Management.Automation.Language.Parser]::ParseFile((Resolve-Path $f), [ref]$null, [ref]$errs)
+            if ($errs) { $bad += "${f}: $(($errs | ForEach-Object Message) -join '; ')" }
+          }
+          if ($bad) { $bad; exit 1 }
+          "$(@(git ls-files '*.ps1' '*.psm1').Count) PowerShell files parse"

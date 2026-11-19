@@ -88,6 +88,11 @@ Check 'build' 'module scripts are LF, no BOM, executable in the ZIPs' {
     }
     $true
 }
+Check 'build' 'module builder unit tests (device\modules\test_build_modules.py)' {
+    $o = & $py -m unittest discover -s (Join-Path $Root 'device\modules') -p 'test_*.py' 2>&1 | Out-String
+    if ($LASTEXITCODE -ne 0) { throw $o.Trim() }
+    ([regex]::Match($o, 'Ran \d+ tests')).Value
+}
 Check 'build' 'jadx decompiles UpdateHelper.dex' {
     & jadx --quiet -d (Join-Path $Tmp 'jadx') (Join-Path $Root 'device\helpers\UpdateHelper.dex') 2>&1 | Out-Null
     $src = Get-ChildItem (Join-Path $Tmp 'jadx') -Recurse -Filter 'UpdateHelper.java' | Select-Object -First 1
