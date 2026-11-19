@@ -127,17 +127,20 @@ switch ($Action) {
         # images in /data. KEY_USERDATA_SIZE is in bytes. VerificationActivity asks for the screen-lock
         # PIN, pattern or password first only when the phone has a secure lock screen; without one
         # (as on the tested unit, 2026-11-19) the installation starts with no prompt at all.
-        & $Adb shell am start-activity -n com.android.dynsystem/com.android.dynsystem.VerificationActivity `
-            -a android.os.image.action.START_INSTALL -d "file://$Remote" --el KEY_USERDATA_SIZE $userdata | Out-Null
-        Write-Host 'Installing (if the phone has a secure lock screen, it asks for the PIN, pattern or password first). Waiting for it to finish (up to 30 min) ...' -ForegroundColor Cyan
         # gsi_tool lists partitions as "installed" as soon as they are created, while the installer is
         # still writing them, so the installer's own status in logcat is what to wait for:
         # NOT_STARTED -> IN_PROGRESS (with a progress fraction) -> READY, or an error cause.
-        & $Adb logcat -c 2>$null
+        # Only lines from now on count: the phone's clock is read before the installer starts and
+        # logcat -T reads from there, so earlier installs' lines are ignored and the phone's log
+        # buffers (evidence if something goes wrong) are left alone instead of cleared.
+        $since = ((& $Adb shell "date '+%m-%d %H:%M:%S.000'") -join '').Trim()
+        & $Adb shell am start-activity -n com.android.dynsystem/com.android.dynsystem.VerificationActivity `
+            -a android.os.image.action.START_INSTALL -d "file://$Remote" --el KEY_USERDATA_SIZE $userdata | Out-Null
+        Write-Host 'Installing (if the phone has a secure lock screen, it asks for the PIN, pattern or password first). Waiting for it to finish (up to 30 min) ...' -ForegroundColor Cyan
         $t = 0; $state = 'NOT_STARTED'; $lastShown = ''
         while ($t -lt 1800) {
             Start-Sleep 10; $t += 10
-            $line = (& $Adb logcat -d 2>$null | Select-String -Pattern 'DynamicSystemInstallationService: status: (\w+), cause: (\w+)' | Select-Object -Last 1)
+            $line = (& $Adb logcat -d -T $since 2>$null | Select-String -Pattern 'DynamicSystemInstallationService: status: (\w+), cause: (\w+)' | Select-Object -Last 1)
             if ($line) {
                 $state = $line.Matches[0].Groups[1].Value
                 $progress = [regex]::Match($line.Line, 'total_progress: (\d+%)').Groups[1].Value
