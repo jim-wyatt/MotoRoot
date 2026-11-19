@@ -39,7 +39,7 @@ Things worth checking while you're there, and noting if they fail: Wi-Fi, the di
 
 ## Coming back
 
-Reboot. The one-shot boot is over and the Motorola system comes back with everything as it was. The GSI's images stay in `/data` (about 3 GB plus the userdata) until you remove them:
+Reboot. The one-shot boot is over and the Motorola system comes back with everything as it was. (This project's own images are booted persistently and switched with `-Action Stock` and `-Action Boot -Persistent`; see [Living with the image](../develop/aosp-build.md#living-with-the-image).) The GSI's images stay in `/data` (about 3 GB plus the userdata) until you remove them:
 
 ```powershell
 & $adb reboot                                      # back to the installed system
