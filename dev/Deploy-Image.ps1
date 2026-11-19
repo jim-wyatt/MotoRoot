@@ -22,6 +22,10 @@
        defaults the image sets (animations, log buffers, time zone, the hidden AOSP Files and
        keyboard icons), and whether anything is in the crash log.
 
+    Once the phone is up in the new image, the local copy (system.img, its sidecars) is deleted
+    unless -KeepImage is given: the install PC only pushes and validates, and the build machine
+    keeps every build. Its hash stays in deployed.sha256.
+
     Step 3 deletes the installed image's data: its apps' data and settings. So the script asks
     before it starts. -Confirm:$false skips the question.
 
@@ -33,6 +37,7 @@
 [CmdletBinding(SupportsShouldProcess, ConfirmImpact = 'High')]
 param(
     [switch]$NoFetch,
+    [switch]$KeepImage,   # keep the fetched image on this PC after the install (by default it is removed)
     [int]$UserdataGiB = 24
 )
 $ErrorActionPreference = 'Stop'
@@ -78,6 +83,14 @@ Step 'Installing the new image'
 Step 'Booting it'
 & $gsi -Action Boot
 if ((Sh 'getprop ro.product.name') -notlike 'vedotom*') { throw "The phone did not come up in the VedoTom image (product $(Sh 'getprop ro.product.name'))." }
+# The image is on the phone now, and the build machine keeps every build, so this PC drops its copy
+# (about 1.8 GB). A re-deploy fetches it again. -KeepImage keeps it, e.g. to re-install offline.
+if (-not $KeepImage) {
+    $own = Split-Path $Img
+    Remove-Item -Force -ErrorAction SilentlyContinue $Img, (Join-Path $own 'system.prev.img'), (Join-Path $own 'build.prop'), (Join-Path $own 'vbmeta.img'), (Join-Path $own 'own-gsi.zip')
+    Move-Item -Force $sidecar (Join-Path $own 'deployed.sha256') -ErrorAction SilentlyContinue
+    Write-Host "  local image removed (deployed: $($hash.Substring(0,12))..., in $own\deployed.sha256)"
+}
 
 # ---- 3b. Wi-Fi (optional)
 # Every DSU install starts with empty userdata, so no network is saved. If work\wifi.json exists

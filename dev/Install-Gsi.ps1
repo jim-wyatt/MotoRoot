@@ -112,7 +112,11 @@ switch ($Action) {
         foreach ($p in 'ro.boot.dynamic_partitions') { if ((Prop $p) -ne 'true') { throw "$p is not true; DSU needs dynamic partitions." } }
         Write-Host "Pushing $($Spec.name) to the device (this takes a minute) ..."
         & $Adb push $Zip $Remote | Out-Null
-        if ($LASTEXITCODE -ne 0) { throw 'push failed' }
+        $pushRc = $LASTEXITCODE
+        # The zip wrapped around your own image is only a carrier for the push: drop it at once, so the
+        # install PC doesn't keep a second copy of the image (it is rebuilt from system.img next time).
+        if ($Image -and $Zip -ne $Image) { Remove-Item -Force -ErrorAction SilentlyContinue $Zip }
+        if ($pushRc -ne 0) { throw 'push failed' }
         $userdata = [int64]$UserdataGiB * 1GB
         # Android's own DSU installer: it reads system.img (sparse or raw) out of the zip, creates the
         # images in /data. KEY_USERDATA_SIZE is in bytes. VerificationActivity asks for the screen-lock

@@ -13,7 +13,8 @@
       copied again.
     - It copies into a .part file and keeps the image only if its SHA-256 matches the build
       machine's checksum.
-    - The image it replaces is kept as system.prev.img.
+    - The image it replaces is deleted, not kept: the build machine holds every build, and the
+      install PC keeps as little as possible (Deploy-Image.ps1 deletes the image after installing).
 
     The build machine needs an SSH server with this PC's public key authorised: either the
     Windows OpenSSH Server, or an SFTP-only server inside its WSL (for machines whose policy
@@ -123,10 +124,19 @@ function Pull-Parts([string]$to) {
         $parts | ForEach-Object { Remove-Item -Force -ErrorAction SilentlyContinue $_.File }
         throw "Parts still missing or mismatched after a retry: $($bad.Name -join ', '). Nothing was replaced."
     }
+    # Each part goes as soon as it is joined, so the parts and the joined image never both sit on disk
+    # in full. A failed join leaves nothing: the full SHA-256 check would reject it anyway.
     $out = [IO.File]::Create($to)
-    try { foreach ($p in $parts) { $in = [IO.File]::OpenRead($p.File); try { $in.CopyTo($out) } finally { $in.Dispose() } } }
-    finally { $out.Dispose() }
-    $parts | ForEach-Object { Remove-Item -Force $_.File }
+    try {
+        foreach ($p in $parts) {
+            $in = [IO.File]::OpenRead($p.File); try { $in.CopyTo($out) } finally { $in.Dispose() }
+            Remove-Item -Force $p.File
+        }
+    } catch {
+        $out.Dispose(); Remove-Item -Force -ErrorAction SilentlyContinue $to
+        $parts | ForEach-Object { Remove-Item -Force -ErrorAction SilentlyContinue $_.File }
+        throw
+    } finally { $out.Dispose() }
     return $true
 }
 
@@ -144,7 +154,9 @@ try { Pull 'build.prop' $propPart } catch { Remove-Item -Force $part; throw "bui
 & scp.exe @sshOpts -q "${target}:$remoteDir/vbmeta.img" $vbPart 2>$null
 $haveVb = $LASTEXITCODE -eq 0
 foreach ($f in 'build.prop', 'vbmeta.img') { Remove-Item -Force -ErrorAction SilentlyContinue (Join-Path $Dest $f) }
-if (Test-Path $img) { Move-Item -Force $img (Join-Path $Dest 'system.prev.img') }
+# No system.prev.img: the install PC only installs and validates, and every image stays on the build
+# machine, so the old one is simply replaced (and an old system.prev.img removed).
+Remove-Item -Force -ErrorAction SilentlyContinue $img, (Join-Path $Dest 'system.prev.img')
 Move-Item -Force $part $img
 Move-Item -Force $propPart (Join-Path $Dest 'build.prop')
 if ($haveVb) { Move-Item -Force $vbPart (Join-Path $Dest 'vbmeta.img') } else { Remove-Item -Force -ErrorAction SilentlyContinue $vbPart; Write-Host '  (no vbmeta.img published)' }

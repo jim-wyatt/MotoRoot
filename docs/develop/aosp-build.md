@@ -102,7 +102,7 @@ The machine that builds and the machine the phone is plugged into don't have to 
 1. It reads the remote checksum first and stops if the local image already matches.
 2. It copies into a `.part` file and keeps it only when its SHA-256 matches. When the build machine published the image in parts (`build-gsi.sh` with `PUBLISH_DIR` writes 16 `system.img.partNN` files and a `system.img.parts` list of their SHA-256), it pulls them over `-Streams` parallel connections (default 8) and joins them: a VPN that limits each connection goes several times faster. Without parts it pulls the single file.
 3. It fetches `build.prop` (required) and `vbmeta.img` (if published) before swapping anything in, and removes the previous build's copies, so an old sidecar never travels with a new image.
-4. It keeps the image it replaces as `system.prev.img`.
+4. It deletes the image it replaces (there's no `system.prev.img`): the build machine keeps every build, and the install machine only installs and validates. `Deploy-Image.ps1` also deletes the fetched image once the phone is up in it (`-KeepImage` keeps it), and `Install-Gsi.ps1 -Image` deletes the DSU zip it wraps around the image once it's pushed.
 
 Then install as usual from the stock system.
 
