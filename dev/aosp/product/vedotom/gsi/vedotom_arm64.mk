@@ -56,7 +56,7 @@ PRODUCT_PRODUCT_PROPERTIES += \
 PRODUCT_PRODUCT_PROPERTIES += \
     persist.sys.timezone=America/New_York
 
-# Charge limit in percent, as on stock with Battery protection on; 100 means no limit. Applied by
+# Charge limit in percent, as on stock with Battery protection on; 100 means charge to full (a hold already in place at exactly 100% lifts when the level next falls; docs/develop/aosp-build.md). Applied by
 # init.vedotom.rc (firstboot/) at boot and on every change. A value set with setprop is stored in
 # /data and wins over this default.
 PRODUCT_PRODUCT_PROPERTIES += \
