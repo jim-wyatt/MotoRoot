@@ -21,7 +21,7 @@ All from the dev shell, phone connected over USB, Magisk root working:
 
 ```powershell
 .\dev\Install-Gsi.ps1 -Action Download -AcceptGoogleGsiTerms   # ~1 GB, verified against the pinned SHA-256
-.\dev\Install-Gsi.ps1 -Action Install                           # pushes the zip; CONFIRM ON THE PHONE; waits for the install
+.\dev\Install-Gsi.ps1 -Action Install                           # pushes the zip; waits for the install (enter the PIN on the phone if it asks)
 .\dev\Install-Gsi.ps1 -Action Boot                              # one-shot boot into the GSI
 ```
 

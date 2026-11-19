@@ -44,7 +44,7 @@ Get-Content $Work\aosp-sync.log -Tail 5; Get-Content $Work\aosp-build.log -Tail 
 Then boot your build exactly like Google's, one-shot, nothing flashed:
 
 ```powershell
-.\dev\Install-Gsi.ps1 -Action Install -Image "$Work\device-tools\gsi\own\system.img"   # wraps it in a zip for the DSU installer; confirm on the phone
+.\dev\Install-Gsi.ps1 -Action Install -Image "$Work\device-tools\gsi\own\system.img"   # wraps it in a zip for the DSU installer (enter the PIN on the phone if it asks)
 .\dev\Install-Gsi.ps1 -Action Boot
 & $adb shell getprop ro.build.fingerprint     # yours, with test-keys
 & $adb root                                   # works on a userdebug build

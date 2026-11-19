@@ -115,10 +115,12 @@ switch ($Action) {
         if ($LASTEXITCODE -ne 0) { throw 'push failed' }
         $userdata = [int64]$UserdataGiB * 1GB
         # Android's own DSU installer: it reads system.img (sparse or raw) out of the zip, creates the
-        # images in /data, and asks for confirmation on the screen. KEY_USERDATA_SIZE is in bytes.
+        # images in /data. KEY_USERDATA_SIZE is in bytes. VerificationActivity asks for the screen-lock
+        # PIN, pattern or password first only when the phone has a secure lock screen; without one
+        # (as on the tested unit, 2026-11-19) the installation starts with no prompt at all.
         & $Adb shell am start-activity -n com.android.dynsystem/com.android.dynsystem.VerificationActivity `
             -a android.os.image.action.START_INSTALL -d "file://$Remote" --el KEY_USERDATA_SIZE $userdata | Out-Null
-        Write-Host 'On the phone: confirm the DSU installation. Waiting for it to finish (up to 30 min) ...' -ForegroundColor Cyan
+        Write-Host 'Installing (if the phone has a secure lock screen, it asks for the PIN, pattern or password first). Waiting for it to finish (up to 30 min) ...' -ForegroundColor Cyan
         # gsi_tool lists partitions as "installed" as soon as they are created, while the installer is
         # still writing them, so the installer's own status in logcat is what to wait for:
         # NOT_STARTED -> IN_PROGRESS (with a progress fraction) -> READY, or an error cause.
