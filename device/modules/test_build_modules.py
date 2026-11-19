@@ -18,8 +18,16 @@ def sha256(path: Path) -> str:
     return hashlib.sha256(path.read_bytes()).hexdigest()
 
 
+def entries(path: Path) -> list:
+    """What a ZIP holds, independent of the compressor: deflate output differs between zlib builds
+    (Windows' Python and a Linux runner's), so archives built on two platforms can differ in bytes
+    while every entry is identical. Names, order, timestamps, permissions and contents all count."""
+    with zipfile.ZipFile(path) as z:
+        return [(i.filename, i.date_time, i.external_attr, z.read(i)) for i in z.infolist()]
+
+
 class CommittedModules(unittest.TestCase):
-    """The ZIPs in device/modules must be exactly what their manifests build."""
+    """The ZIPs in device/modules must hold exactly what their manifests build."""
 
     def test_every_manifest_rebuilds_its_committed_zip(self):
         manifests = sorted(bm.MANIFEST_DIR.glob("*.json"))
@@ -30,7 +38,7 @@ class CommittedModules(unittest.TestCase):
                 committed = bm.HERE / built.name
                 with self.subTest(module=built.name):
                     self.assertTrue(committed.exists(), f"{built.name} is not committed")
-                    self.assertEqual(sha256(built), sha256(committed),
+                    self.assertEqual(entries(built), entries(committed),
                                      f"{built.name} is stale: rebuild with dev\\Build-Device.ps1 -Promote")
 
     def test_no_committed_zip_without_a_manifest(self):

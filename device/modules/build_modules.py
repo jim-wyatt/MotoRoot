@@ -46,7 +46,9 @@ In both cases the manifest travels inside the ZIP as manifest.json, so a module 
 is self-describing.
 
 Builds are deterministic: entry order and timestamps are fixed, so the same manifest and
-scripts always produce a byte-identical ZIP and the committed ZIPs can be verified by hash.
+scripts always produce a byte-identical ZIP on the same platform, and the committed ZIPs can be
+verified by hash there (dev/Build-Device.ps1). Across platforms the deflate stream can differ
+between zlib builds while every entry is identical, so test_build_modules.py compares entries.
 
 This script runs on the PC only. It never communicates with or modifies a phone.
 """
