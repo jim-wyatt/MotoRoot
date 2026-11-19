@@ -14,6 +14,7 @@
        recognised by ro.product.name instead.
     3. Install-Gsi.ps1 discards the installed image, installs the new one with a -UserdataGiB data
        partition, and boots it.
+       With work\wifi.json present (private, git-ignored), the image then joins that Wi-Fi network.
     4. It waits for the first-boot service to finish. The service writes its result to
        /data/local/vedotom-firstboot/status and every step to .../log, read here as root
        (su 0, which a userdebug image has), so the result does not depend on the log buffers.
@@ -78,6 +79,24 @@ Step 'Booting it'
 & $gsi -Action Boot
 if ((Sh 'getprop ro.product.name') -notlike 'vedotom*') { throw "The phone did not come up in the VedoTom image (product $(Sh 'getprop ro.product.name'))." }
 
+# ---- 3b. Wi-Fi (optional)
+# Every DSU install starts with empty userdata, so no network is saved. If work\wifi.json exists
+# ({"ssid": ..., "security": "wpa2"|"wpa3"|..., "passphrase": ...}; private, git-ignored, like the
+# rest of work\), the image joins it, so the checks that need a network (captive-portal validation,
+# NTP) can run unattended. The passphrase goes to the phone over USB only.
+$WifiCfg = Join-Path $Work 'wifi.json'
+if (Test-Path $WifiCfg) {
+    $w = Get-Content -Raw $WifiCfg | ConvertFrom-Json
+    $q = { param($s) "'" + ($s -replace "'", "'\''") + "'" }
+    Step "Joining Wi-Fi $($w.ssid)"
+    Invoke-RootShell 'cmd wifi set-wifi-enabled enabled' | Out-Null
+    Start-Sleep 3
+    Invoke-RootShell "cmd wifi connect-network $(& $q $w.ssid) $($w.security) $(& $q $w.passphrase)" | Out-Null
+    $t = 0
+    while ($t -lt 60 -and (Sh 'dumpsys connectivity | grep -E "^ *NetworkAgentInfo.*WIFI.*VALIDATED"') -eq '') { Start-Sleep 3; $t += 3 }
+    if ($t -ge 60) { Write-Warning "Wi-Fi $($w.ssid) did not validate within 60 s." } else { Write-Host "  connected and validated after ~${t}s" }
+}
+
 # ---- 4. first-boot service
 Step 'Waiting for the first-boot service'
 $State = '/data/local/vedotom-firstboot'
@@ -98,6 +117,10 @@ Step 'Result'
 $crashes = @(& $Adb logcat -d -b crash 2>$null | Select-String ' F libc|FATAL EXCEPTION').Count
 $scales = @('window_animation_scale', 'transition_animation_scale', 'animator_duration_scale' | ForEach-Object { Sh "settings get global $_" }) -join '/'
 $aospIcons = Sh 'pm query-activities -a android.intent.action.MAIN -c android.intent.category.LAUNCHER --components | grep -E "com.android.documentsui|com.android.inputmethod.latin"'
+# Which hosts NetworkMonitor's captive-portal probes used, and the NTP server that last answered.
+$validated = (Sh 'dumpsys connectivity | grep -E "^ *NetworkAgentInfo.*VALIDATED"') -ne ''
+$probeHosts = @([regex]::Matches((Sh 'dumpsys network_stack | grep -E "PROBE_HTTPS? "'), 'PROBE_HTTPS? https?://([^/\s]+)') | ForEach-Object { $_.Groups[1].Value } | Sort-Object -Unique) -join ', '
+$ntp = [regex]::Match((Sh 'dumpsys network_time_update_service'), 'mLastSuccessfulNtpServerUri=(\S+)').Groups[1].Value
 [pscustomobject]@{
     Fingerprint = Sh 'getprop ro.build.fingerprint'
     Home        = Sh 'cmd role get-role-holders android.app.role.HOME'
@@ -107,6 +130,7 @@ $aospIcons = Sh 'pm query-activities -a android.intent.action.MAIN -c android.in
     TimeZone    = Sh 'getprop persist.sys.timezone'
     AospIcons   = if ($aospIcons) { "still in the launcher: $aospIcons" } else { 'hidden (Files, keyboard)' }
     ChargeLimit = if ($cl = Sh "su 0 cat $State/charge-limit") { "$cl; now blocking=$(Sh 'su 0 cat /sys/module/qpnp_adaptive_charge/parameters/blocking'), battery $(Sh 'cat /sys/class/power_supply/battery/capacity')%" } else { 'not applied yet (no charge-limit file)' }
+    Network     = if ($validated) { "validated; probes to $(if ($probeHosts) { $probeHosts } else { '?' }); NTP $(if ($ntp) { $ntp } else { 'not synced yet' })" } else { 'no validated network (no work\wifi.json, or not joined)' }
     CrashLog    = if ($crashes) { "$crashes entries: check adb logcat -b crash" } else { 'empty' }
     DataFree    = ((Sh 'df -h /data | tail -1') -split '\s+')[3]
 } | Format-List
