@@ -23,7 +23,9 @@ $ErrorActionPreference = 'Stop'
 $Root   = Split-Path -Parent $PSScriptRoot
 $Device = Join-Path $Root 'device'
 $Out    = Join-Path $PSScriptRoot 'build'
-$R8     = Join-Path $PSScriptRoot '.tools\r8-8.3.37.jar'
+# The pinned R8 jar, as dev\toolchain.json names it (so a version bump needs no edit here).
+$R8Name = ((Get-Content -Raw (Join-Path $PSScriptRoot 'toolchain.json') | ConvertFrom-Json).jars | Where-Object { $_.name -like 'r8-*' }).name
+$R8     = Join-Path $PSScriptRoot ".tools\$R8Name"
 $Java   = if ($env:JAVA_HOME) { Join-Path $env:JAVA_HOME 'bin' } else { throw 'JAVA_HOME not set. Run . .\dev\Enter-DevShell.ps1 first.' }
 $Py     = Join-Path $Root 'work\.venv\Scripts\python.exe'
 if (-not (Test-Path $R8)) { throw 'R8 jar missing. Run .\dev\Bootstrap-DevEnv.ps1.' }

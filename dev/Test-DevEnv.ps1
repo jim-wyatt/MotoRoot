@@ -42,10 +42,11 @@ Check 'env' 'ANDROID_HOME (user) exists' { Test-Path ([Environment]::GetEnvironm
 
 # ---------------- Android SDK
 $Sdk = $env:ANDROID_HOME
+$BtVer = ($Spec.androidSdk.packages | Where-Object { $_ -like 'build-tools/*' }) -replace '^build-tools/'   # the pinned build-tools
 Check 'sdk' 'android.exe CLI' { (& "$Sdk\cmdline-tools\latest\bin\android.exe" --no-metrics --version 2>&1 | Select-Object -First 1) }
 Check 'sdk' 'platforms/android-36 android.jar' { Test-Path "$Sdk\platforms\android-36\android.jar" }
-Check 'sdk' 'build-tools 36.1.0 d8' { $v = & "$Sdk\build-tools\36.1.0\d8.bat" --version 2>&1 | Select-Object -First 1; if ($LASTEXITCODE -eq 0) { "$v" } else { $false } }
-Check 'sdk' 'build-tools 36.1.0 aapt2' { $v = & "$Sdk\build-tools\36.1.0\aapt2.exe" version 2>&1 | Select-Object -First 1; if ($LASTEXITCODE -eq 0) { "$v" } else { $false } }
+Check 'sdk' "build-tools $BtVer d8" { $v = & "$Sdk\build-tools\$BtVer\d8.bat" --version 2>&1 | Select-Object -First 1; if ($LASTEXITCODE -eq 0) { "$v" } else { $false } }
+Check 'sdk' "build-tools $BtVer aapt2" { $v = & "$Sdk\build-tools\$BtVer\aapt2.exe" version 2>&1 | Select-Object -First 1; if ($LASTEXITCODE -eq 0) { "$v" } else { $false } }
 $NdkVer = ($Spec.androidSdk.packages | Where-Object { $_ -like 'ndk/*' }) -replace '^ndk/'
 Check 'sdk' "ndk $NdkVer" { Test-Path "$Sdk\ndk\$NdkVer\source.properties" }
 
@@ -63,7 +64,9 @@ Check 'tools' 'scrcpy + bundled adb = 37.0.1' { $d = Split-Path (Get-Command scr
 Check 'tools' 'SDK platform-tools adb = pinned adb (no server fights with Studio)' { $sdkV = (& "$Sdk\platform-tools\adb.exe" version)[1]; $pinV = (& $adb version)[1]; if ($sdkV -eq $pinV) { "$sdkV" } else { throw "SDK ${sdkV} vs pinned ${pinV}: decline the platform-tools update in Studio, or move the pin" } }
 Check 'tools' 'gh CLI' { (gh --version | Select-Object -First 1) }
 Check 'tools' '7-Zip' { (Get-Command 7z -ErrorAction Stop).Source }
-Check 'tools' 'Android Studio' { Test-Path "$env:ProgramFiles\Android\Android Studio\bin\studio64.exe" }
+# Optional (Bootstrap -AndroidStudio): a warning, not a failure, when it isn't installed.
+if (Test-Path "$env:ProgramFiles\Android\Android Studio\bin\studio64.exe") { Check 'tools' 'Android Studio' { $true } }
+else { Warn 'tools' 'Android Studio' 'not installed (optional: .\dev\Bootstrap-DevEnv.ps1 -AndroidStudio)' }
 
 # ---------------- functional builds
 # Build-Device prints one Identical=True/False row per artifact: 2 helper DEX files + one ZIP per manifest.
@@ -148,7 +151,7 @@ Check 'devtools' 'frida-server extracted from the pinned archive' {
 # signed build.
 foreach ($Dl in ($DevDownloads | Where-Object { $_.signerSha256 })) {
     Check 'devtools' "$($Dl.name) signing certificate" {
-        $o = & "$Sdk\build-tools\36.1.0\apksigner.bat" verify --print-certs (Join-Path $Work "device-tools\$($Dl.name)") 2>&1 | Out-String
+        $o = & "$Sdk\build-tools\$BtVer\apksigner.bat" verify --print-certs (Join-Path $Work "device-tools\$($Dl.name)") 2>&1 | Out-String
         if ($o -match 'certificate SHA-256 digest: ([0-9a-f]{64})' -and $Matches[1] -eq $Dl.signerSha256) { $Matches[1].Substring(0, 16) + '...' } else { $false }
     }
 }

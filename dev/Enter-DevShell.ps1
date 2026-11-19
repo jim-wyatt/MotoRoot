@@ -31,13 +31,26 @@ $env:Path = @([Environment]::GetEnvironmentVariable('Path', 'Machine'), [Environ
 if (-not $env:JAVA_HOME)    { $env:JAVA_HOME    = [Environment]::GetEnvironmentVariable('JAVA_HOME', 'User') }
 if (-not $env:ANDROID_HOME) { $env:ANDROID_HOME = [Environment]::GetEnvironmentVariable('ANDROID_HOME', 'User') }
 
+$Spec = Get-Content -Raw -LiteralPath (Join-Path $PSScriptRoot 'toolchain.json') | ConvertFrom-Json
+
+# The pinned build-tools and NDK (dev\toolchain.json), not whatever is newest: Android Studio
+# installs its own versions into the same SDK, and the newest would silently win. If the pinned one
+# is missing, fall back to the newest present and say so.
+function Get-PinnedSdkDir([string]$Kind) {
+    $dir = Join-Path $env:ANDROID_HOME $Kind
+    $pin = ($Spec.androidSdk.packages | Where-Object { $_ -like "$Kind/*" }) -replace "^$Kind/"
+    if ($pin -and (Test-Path (Join-Path $dir $pin))) { return Get-Item (Join-Path $dir $pin) }
+    $newest = Get-ChildItem $dir -Directory -ErrorAction SilentlyContinue | Sort-Object { [version]$_.Name } | Select-Object -Last 1
+    if ($newest) { Write-Warning "$Kind $pin (pinned) is not installed; using $($newest.Name). Run .\dev\Bootstrap-DevEnv.ps1." }
+    $newest
+}
 $DevPath = @(Join-Path $Work 'platform-tools')
 if ($env:JAVA_HOME) { $DevPath += Join-Path $env:JAVA_HOME 'bin' }
 if ($env:ANDROID_HOME) {
     $DevPath += Join-Path $env:ANDROID_HOME 'cmdline-tools\latest\bin'
-    $Bt = Get-ChildItem (Join-Path $env:ANDROID_HOME 'build-tools') -Directory -ErrorAction SilentlyContinue | Sort-Object { [version]$_.Name } | Select-Object -Last 1
+    $Bt = Get-PinnedSdkDir 'build-tools'
     if ($Bt) { $DevPath += $Bt.FullName }
-    $Ndk = Get-ChildItem (Join-Path $env:ANDROID_HOME 'ndk') -Directory -ErrorAction SilentlyContinue | Sort-Object { [version]$_.Name } | Select-Object -Last 1
+    $Ndk = Get-PinnedSdkDir 'ndk'
     if ($Ndk) { $env:ANDROID_NDK_HOME = $Ndk.FullName; $DevPath += $Ndk.FullName }
 }
 $DevPath += Join-Path $DevTools 'jadx\bin'
@@ -50,8 +63,11 @@ $env:Path = (($DevPath | Where-Object { Test-Path $_ }) + $env:Path) -join ';'
 # window too. -Force picks up edits to the module when the shell is re-entered.
 Import-Module (Join-Path $PSScriptRoot 'VedoTom.psm1') -Global -Force
 
-function global:apktool { & java -jar (Join-Path $DevTools 'apktool_3.0.3.jar') @args }
-function global:r8d8    { & java -cp (Join-Path $DevTools 'r8-8.3.37.jar') com.android.tools.r8.D8 @args }
+# Jar names come from the pins, so bumping a version in toolchain.json needs no edit here.
+$global:VedoTomApktoolJar = Join-Path $DevTools (($Spec.jars | Where-Object { $_.name -like 'apktool*' }).name)
+$global:VedoTomR8Jar      = Join-Path $DevTools (($Spec.jars | Where-Object { $_.name -like 'r8-*' }).name)
+function global:apktool { & java -jar $global:VedoTomApktoolJar @args }
+function global:r8d8    { & java -cp $global:VedoTomR8Jar com.android.tools.r8.D8 @args }
 function global:docs    { & (Join-Path $PSScriptRoot '.venv-docs\Scripts\zensical.exe') serve -f (Join-Path $Repo 'zensical.toml') @args }
 # Connect ADB over Wi-Fi: reads the phone's Wi-Fi address over USB, then connects to port 5555
 # (listening from boot with the dev_adb_tcp module, or after `& $adb tcpip 5555`).
