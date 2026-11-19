@@ -2,8 +2,9 @@
 // endpoints instead of Google's. A static runtime resource overlay on the product partition,
 // targeting the NetworkStackConfig overlayable of com.android.networkstack (the NetworkStack
 // priv-app this GSI installs; MODULE_BUILD_FROM_SOURCE, so not Google's com.google.android
-// variant). NetworkMonitor reads Settings.Global captive_portal_* first, then these resources,
-// then its Google defaults, so a value set with `settings put global` still wins.
+// variant). The probe lists come from config_captive_portal_http[s]_urls when those are set
+// (they win over Settings and the single URLs); the vendor's own overlay sets them to Google's
+// URLs, so ours sets them too and wins on priority.
 
 package {
     default_applicable_licenses: ["device_vedotom_gsi_license"],
