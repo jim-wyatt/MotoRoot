@@ -22,6 +22,8 @@
     5. It reports the fingerprint, the HOME role holder, what the first-boot service did, the
        defaults the image sets (animations, log buffers, time zone, the hidden AOSP Files and
        keyboard icons), and whether anything is in the crash log.
+    6. It runs Test-Device.ps1: the development loops (root, logs, NDK, app install, Perfetto,
+       Frida, scrcpy) on the new image. -SkipDeviceTest leaves it out.
 
     Once the phone is up in the new image, the local copy (system.img, its sidecars) is deleted
     unless -KeepImage is given: the install PC only pushes and validates, and the build machine
@@ -40,6 +42,7 @@ param(
     [switch]$NoFetch,
     [switch]$KeepImage,   # keep the fetched image on this PC after the install (by default it is removed)
     [switch]$SingleBoot,  # boot the new image once only (by default it stays enabled across reboots)
+    [switch]$SkipDeviceTest,  # leave out step 6, the development-workflow smoke test (Test-Device.ps1)
     [int]$UserdataGiB = 24
 )
 $ErrorActionPreference = 'Stop'
@@ -151,3 +154,13 @@ $ntp = [regex]::Match((Sh 'dumpsys network_time_update_service'), 'mLastSuccessf
     CrashLog    = if ($crashes) { "$crashes entries: check adb logcat -b crash" } else { 'empty' }
     DataFree    = ((Sh 'df -h /data | tail -1') -split '\s+')[3]
 } | Format-List
+
+# ---- 6. development workflows
+# The report above checks what the image sets; Test-Device.ps1 checks that the development loops
+# work on it: root, logs, an NDK binary, an app built here (install, launch, uninstall), a
+# Perfetto trace, Frida, scrcpy. It removes what it installs. -SkipDeviceTest leaves it out.
+if (-not $SkipDeviceTest) {
+    Step 'Development workflows (Test-Device.ps1)'
+    & (Join-Path $PSScriptRoot 'Test-Device.ps1')
+    if ($LASTEXITCODE) { Write-Warning "Test-Device.ps1: $LASTEXITCODE check(s) failed (see the table above)." }
+}

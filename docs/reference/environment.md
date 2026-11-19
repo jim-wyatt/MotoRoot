@@ -23,7 +23,7 @@ flowchart TB
 | `VedoTom.psm1` | imported by the dev shell and the phone scripts | Device helpers: `Assert-OneDevice`, `Invoke-RootShell` (Magisk's `su -c` on stock, AOSP's `su 0` in a DSU image), `Wait-DeviceBoot -AfterReboot`, `Test-GsiRunning`. |
 | `Build-Device.ps1` | when changing helpers/modules | Rebuilds the two helper DEX files and the seven module ZIPs in `device/` from source and compares them with the committed copies. |
 | `Test-DevEnv.ps1` | to verify | Exercises every tool and re-checks every pin. Exit code = failures. |
-| `Test-Device.ps1` | after connecting a phone, or deploying an image | The phone-side half of the self-test: root, logcat and dumpsys, an NDK binary built here and run on the phone, a 2 s Perfetto trace, Frida and scrcpy, end to end, on whatever system is running. Leaves nothing behind. Exit code = failures. |
+| `Test-Device.ps1` | after connecting a phone; `Deploy-Image.ps1` runs it after every deploy | The phone-side half of the self-test: root, logcat and dumpsys, an NDK binary built here and run on the phone, an APK built here with the SDK tools alone (installed, launched, its log line read back, uninstalled), a 2 s Perfetto trace, Frida and scrcpy, end to end, on whatever system is running. Leaves nothing behind. Exit code = failures. |
 | `Trace-Device.ps1` | when profiling | Records a Perfetto trace on the device and pulls it into `work\traces\` ([tracing](../develop/tracing.md)). |
 | `Dump-DeviceInfo.ps1` | once per unit or firmware | Writes a hardware inventory into `work\device-info\` (private) and prints an identifier-free summary ([hardware](../device/hardware.md)). |
 

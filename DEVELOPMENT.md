@@ -10,7 +10,7 @@ Set-ExecutionPolicy -Scope Process Bypass
 . .\dev\Enter-DevShell.ps1                      # in every new window
 .\dev\Build-Device.ps1                          # rebuild helpers + modules, compare with the committed copies
 .\dev\Test-DevEnv.ps1                           # end-to-end self-test; exit code = failures
-.\dev\Test-Device.ps1                           # the same for the phone: root, logs, NDK, Perfetto, Frida, scrcpy
+.\dev\Test-Device.ps1                           # the same for the phone: root, logs, NDK, app install, Perfetto, Frida, scrcpy
 ```
 
 `Test-DevEnv.ps1` exercises every tool, not just its version. It compiles and dexes the helpers, decompiles with jadx, cross-compiles an aarch64 Android 16 binary with the NDK, builds the docs site, imports val-protocol, re-verifies every pinned input, and checks the git safety settings (hook active, private paths ignored, no-reply commit email). It reports `origin`'s visibility but doesn't require it to be private: the repository is public by design, and the ignore rules plus the hook are what keep device data out of it. It never talks to the phone and never starts an ADB server.

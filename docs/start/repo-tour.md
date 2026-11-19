@@ -16,7 +16,7 @@ VedoTom/
 │   ├── VedoTom.psm1           device helpers the phone scripts share (root with either su, boot waits)
 │   ├── Build-Device.ps1       rebuilds and compares the device artifacts
 │   ├── Test-DevEnv.ps1        the self-test (PC side; never touches the phone)
-│   ├── Test-Device.ps1        the phone-side smoke test: root, logs, NDK, Perfetto, Frida, scrcpy
+│   ├── Test-Device.ps1        the phone-side smoke test: root, logs, NDK, an app, Perfetto, Frida, scrcpy
 │   ├── Set-DevSettings.ps1    development-target settings on the phone (animations, ADB, logs)
 │   ├── Trace-Device.ps1       records a Perfetto trace into work\traces
 │   ├── Dump-DeviceInfo.ps1    hardware inventory into work\device-info (private)

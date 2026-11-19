@@ -11,6 +11,8 @@ it exercises each workflow the docs teach, end to end, on whatever system the ph
   root      a root shell through Invoke-RootShell (Magisk's su on stock, AOSP's su 0 in an image)
   logs      logcat reads, the buffer size, and dumpsys
   native    an aarch64 binary built here with the pinned NDK, pushed, run on the phone, removed
+  app       an APK built here with the pinned SDK tools (no Gradle), installed, launched, its log
+            line read back, then uninstalled
   trace     a 2-second Perfetto trace through Trace-Device.ps1, pulled and checked, then deleted
   frida     Start-Frida, frida-ps over USB, Stop-Frida (needs root)
   mirror    scrcpy reaches the device (lists its displays; opens no window)
@@ -75,6 +77,58 @@ int main(void) { struct utsname u; uname(&u); printf("probe ok on %s %s\n", u.ma
     try { $o = Sh 'chmod 755 /data/local/tmp/vedotom-probe && /data/local/tmp/vedotom-probe' }
     finally { Sh 'rm -f /data/local/tmp/vedotom-probe' | Out-Null }
     if ($o -match '^probe ok on aarch64') { $o } else { throw $o }
+}
+
+# ---------------- app: the everyday loop (build, install, launch, log, uninstall) with the pinned
+# SDK tools alone, no Gradle: javac against android.jar, d8, aapt2, zipalign, apksigner with a
+# throwaway key. Proves an app built on this PC runs on the phone's current system.
+Check 'app' 'build, install, launch and uninstall an app' {
+    $pkg = 'dev.vedotom.probe'
+    $btDir = $Bt.FullName; $jar = Join-Path $env:ANDROID_HOME 'platforms\android-36\android.jar'
+    $d = Join-Path $Tmp 'app'; New-Item -ItemType Directory -Force (Join-Path $d 'src\dev\vedotom\probe'), (Join-Path $d 'classes'), (Join-Path $d 'dex') | Out-Null
+    Set-Content -LiteralPath (Join-Path $d 'AndroidManifest.xml') -Value @"
+<manifest xmlns:android="http://schemas.android.com/apk/res/android" package="$pkg">
+  <application android:label="VedoTom probe" android:hasCode="true">
+    <activity android:name=".Main" android:exported="true" />
+  </application>
+</manifest>
+"@
+    Set-Content -LiteralPath (Join-Path $d 'src\dev\vedotom\probe\Main.java') -Value @'
+package dev.vedotom.probe;
+public class Main extends android.app.Activity {
+    @Override protected void onCreate(android.os.Bundle b) {
+        super.onCreate(b);
+        android.util.Log.i("VedoTomProbe", "app probe ok on sdk " + android.os.Build.VERSION.SDK_INT);
+        finish();
+    }
+}
+'@
+    & javac --release 11 -nowarn -Xlint:-options -cp $jar -d (Join-Path $d 'classes') (Join-Path $d 'src\dev\vedotom\probe\Main.java') 2>&1 | Out-Null
+    if ($LASTEXITCODE -ne 0) { throw 'javac failed' }
+    & "$btDir\d8.bat" --min-api 26 --lib $jar --output (Join-Path $d 'dex') (Get-ChildItem (Join-Path $d 'classes') -Recurse -Filter *.class).FullName 2>&1 | Out-Null
+    if ($LASTEXITCODE -ne 0) { throw 'd8 failed' }
+    $unsigned = Join-Path $d 'unsigned.apk'; $aligned = Join-Path $d 'aligned.apk'; $apk = Join-Path $d 'probe.apk'
+    & "$btDir\aapt2.exe" link -o $unsigned -I $jar --manifest (Join-Path $d 'AndroidManifest.xml') --min-sdk-version 26 --target-sdk-version 36 2>&1 | Out-Null
+    if ($LASTEXITCODE -ne 0) { throw 'aapt2 link failed' }
+    Add-Type -AssemblyName System.IO.Compression.FileSystem
+    $z = [IO.Compression.ZipFile]::Open($unsigned, 'Update')
+    try { [void][IO.Compression.ZipFileExtensions]::CreateEntryFromFile($z, (Join-Path $d 'dex\classes.dex'), 'classes.dex') } finally { $z.Dispose() }
+    & "$btDir\zipalign.exe" -f -p 4 $unsigned $aligned 2>&1 | Out-Null
+    if ($LASTEXITCODE -ne 0) { throw 'zipalign failed' }
+    $ks = Join-Path $d 'probe.jks'
+    & keytool -genkeypair -keystore $ks -storepass probepass -keypass probepass -alias probe -keyalg RSA -keysize 2048 -validity 1 -dname 'CN=VedoTom probe' 2>&1 | Out-Null
+    & "$btDir\apksigner.bat" sign --ks $ks --ks-pass pass:probepass --out $apk $aligned 2>&1 | Out-Null
+    if ($LASTEXITCODE -ne 0) { throw 'apksigner failed' }
+    $since = Sh "date '+%m-%d %H:%M:%S.000'"
+    try {
+        $i = (& $adb install -r -t $apk 2>&1) -join ' '
+        if ($i -notmatch 'Success') { throw "install: $i" }
+        Sh "am start -W -n $pkg/.Main" | Out-Null
+        Start-Sleep 2
+        $log = (& $adb logcat -d -T $since -s VedoTomProbe 2>$null | Select-String 'app probe ok' | Select-Object -Last 1).Line
+        if (-not $log) { throw 'installed, but the activity did not log' }
+        $log -replace '^.*VedoTomProbe\s*:\s*', ''
+    } finally { & $adb uninstall $pkg 2>&1 | Out-Null }
 }
 
 # ---------------- trace: Perfetto through the project's script
