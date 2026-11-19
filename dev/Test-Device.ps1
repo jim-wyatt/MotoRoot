@@ -13,6 +13,7 @@ it exercises each workflow the docs teach, end to end, on whatever system the ph
   native    an aarch64 binary built here with the pinned NDK, pushed, run on the phone, removed
   app       an APK built here with the pinned SDK tools (no Gradle), installed, launched, its log
             line read back, then uninstalled
+  debug     adb root and back (userdebug images), and how many processes accept a debugger (JDWP)
   trace     a 2-second Perfetto trace through Trace-Device.ps1, pulled and checked, then deleted
   frida     Start-Frida, frida-ps over USB, Stop-Frida (needs root)
   mirror    scrcpy reaches the device (lists its displays; opens no window)
@@ -129,6 +130,32 @@ public class Main extends android.app.Activity {
         if (-not $log) { throw 'installed, but the activity did not log' }
         $log -replace '^.*VedoTomProbe\s*:\s*', ''
     } finally { & $adb uninstall $pkg 2>&1 | Out-Null }
+}
+
+# ---------------- debug: what a debugger can reach
+# adb root works only on a real userdebug build (a VedoTom image), not on stock, whose adbd is
+# compiled to stay unprivileged even with dev_debuggable's ro.debuggable=1. JDWP (what Android
+# Studio's "Attach debugger" uses) reaches every app only on a userdebug build with
+# persist.debug.dalvik.vm.jdwp.enabled=1, which zygote reads when it starts (so: set, reboot).
+if ($inImage -and (Sh 'getprop ro.build.type') -eq 'userdebug') {
+    Check 'debug' 'adb root, then back to unprivileged adbd' {
+        try {
+            & $adb root 2>&1 | Out-Null; & $adb wait-for-device; Start-Sleep 2
+            $id = Sh 'id -u'
+            if ($id -ne '0') { throw "adb root gave uid $id" }
+            'uid 0 under adb root'
+        } finally { & $adb unroot 2>&1 | Out-Null; & $adb wait-for-device; Start-Sleep 2 }
+    }
+}
+Check 'debug' 'processes a debugger can attach to (JDWP)' {
+    $o = Join-Path $Tmp 'jdwp.txt'
+    $p = Start-Process $adb -ArgumentList 'jdwp' -NoNewWindow -PassThru -RedirectStandardOutput $o
+    Start-Sleep 4; if (-not $p.HasExited) { $p.Kill() }
+    $n = @(Get-Content $o -ErrorAction SilentlyContinue | Where-Object { $_ -match '^\d+$' }).Count
+    $prop = Sh 'getprop persist.debug.dalvik.vm.jdwp.enabled'
+    # Informational: a count of 0 is right on a system that doesn't open JDWP for every app.
+    if ($n -gt 0) { "$n (persist.debug.dalvik.vm.jdwp.enabled='$prop')" }
+    else { "0: only debuggable apps you install (all apps: persist.debug.dalvik.vm.jdwp.enabled=1 on a userdebug build, then reboot)" }
 }
 
 # ---------------- trace: Perfetto through the project's script
