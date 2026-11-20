@@ -19,6 +19,20 @@ It's made of:
 
 The change loop: edit the image on a branch → the build node builds and tests → the device node deploys and verifies → merge.
 
+## Name: aosp-academy (the user, 2026-11-19)
+
+The project is renamed from VedoTom to **aosp-academy** everywhere.
+
+| Where | Name |
+| --- | --- |
+| The project, the docs, the GitHub repo | `aosp-academy` |
+| The CLI | `aosp-academy` |
+| The Python package | `aosp_academy` |
+| The image product | `aospacademy_arm64`: no underscore after `aosp`, so it can't be mistaken for Google's `aosp_*` products |
+| Properties, device dirs, overlay and module names | `aospacademy` |
+
+The GitHub repo (`jim-wyatt/VedoTom` to `jim-wyatt/aosp-academy`) and its Pages site are renamed in phase 5, together with the new docs. The local folder `C:\Users\Jim\MotoDev` stays as it is. The trademark rule is the user's: no "Android", "Moto", "droid" or other marks in the name.
+
 ## Portability (the user, 2026-11-19)
 
 - **The build doesn't need Windows or WSL.** The build node is any x86-64 Linux host: native Linux, WSL2, a cloud VM or a container.

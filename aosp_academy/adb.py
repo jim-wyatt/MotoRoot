@@ -1,0 +1,132 @@
+"""The phone, through the pinned adb in work/platform-tools.
+
+Every command that talks to the phone goes through this module, so the rules live in one place:
+exactly one authorized device; root with whichever su the running system has; boot waits that
+can't mistake the old system's "booted" for the new one's; DSU state from gsi_tool.
+"""
+from __future__ import annotations
+
+import subprocess
+
+from .core import EXE, WORK, Failure, run, say, sleep
+
+ADB = WORK / "platform-tools" / f"adb{EXE}"
+FASTBOOT = WORK / "platform-tools" / f"fastboot{EXE}"
+
+
+def adb(*args, check: bool = True, timeout: float | None = None) -> str:
+    """Run adb and return its output (stdout and stderr together), stripped."""
+    if not ADB.exists():
+        raise Failure("platform-tools missing. Run: vedotom setup")
+    p = run([ADB, *args], check=check, capture=True, timeout=timeout)
+    return p.stdout.strip()
+
+
+def quote(s: str) -> str:
+    """Single-quote s for the phone's sh."""
+    return "'" + s.replace("'", "'\\''") + "'"
+
+
+def sh(command: str) -> str:
+    """A shell command on the phone as the shell user; its output, stripped. Never raises on exit codes."""
+    return adb("shell", command, check=False)
+
+
+def prop(name: str) -> str:
+    return sh(f"getprop {name}")
+
+
+def devices() -> list[tuple[str, str]]:
+    out = adb("devices")
+    rows = []
+    for line in out.splitlines()[1:]:
+        parts = line.split()
+        if len(parts) >= 2 and not line.startswith("*"):
+            rows.append((parts[0], parts[1]))
+    return rows
+
+
+def assert_one_device() -> None:
+    authorized = [s for s, state in devices() if state == "device"]
+    if len(authorized) != 1:
+        raise Failure(f"Connect exactly one authorized device (found {len(authorized)}).")
+
+
+def root(command: str) -> str:
+    """Run command as root, with the su the running system has.
+
+    Two su flavours. Magisk's (the stock system) takes -c. AOSP's userdebug su (any DSU image built
+    from source, this project's included) takes "su 0 <command>" and rejects -c with
+    "invalid uid/gid '-c'". Magisk's form is tried first and AOSP's on that exact refusal. Nothing
+    is cached: the phone can reboot between stock and an image while a session stays open.
+    """
+    q = quote(command)
+    out = sh(f"su -c {q}")
+    if "invalid uid/gid" not in out:
+        return out
+    return sh(f"su 0 sh -c {q}")
+
+
+def has_root() -> bool:
+    return "uid=0(" in root("id")
+
+
+def wait_authorized() -> None:
+    """Wait until adb sees the phone as authorized, saying once what it waits for.
+
+    VedoTom images set ro.adb.secure=1 and every DSU install starts with empty userdata, so a PC
+    whose key isn't built into the image sees the phone as "unauthorized" until someone taps Allow.
+    """
+    told = False
+    while True:
+        state = adb("get-state", check=False)
+        if state == "device":
+            return
+        if "unauthorized" in state and not told:
+            say('  >> Tap "Allow" on the phone\'s "Allow USB debugging?" prompt (tick "Always allow from this computer"). Waiting ...', "yellow")
+            told = True
+        sleep(2)
+
+
+def wait_boot(timeout: int = 600, after_reboot: bool = False) -> int:
+    """Wait for sys.boot_completed; return the seconds it took.
+
+    after_reboot first waits for the old system to drop off USB, so its "booted" isn't taken for
+    the new system's.
+    """
+    if after_reboot:
+        try:
+            adb("wait-for-disconnect", check=False, timeout=180)
+        except subprocess.TimeoutExpired:
+            pass
+    wait_authorized()
+    t = 0
+    while t < timeout:
+        if prop("sys.boot_completed") == "1":
+            return t
+        sleep(5)
+        t += 5
+    raise Failure(f"The phone did not finish booting within {timeout} s.")
+
+
+def reboot() -> None:
+    adb("reboot", check=False)
+
+
+def gsi_status() -> str:
+    return root("gsi_tool status").strip()
+
+
+def gsi_running() -> bool:
+    """True while a DSU image is the running system.
+
+    ro.gsid.image_running reads empty on this phone; gsi_tool's first line says "running" instead.
+    """
+    lines = gsi_status().splitlines()
+    return bool(lines) and lines[0].strip() == "running"
+
+
+def require_root_device() -> None:
+    assert_one_device()
+    if not has_root():
+        raise Failure("Root (su) is required on the device.")
