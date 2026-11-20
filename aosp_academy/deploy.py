@@ -62,6 +62,19 @@ def _first_boot() -> tuple[str, list[str]]:
     return status, log
 
 
+BATTERY_STATUS = {"1": "unknown", "2": "charging", "3": "discharging", "4": "not charging", "5": "full"}
+BATTERY_HEALTH = {"1": "unknown", "2": "good", "3": "overheat", "4": "dead", "5": "over voltage", "6": "failure", "7": "cold"}
+
+
+def battery(dump: str) -> str:
+    """One line from dumpsys battery: level, status, health, temperature and the power source."""
+    v = dict(re.findall(r"^\s*([A-Za-z ]+): (.+)$", dump, re.M))
+    temp = f"{int(v['temperature']) / 10:.1f} C" if v.get("temperature", "").lstrip("-").isdigit() else "?"
+    source = next((s for s in ("AC", "USB", "Wireless", "Dock") if v.get(f"{s} powered") == "true"), "none")
+    return (f"{v.get('level', '?')}%, {BATTERY_STATUS.get(v.get('status', ''), v.get('status', '?'))}, "
+            f"health {BATTERY_HEALTH.get(v.get('health', ''), v.get('health', '?'))}, {temp}, power {source}")
+
+
 def report(status: str = "", log: list[str] | None = None) -> None:
     """What the image sets, read back from the phone."""
     log = log or []
@@ -93,6 +106,9 @@ def report(status: str = "", log: list[str] | None = None) -> None:
         # As root: the shell user may not list /product/etc/security.
         "AdbKeys": (f"built in ({n} keys)" if (n := adb.root("grep -c . /product/etc/security/adb_keys 2>/dev/null")).isdigit() and n != "0"
                     else "none (each PC needs the Allow tap)"),
+        "Battery": battery(sh("dumpsys battery")),
+        "AdbTcp": f"listening on {port}" if (port := adb.prop("persist.adb.tcp.port") or adb.prop("service.adb.tcp.port")) not in ("", "0", "-1")
+                  else "USB only",
         "CrashLog": f"{crashes} entries: check adb logcat -b crash" if crashes else "empty",
         "DataFree": (sh("df -h /data | tail -1").split() + ["?"] * 4)[3],
     }

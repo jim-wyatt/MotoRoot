@@ -49,7 +49,7 @@ It builds a small app with the SDK tools alone, installs it, launches it, reads 
 
 - **Every deploy of a new image wipes the image's data**, your installed apps included. The device is a test target, not a store: keep everything in your project, and expect to reinstall after a deploy. [What the image gives you](the-image.md#what-a-deploy-wipes) has the details.
 - **Seeing the screen.** `./aosp-academy device mirror` mirrors and controls the phone in a window on the PC (scrcpy, with any extra options passed through).
-- **No cable.** On the image, `adb tcpip 5555` over USB, then `./aosp-academy adb-wifi`, connects adb over Wi-Fi until the next reboot. The PC and the phone must be on the same network; the command says so if they aren't. Studio lists the Wi-Fi device like any other.
+- **No cable.** The image's adbd listens on TCP port 5555 from the first boot, so `./aosp-academy adb-wifi` (with the cable in once, to read the phone's address) connects adb over Wi-Fi. The PC and the phone must be on the same network; the command says so if they aren't. Studio lists the Wi-Fi device like any other.
 - **The device is shared with this project.** Changing the image itself (adding a package, a default, a patch) is the other half of this site: [change the environment](../environment/index.md).
 
 ## Pages in this section

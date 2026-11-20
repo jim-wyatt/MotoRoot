@@ -89,6 +89,7 @@ The report reads back from the phone what the image sets. `./aosp-academy device
 | `Fingerprint` | `ro.build.fingerprint` | `Android/aospacademy_arm64/generic_arm64:...:userdebug/test-keys` |
 | `Home` | the HOME role holder | `org.fossify.home` |
 | `FirstBoot` | the first-boot `status`, and how many icon colours it set | `done failures=0; 16 icons set` |
+| `DevOptions` | Developer options, Stay awake and the brightness setting | `shown=1 stay_awake=15 brightness=64` |
 | `Animations` | the three animation scales | `0/0/0` |
 | `LogBuffer` | `logcat -g -b main` | 16 MiB |
 | `TimeZone` | `persist.sys.timezone` | `America/New_York` |
@@ -96,6 +97,8 @@ The report reads back from the phone what the image sets. `./aosp-academy device
 | `ChargeLimit` | the charge-limit result file, then `blocking` now and the battery level | `upper_limit=80, blocking=...`; `blocking=1` while the battery is above the limit |
 | `Network` | whether a network is validated, which hosts the captive-portal probes used, and the last NTP server | `validated; probes to connectivitycheck.grapheneos.network; NTP ntp://pool.ntp.org` |
 | `AdbKeys` | how many keys `/product/etc/security/adb_keys` holds | `built in (N keys)`, or `none (each PC needs the Allow tap)` for an image built without keys |
+| `Battery` | level, charging status, health, temperature and power source, from `dumpsys battery` | health `good`; on the cable above the limit: `not charging`, power `USB` |
+| `AdbTcp` | whether adbd listens on TCP (`persist.adb.tcp.port`) | `listening on 5555` |
 | `CrashLog` | fatal entries in the crash buffer | `empty` |
 | `DataFree` | free space in `/data` | about 22 GB with the default 24 GB partition |
 

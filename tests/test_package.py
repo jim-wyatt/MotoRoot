@@ -49,6 +49,14 @@ class Images(unittest.TestCase):
         self.assertFalse(core.is_image_product("aosp_arm64"))
 
 
+class Report(unittest.TestCase):
+    def test_battery_line(self):
+        from aosp_academy import deploy
+        dump = "\n".join(["  AC powered: false", "  USB powered: true", "  status: 4", "  health: 2", "  level: 86", "  temperature: 260"])
+        self.assertEqual(deploy.battery(dump), "86%, not charging, health good, 26.0 C, power USB")
+        self.assertIn("health ?", deploy.battery(""))
+
+
 class Files(unittest.TestCase):
     def test_get_pinned_refuses_a_mismatched_file(self):
         with tempfile.TemporaryDirectory() as d:
