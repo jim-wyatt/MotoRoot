@@ -85,7 +85,7 @@ def parser() -> argparse.ArgumentParser:
     m.add_argument("stock_image", help="your own init_boot_a backup (work/private-backups/...)")
 
     p = sub.add_parser("image", help="build node: inputs, setup, sync, apply, build (Linux)")
-    p.add_argument("action", choices=["inputs", "setup", "sync", "apply", "build", "verify"])
+    p.add_argument("action", choices=["inputs", "setup", "sync", "apply", "build", "verify", "after-sync"])
     return ap
 
 

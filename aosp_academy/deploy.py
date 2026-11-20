@@ -130,7 +130,7 @@ def deploy(args) -> int:
     if not is_image_product(product):
         raise Failure(f"The phone did not come up in the {PRODUCT} image (product {product}).")
     if not args.keep_image:
-        # The image is on the phone and the build node keeps every build, so this PC drops its copy.
+        # The image is on the phone, so this PC drops its copy (--keep-image keeps it for a re-install).
         for f in ("system.img", "system.prev.img", "build.prop", "vbmeta.img", "own-gsi.zip"):
             (fetch.OWN / f).unlink(missing_ok=True)
         if sidecar.exists():

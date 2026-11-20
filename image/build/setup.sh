@@ -1,12 +1,12 @@
 #!/usr/bin/env bash
-# image/build/setup.sh - prepare this WSL Ubuntu instance to build AOSP.
+# image/build/setup.sh - prepare this Linux host (Ubuntu/Debian: native, WSL2, VM) to build AOSP.
 #
-# Run inside WSL (from the dev shell: wsl -- bash image/build/setup.sh). Idempotent.
+# Run on the build node:  ./aosp-academy image setup   (or bash image/build/setup.sh). Idempotent.
 # Installs the build dependencies Google lists for AOSP, the `repo` tool and git-lfs, and
-# creates the AOSP tree's parent directory on the WSL disk. Nothing here touches the repo on
+# creates the AOSP tree's parent directory on this host's own disk. Nothing here touches the repo on
 # the Windows side except reading this script.
 #
-# Why WSL's own disk: an AOSP tree is 300-400 GB with its build output, must be on a
+# Why the host's own disk (on WSL2: the WSL disk, not /mnt/c): an AOSP tree is 300-400 GB with its build output, must be on a
 # case-sensitive filesystem, and building across the /mnt/c boundary is unsupported and slow.
 set -euo pipefail
 
@@ -28,7 +28,7 @@ echo "   java:   $(java -version 2>&1 | head -1)"
 # "Read-only file system", and AOSP's own build/make/core/ccache.mk says it adds little over
 # incremental builds. An earlier version of this script exported USE_CCACHE in ~/.profile;
 # remove that so a hand-run `m` in a login shell does not hit the same failure.
-if grep -q '^# AOSP builds (.*image/build/setup.sh)$' "$HOME/.profile" 2>/dev/null; then
+if grep -q '^# AOSP builds (.*dev/aosp/setup.sh)$' "$HOME/.profile" 2>/dev/null; then
   sed -i '/^# AOSP builds (.*dev\/aosp\/setup.sh)$/,/^export CCACHE_DIR=/d' "$HOME/.profile"
   echo "== removed the old ccache exports from ~/.profile"
 fi

@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
-# image/build/build-image.sh - build the GSI (aosp_arm64) from the synced tree and hand the image back.
+# image/build/build-image.sh - build the aospacademy_arm64 image from the synced tree and publish it.
 #
-# Run inside WSL after sync.sh:  wsl -- bash image/build/build-image.sh
+# Run on the build node after sync.sh:  ./aosp-academy image build   (or bash image/build/build-image.sh)
 # The lunch target comes from toolchain.json (deviceTools.aosp.lunch). The first build takes
 # hours and all cores; later builds are incremental. On success the system image is copied to
 # work/device-tools/gsi/own/ where 'aosp-academy gsi install --image' can boot it
@@ -47,8 +47,8 @@ if [ -f "$PRODUCT_OUT/vbmeta.img" ]; then
 fi
 # A checksum beside the image, so a copy on another machine can be verified (aosp-academy fetch).
 (cd "$DEST_DIR" && sha256sum system.img > system.img.sha256)
-# Optional second copy for another machine to pull, e.g. a chrooted SFTP folder on WSL's own disk
-# (see "Building on one machine, installing from another" in docs/develop/aosp-build.md). Each file
+# Optional second copy for another machine to pull, e.g. a chrooted SFTP folder on the build node's own disk
+# (see docs/start/build-node.md and docs/environment/building.md). Each file
 # is written under a temporary name and renamed, and the checksum goes last, so a pull that
 # overlaps a build never sees a half-written image paired with the new checksum.
 # The image is also published in PARTS pieces (system.img.part00 ...), listed with their SHA-256

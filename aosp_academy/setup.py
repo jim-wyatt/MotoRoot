@@ -42,6 +42,7 @@ def _set_user_env(name: str, value: str) -> None:
     """Persist a per-user environment variable (Windows registry; elsewhere, tell the user)."""
     os.environ[name] = value
     if not WINDOWS:
+        note(f"add to your shell profile (~/.profile, ~/.zshrc):  export {name}='{value}'")
         return
     import winreg
     with winreg.OpenKey(winreg.HKEY_CURRENT_USER, "Environment", 0, winreg.KEY_READ | winreg.KEY_SET_VALUE) as k:

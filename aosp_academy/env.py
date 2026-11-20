@@ -8,8 +8,9 @@
   apktool ... / d8 ...          the pinned apktool and R8's D8
   adb-wifi                      connect adb over Wi-Fi (reads the phone's address over USB)
 
-The pinned platform-tools come first on PATH, so a bare `adb` is the tested version. Close Android
-Studio during device work: it runs its own, newer adb server, and two versions fight over the phone.
+The pinned platform-tools come first on PATH, so a bare `adb` is the tested version. It is the same
+version the SDK holds for Android Studio ('check' enforces that), so Studio's adb server and this one
+don't fight over the phone.
 """
 from __future__ import annotations
 

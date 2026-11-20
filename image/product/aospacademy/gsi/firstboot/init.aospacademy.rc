@@ -32,7 +32,7 @@ on property:logd.ready=true
 # kernel module qpnp_adaptive_charge (upper_limit=80, lower_limit -1 = auto mode: charging is
 # suspended above the limit and resumed below it). The image has that module and HAL but not the
 # Moto client, so it makes the same write itself, from persist.aospacademy.charge_limit (product
-# build.prop default 80; 100 = charge to full; see docs/develop/aosp-build.md). Re-applied whenever the property changes:
+# build.prop default 80; 100 = charge to full; see docs/environment/image.md). Re-applied whenever the property changes:
 #   adb shell su 0 setprop persist.aospacademy.charge_limit 85
 service aospacademy_chargelimit /product/bin/aospacademy-firstboot charge-limit
     user root

@@ -2,7 +2,7 @@
 # image/build/sync.sh - check out the pinned AOSP release into $AOSP_DIR (default: deviceTools.aosp.treeDir
 # in toolchain.json, ~/aosp17 here).
 #
-# Run inside WSL after setup.sh:  wsl -- bash image/build/sync.sh
+# Run on the build node after setup.sh:  ./aosp-academy image sync   (or bash image/build/sync.sh)
 # The tag comes from toolchain.json (deviceTools.aosp.tag) so the source matches the GSI
 # build that was validated on the device. A partial clone keeps the first download to roughly
 # 60-100 GB; `repo sync` is resumable, so re-run this if it is interrupted.

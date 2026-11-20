@@ -3,7 +3,7 @@
   build          rebuild the two helper DEX files and the Magisk module ZIPs into work/build and
                  compare them with the committed copies in stock/ (--promote copies changed ones over)
   magisk-image   make a Magisk-patched init_boot image FILE from your own init_boot_a backup
-                 (walkthrough stage 7; it never flashes anything)
+                 (walkthrough stage 5; stage 7 writes it; this never flashes anything)
 
 Helpers: javac --release 8, then D8 from the pinned R8. Compared byte for byte; a mismatch
 usually means another javac build changed the debug line tables, not the bytecode. Modules:

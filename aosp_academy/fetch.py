@@ -10,7 +10,8 @@ Linux and macOS) into work/device-tools/gsi/own here.
   connection, not the total (8 streams: 1.8 GB in about 4.5 minutes instead of 13).
 - The joined image is kept only if its SHA-256 matches the build node's checksum. Parts that
   verified are kept on failure, so the next run resumes.
-- The image it replaces is deleted: the build node keeps every build.
+- The image it replaces is deleted. The publish folder holds only the newest build; keep your own
+  copy (or ask the build node to) before a risky change.
 
 Which machine to pull from is private to your network, so it isn't in the repository: pass
 --host, --user, --repo (and --port) once with --save, and they're kept in work/remote-build.json.

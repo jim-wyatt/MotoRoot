@@ -5,6 +5,8 @@
   sync     check out the pinned AOSP tag into $AOSP_DIR (image/build/sync.sh)
   apply    put this project's product, patches and APKs into the tree (image/build/apply-local.sh)
   build    apply, lunch, build, and publish to $PUBLISH_DIR if set (image/build/build-image.sh)
+  verify   find and repair half-checked-out projects in the tree (image/build/verify-tree.sh)
+  after-sync  wait for a running sync, then build (overnight runs; image/build/build-after-sync.sh)
 
 The AOSP steps stay bash: envsetup.sh and lunch are bash. Settings come from the environment:
 AOSP_DIR (default: deviceTools.aosp.treeDir), JOBS, PUBLISH_DIR, PARTS.
@@ -16,7 +18,8 @@ import sys
 
 from .core import ROOT, WINDOWS, WORK, Failure, get_pinned, note, pins, step
 
-SCRIPTS = {"setup": "setup.sh", "sync": "sync.sh", "apply": "apply-local.sh", "build": "build-image.sh", "verify": "verify-tree.sh"}
+SCRIPTS = {"setup": "setup.sh", "sync": "sync.sh", "apply": "apply-local.sh", "build": "build-image.sh", "verify": "verify-tree.sh",
+           "after-sync": "build-after-sync.sh"}
 
 
 def inputs() -> int:
