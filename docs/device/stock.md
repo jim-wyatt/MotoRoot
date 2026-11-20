@@ -226,9 +226,22 @@ Undoing `wifi_carrier_debloat` needs one more step after the reboot, which belon
 
 The same toggles are in the Magisk app under **Modules**. Nothing was deleted from the firmware; disabling the overlay is all it takes. To bring back one app without disabling a whole module, remove it from the module's manifest in `stock/modules/manifests/`, rebuild with `aosp-academy stock build --promote` ([The Magisk modules](modules.md)), and reinstall the ZIP.
 
-### If the boot chain breaks
+### If the boot chain breaks { #recovery }
 
-The modules can always be turned off with safe mode, as above. A boot problem in the boot chain itself (the bootloader or the Magisk image in `init_boot_a`) is a different matter: recovering from it means restoring your own backup of that partition from Fastboot, and the [preparation walkthrough](walkthrough.md) is the reference for the backups and the boot chain. If a bad bootloader stops Fastboot from starting, there is **no vendor-independent recovery proven for this model**. Don't assume the other slot, a MediaTek COM-port tool or a random download agent will save it.
+The modules can always be turned off with safe mode, as above. A problem in the boot chain itself (the bootloader, or the Magisk image in `init_boot_a`) is different. If it stops the phone booting and **Fastboot is still reachable**, restore your own backup to the exact slot, from an `aosp-academy shell`:
+
+```sh
+# The root image won't boot: restore the original init_boot
+fastboot flash init_boot_a work/private-backups/init_boot_a.img
+
+# The modified LK misbehaves: restore the original LK
+fastboot flash lk_a work/private-backups/lk_a.img
+```
+
+This hasn't been needed on either unit, so it is untested. The backups are the ones the [preparation walkthrough](walkthrough.md) makes.
+
+!!! danger "If Fastboot won't start"
+    These commands need Fastboot. If a bad LK stops Fastboot from starting, there is **no vendor-independent recovery proven for this model**. This is the risk accepted in [Stage 6](walkthrough.md#stage-6-flash-lk-and-unlock). Don't assume the other slot, a MediaTek COM-port tool or a random download agent will save it.
 
 ### When you report a problem
 

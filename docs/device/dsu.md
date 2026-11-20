@@ -103,7 +103,7 @@ Things worth checking on any new system, and noting if they fail: Wi-Fi, the dis
 !!! warning "Not documented yet: a persistent image that doesn't boot"
     If an image enabled **persistently** fails to boot and `adb` can't reach it, there is no tested way back documented here yet. Until there is, boot untested images with `--single-boot`, which always returns to stock on the next reboot. The open item is on the [backlog](../environment/backlog.md).
 
-The stock system underneath is never at risk from DSU, because DSU writes only `/data`. Problems with the boot chain itself are a different matter; see [the stock system](stock.md#if-the-boot-chain-breaks).
+The stock system underneath is never at risk from DSU, because DSU writes only `/data`. Problems with the boot chain itself are a different matter; see [the stock system](stock.md#recovery).
 
 ## And after that
 
