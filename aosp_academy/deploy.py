@@ -2,9 +2,11 @@
 
 1. fetch: the newest verified image from the build node (--no-fetch: the one already here)
 2. stock: if the phone runs a DSU image, disable it and reboot to stock (DSU installs only from there)
-3. discard, install (a --userdata-gib data partition), boot (persistent unless --single-boot)
-4. Wi-Fi: join the network in work/wifi.json (private, git-ignored), when present; then the
-   WireGuard tunnel from work/wireguard/wg0.conf and wg0.env (private), when present
+3. discard; stage the Wi-Fi network (work/wifi.json) and the WireGuard tunnel (work/wireguard/
+   wg0.conf, wg0.env) in /metadata for the new image's first boot, when present (all private,
+   git-ignored); install (a --userdata-gib data partition); boot (persistent unless --single-boot)
+4. the image's first boot joins that Wi-Fi and brings the tunnel up from the staged files and
+   deletes them; if either didn't take, the deploy pushes it directly instead
 5. wait for the image's first-boot service (its status and log files, read as root)
 6. report what the image sets, then run 'device test' (--skip-device-test leaves it out)
 
@@ -24,6 +26,60 @@ from .core import PRODUCT, WORK, Failure, file_hash, first_hash, image_state, is
 WIFI = WORK / "wifi.json"
 WG_LOCAL = WORK / "wireguard"
 WG_DIR = "/data/local/aospacademy-wg"
+STAGE = "/metadata/aospacademy"
+
+
+def _staged_files() -> dict[str, str]:
+    files = {}
+    if WIFI.exists():
+        w = json.loads(WIFI.read_text(encoding="utf-8"))
+        files["wifi.env"] = f"SSID={w['ssid']}\nSECURITY={w['security']}\nPASSPHRASE={w['passphrase']}\n"
+    if (WG_LOCAL / "wg0.conf").exists() and (WG_LOCAL / "wg0.env").exists():
+        for name in ("wg0.conf", "wg0.env"):
+            files[name] = (WG_LOCAL / name).read_text(encoding="utf-8")
+    return files
+
+
+def _stage() -> bool:
+    """On the stock system, leave the new image's Wi-Fi network and tunnel config in /metadata.
+
+    The install wipes the image's data, so its first boot has no network; /metadata is shared by
+    stock and the image and a DSU install leaves it alone. Root-only (700/600); the image's
+    first-boot service uses the files and deletes them at once. Secrets pass through a local
+    temporary file in git-ignored work/ and /data/local/tmp, both removed straight away.
+    """
+    files = _staged_files()
+    if not files:
+        return False
+    step("Staging Wi-Fi and the tunnel for the new image's first boot")
+    adb.root(f"rm -rf {STAGE}; umask 077; mkdir -p {STAGE}")
+    tmp = WORK / ".stage"
+    tmp.mkdir(exist_ok=True)
+    try:
+        for name, text in files.items():
+            local, remote = tmp / name, f"/data/local/tmp/.aa-{name}"
+            local.write_bytes(text.encode("utf-8"))
+            try:
+                adb.adb("push", str(local), remote)
+                adb.root(f"umask 077; mv {remote} {STAGE}/{name} && chown root:root {STAGE}/{name} && chmod 600 {STAGE}/{name}")
+            finally:
+                local.unlink(missing_ok=True)
+                adb.sh(f"rm -f {remote}")
+    finally:
+        tmp.rmdir()
+    staged = adb.root(f"ls {STAGE}").split()
+    say(f"  staged: {', '.join(sorted(staged))}")
+    return set(staged) == set(files)
+
+
+def _wifi_validated(seconds: int) -> bool:
+    t = 0
+    while not adb.sh('dumpsys connectivity | grep -E "^ *NetworkAgentInfo.*WIFI.*VALIDATED"'):
+        if t >= seconds:
+            return False
+        time.sleep(3)
+        t += 3
+    return True
 
 
 def _start_tunnel() -> None:
@@ -176,6 +232,7 @@ def deploy(args) -> int:
         gsi.stock()
     step("Discarding the installed image")
     gsi.discard()
+    staged = _stage()
     step("Installing the new image")
     gsi.install(str(img), args.userdata_gib)
     step("Booting it")
@@ -190,11 +247,28 @@ def deploy(args) -> int:
         if sidecar.exists():
             sidecar.replace(fetch.DEPLOYED)
         say(f"  local image removed (deployed: {h[:12]}..., in {fetch.DEPLOYED})")
-    if WIFI.exists():
-        _join_wifi()
-    if (WG_LOCAL / "wg0.conf").exists() and (WG_LOCAL / "wg0.env").exists():
-        _start_tunnel()
-    status, log = _first_boot()
+    tunnel_wanted = (WG_LOCAL / "wg0.conf").exists() and (WG_LOCAL / "wg0.env").exists()
+    if staged:
+        # The first-boot service joins the staged Wi-Fi and brings the tunnel up; check both took.
+        status, log = _first_boot()
+        if adb.root(f"ls -d {STAGE} 2>/dev/null"):
+            warn(f"{STAGE} is still on the phone; removing it.")
+            adb.root(f"rm -rf {STAGE}")
+        if WIFI.exists():
+            if _wifi_validated(60):
+                say("  Wi-Fi from the staged network: validated")
+            else:
+                warn("The staged Wi-Fi network did not validate; joining it directly.")
+                _join_wifi()
+        if tunnel_wanted and not adb.root(f"cat {WG_DIR}/status 2>/dev/null").startswith("up"):
+            warn("The staged tunnel did not come up; pushing it directly.")
+            _start_tunnel()
+    else:
+        if WIFI.exists():
+            _join_wifi()
+        if tunnel_wanted:
+            _start_tunnel()
+        status, log = _first_boot()
     step("Result")
     report(status, log)
     if not args.skip_device_test:
