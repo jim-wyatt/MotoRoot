@@ -121,6 +121,12 @@ All in `PRODUCT_PRODUCT_PROPERTIES` in `aospacademy_arm64.mk`:
 | `persist.debug.dalvik.vm.jdwp.enabled` | `1` | JDWP for every app, below. |
 | `ro.adb.secure` | `1` | adb authorisation on, below. |
 
+## The WireGuard tunnel
+
+The kernel (5.15 GKI) has WireGuard built in, and the image adds **`/product/bin/wg`**, built from wireguard-tools (AOSP has no copy): `toolchain.json` pins the release by tag and commit, `aosp-academy image inputs` clones it and checks the commit, and `apply-local.sh` copies its `src/` next to `image/product/aospacademy/gsi/wireguard/Android.bp` in the tree (module `aospacademy_wg`, GPL-2.0-only, its licence text alongside). The source is never in this repository.
+
+The first-boot script's **`wireguard` mode**, started by the `aospacademy_wireguard` init service after boot, brings up `wg0` when `/data/local/aospacademy-wg/` holds a config (`wg0.conf` and `wg0.env`, pushed by the deploy): `ip link add wg0 type wireguard`, `wg setconf`, the addresses, then the routes in a table of their own (1999) with a rule at priority 9000, because Android routes by policy per network and would otherwise not send the tunnel's subnets to `wg0`. Its result goes to `status` in that directory. Without a config it exits at once, so an image without a tunnel behaves as before. The private key never leaves the device node except over USB to that root-only directory.
+
 ## ADB authorisation and the trusted keys
 
 **`ro.adb.secure=1`** turns adb authorisation on, as on a user build: a PC must be allowed on the phone's screen ("Allow USB debugging?") before adb works. Without it, any USB host would get a root-capable shell on this userdebug image. The GSI's system_ext `build.prop` sets `ro.adb.secure=0` (`build/make/target/board/gsi_system_ext.prop`); init loads the product partition's `build.prop` last, so the product value wins.

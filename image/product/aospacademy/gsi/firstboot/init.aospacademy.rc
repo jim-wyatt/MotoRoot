@@ -34,6 +34,18 @@ on property:logd.ready=true
 # Moto client, so it makes the same write itself, from persist.aospacademy.charge_limit (product
 # build.prop default 80; 100 = charge to full; see docs/environment/image.md). Re-applied whenever the property changes:
 #   adb shell su 0 setprop persist.aospacademy.charge_limit 85
+# WireGuard tunnel, when a deploy has left a config in /data/local/aospacademy-wg (aosp-academy
+# deploy pushes it from the device node's work/wireguard/). Without one it exits at once.
+service aospacademy_wireguard /product/bin/aospacademy-firstboot wireguard
+    user root
+    group root
+    seclabel u:r:su:s0
+    oneshot
+    disabled
+
+on property:sys.boot_completed=1
+    start aospacademy_wireguard
+
 service aospacademy_chargelimit /product/bin/aospacademy-firstboot charge-limit
     user root
     group root

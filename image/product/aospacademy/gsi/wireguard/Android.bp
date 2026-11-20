@@ -1,0 +1,47 @@
+// wg, WireGuard's userspace tool, for the image's tunnel (aospacademy-firstboot's wireguard mode).
+// The sources are not in this repository: apply-local.sh copies the pinned wireguard-tools release
+// (toolchain.json deviceTools.wireguardTools) into src/ here in the AOSP tree.
+
+package {
+    default_applicable_licenses: ["device_aospacademy_gsi_wireguard_license"],
+}
+
+license {
+    name: "device_aospacademy_gsi_wireguard_license",
+    visibility: [":__subpackages__"],
+    license_kinds: ["SPDX-license-identifier-GPL-2.0-only"],
+    license_text: ["src/COPYING"],
+}
+
+cc_binary {
+    name: "aospacademy_wg",
+    stem: "wg",
+    product_specific: true,
+    srcs: [
+        "src/wg.c",
+        "src/config.c",
+        "src/curve25519.c",
+        "src/encoding.c",
+        "src/genkey.c",
+        "src/ipc.c",
+        "src/pubkey.c",
+        "src/set.c",
+        "src/setconf.c",
+        "src/show.c",
+        "src/showconf.c",
+        "src/terminal.c",
+    ],
+    local_include_dirs: [
+        "src",
+        "src/uapi/linux",
+    ],
+    cflags: [
+        "-std=gnu11",
+        "-D_GNU_SOURCE",
+        "-DRUNSTATEDIR=\"/data/local/tmp\"",
+        "-Wno-error",
+        "-Wno-unused-parameter",
+        "-Wno-sign-compare",
+        "-Wno-missing-field-initializers",
+    ],
+}

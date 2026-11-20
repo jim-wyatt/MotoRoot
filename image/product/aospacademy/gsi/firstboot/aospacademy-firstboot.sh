@@ -57,6 +57,41 @@ if [ "$1" = charge-limit ]; then
     result "upper_limit=$v, blocking=$(cat "$mod/blocking" 2>/dev/null) (1 = holding charge off)"
 fi
 
+# WireGuard mode (init.aospacademy.rc starts it after boot; aosp-academy deploy starts it after
+# pushing a config): bring up wg0 from $WG_DIR/wg0.conf (wg setconf format: the phone's private key
+# and the hub peer) and $WG_DIR/wg0.env (ADDRESS4=, ADDRESS6=, ROUTES4=, ROUTES6=; routes
+# space-separated). Both come from the device node; without them it does nothing. Android routes by
+# policy, per network, so the tunnel's subnets get a table of their own (1999) and a rule ahead of
+# the per-network rules. The result goes to $WG_DIR/status for the deploy report.
+if [ "$1" = wireguard ]; then
+    WG_DIR=/data/local/aospacademy-wg
+    [ -f "$WG_DIR/wg0.conf" ] && [ -f "$WG_DIR/wg0.env" ] || exit 0
+    umask 077
+    result() { note "wireguard: $*"; echo "$*" > "$WG_DIR/status"; exit 0; }
+    wg=/product/bin/wg
+    [ -x "$wg" ] || wg="$WG_DIR/wg"   # a wg pushed by hand, for trying this on an image without one
+    [ -x "$wg" ] || result "failed: no wg binary"
+    val() { sed -n "s/^$1=//p" "$WG_DIR/wg0.env" | head -n 1; }
+    a4="$(val ADDRESS4)"; a6="$(val ADDRESS6)"; r4="$(val ROUTES4)"; r6="$(val ROUTES6)"
+    ip link del wg0 2>/dev/null
+    ip link add wg0 type wireguard || result "failed: the kernel refused a wireguard link"
+    "$wg" setconf wg0 "$WG_DIR/wg0.conf" || { ip link del wg0; result "failed: wg setconf"; }
+    [ -n "$a4" ] && ip addr add "$a4" dev wg0
+    [ -n "$a6" ] && ip -6 addr add "$a6" dev wg0
+    ip link set wg0 up || result "failed: wg0 did not come up"
+    for r in $r4; do
+        ip route replace "$r" dev wg0 table 1999
+        ip rule del to "$r" lookup 1999 2>/dev/null
+        ip rule add to "$r" lookup 1999 priority 9000
+    done
+    for r in $r6; do
+        ip -6 route replace "$r" dev wg0 table 1999
+        ip -6 rule del to "$r" lookup 1999 2>/dev/null
+        ip -6 rule add to "$r" lookup 1999 priority 9000
+    done
+    result "up ${a4%/*}"
+fi
+
 echo running > "$STATUS"
 note "start"
 

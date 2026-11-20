@@ -40,6 +40,12 @@ class Shell(unittest.TestCase):
         self.assertEqual(adb.quote("it's"), "'it'\\''s'")
         self.assertEqual(adb.quote("a b"), "'a b'")
 
+    def test_tcp_transports(self):
+        self.assertTrue(adb.is_tcp("192.0.2.17:5555"))
+        self.assertTrue(adb.is_tcp("[2001:db8::17]:5555"))
+        self.assertTrue(adb.is_tcp("phone.example:5555"))
+        self.assertFalse(adb.is_tcp("ZY22ABCDEF"))
+
 
 class Images(unittest.TestCase):
     def test_image_state_follows_the_product(self):

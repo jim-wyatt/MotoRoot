@@ -3,7 +3,8 @@
 1. fetch: the newest verified image from the build node (--no-fetch: the one already here)
 2. stock: if the phone runs a DSU image, disable it and reboot to stock (DSU installs only from there)
 3. discard, install (a --userdata-gib data partition), boot (persistent unless --single-boot)
-4. Wi-Fi: join the network in work/wifi.json (private, git-ignored), when present
+4. Wi-Fi: join the network in work/wifi.json (private, git-ignored), when present; then the
+   WireGuard tunnel from work/wireguard/wg0.conf and wg0.env (private), when present
 5. wait for the image's first-boot service (its status and log files, read as root)
 6. report what the image sets, then run 'device test' (--skip-device-test leaves it out)
 
@@ -21,6 +22,38 @@ from . import adb, fetch, gsi
 from .core import PRODUCT, WORK, Failure, file_hash, first_hash, image_state, is_image_product, say, step, warn
 
 WIFI = WORK / "wifi.json"
+WG_LOCAL = WORK / "wireguard"
+WG_DIR = "/data/local/aospacademy-wg"
+
+
+def _start_tunnel() -> None:
+    """Push the tunnel config (its private key goes to the phone over USB only) and start wg0."""
+    step("Starting the WireGuard tunnel")
+    adb.root(f"umask 077; mkdir -p {WG_DIR}")
+    for name in ("wg0.conf", "wg0.env"):
+        tmp = f"/data/local/tmp/.{name}"
+        adb.adb("push", str(WG_LOCAL / name), tmp)
+        adb.root(f"umask 077; mv {tmp} {WG_DIR}/{name} && chown root:root {WG_DIR}/{name} && chmod 600 {WG_DIR}/{name}")
+    adb.root(f"rm -f {WG_DIR}/status; start aospacademy_wireguard")
+    t, status = 0, ""
+    while t < 30 and not status:
+        time.sleep(2)
+        t += 2
+        status = adb.root(f"cat {WG_DIR}/status 2>/dev/null")
+    say(f"  {status or 'no result after 30 s'}")
+
+
+def tunnel() -> str:
+    """One line for the report: the tunnel's state and the age of the last handshake."""
+    status = adb.root(f"cat {WG_DIR}/status 2>/dev/null")
+    if not status:
+        return "none (no work/wireguard config)"
+    wg = "/product/bin/wg" if adb.sh("ls /product/bin/wg 2>/dev/null") else f"{WG_DIR}/wg"
+    hs = adb.root(f"{wg} show wg0 latest-handshakes 2>/dev/null").split()
+    if status.startswith("up") and len(hs) >= 2 and hs[1].isdigit() and int(hs[1]) > 0:
+        age = int(adb.sh("date +%s") or 0) - int(hs[1])
+        return f"{status}, handshake {age}s ago"
+    return f"{status}, no handshake yet"
 
 
 def _join_wifi() -> None:
@@ -107,6 +140,7 @@ def report(status: str = "", log: list[str] | None = None) -> None:
         "AdbKeys": (f"built in ({n} keys)" if (n := adb.root("grep -c . /product/etc/security/adb_keys 2>/dev/null")).isdigit() and n != "0"
                     else "none (each PC needs the Allow tap)"),
         "Battery": battery(sh("dumpsys battery")),
+        "Tunnel": tunnel(),
         "AdbTcp": f"listening on {port}" if (port := adb.prop("persist.adb.tcp.port") or adb.prop("service.adb.tcp.port")) not in ("", "0", "-1")
                   else "USB only",
         "CrashLog": f"{crashes} entries: check adb logcat -b crash" if crashes else "empty",
@@ -156,6 +190,8 @@ def deploy(args) -> int:
         say(f"  local image removed (deployed: {h[:12]}..., in {fetch.DEPLOYED})")
     if WIFI.exists():
         _join_wifi()
+    if (WG_LOCAL / "wg0.conf").exists() and (WG_LOCAL / "wg0.env").exists():
+        _start_tunnel()
     status, log = _first_boot()
     step("Result")
     report(status, log)

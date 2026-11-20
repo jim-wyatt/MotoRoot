@@ -29,7 +29,7 @@ for p in "$HERE"/../product/*/; do
   mkdir -p "device/$name"
   # --delete keeps the tree copy identical to the repository copy, removed files included; the
   # APKs copied below are the one thing the tree has that the repository does not.
-  rsync -a --delete --exclude '*.apk' --exclude '/gsi/adb_keys' "$p" "device/$name/" || { echo "   copying image/product/$name failed" >&2; exit 1; }
+  rsync -a --delete --exclude '*.apk' --exclude '/gsi/adb_keys' --exclude '/gsi/wireguard/src/' "$p" "device/$name/" || { echo "   copying image/product/$name failed" >&2; exit 1; }
   echo "   device/$name <- image/product/$name"
 done
 
@@ -45,6 +45,18 @@ for list in "$HERE"/../product/*/*/prebuilt/apks.txt; do
     echo "   $dir/$module <- $pinned"
   done < "$list"
 done
+
+echo "== wireguard-tools source"
+# The image's /product/bin/wg is built from wireguard-tools (AOSP has none): aosp-academy image
+# inputs clones the pinned tag into work/device-tools/wireguard-tools and checks its commit; its
+# src/ and licence go next to device/aospacademy/gsi/wireguard/Android.bp, never into the repository.
+wg_src="$TOOLS/wireguard-tools"
+[ -f "$wg_src/src/wg.c" ] || { echo "   work/device-tools/wireguard-tools missing; run ./aosp-academy image inputs" >&2; exit 1; }
+mkdir -p device/aospacademy/gsi/wireguard/src
+rsync -a --delete --include '*/' --include '*.c' --include '*.h' --exclude '*' "$wg_src/src/" device/aospacademy/gsi/wireguard/src/ \
+  && cp "$wg_src/COPYING" device/aospacademy/gsi/wireguard/src/COPYING \
+  || { echo "   copying wireguard-tools failed" >&2; exit 1; }
+echo "   device/aospacademy/gsi/wireguard/src <- wireguard-tools $(git -C "$wg_src" describe --tags 2>/dev/null)"
 
 echo "== trusted adb keys"
 # work/adb_keys (git-ignored, never in the repository): the public keys of this project's own PCs,

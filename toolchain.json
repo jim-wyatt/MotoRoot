@@ -258,6 +258,12 @@
       "tag": "android-17.0.0_r1",
       "lunch": "aospacademy_arm64-trunk_staging-userdebug",
       "treeDir": "~/aosp17"
+    },
+    "wireguardTools": {
+      "_note": "Source of the image's /product/bin/wg (wireguard-tools' userspace tool; the kernel has WireGuard built in). AOSP has no wireguard-tools, so aosp-academy image inputs clones this tag and checks the commit, and apply-local.sh copies src/ into device/aospacademy/gsi/wireguard/src for its Android.bp. GPL-2.0-only.",
+      "repo": "https://git.zx2c4.com/wireguard-tools",
+      "tag": "v1.0.20260223",
+      "commit": "49ce333da02056ae7b22ee2aeb6afe8aaed79b19"
     }
   },
   "inputs": {
