@@ -21,7 +21,13 @@ def adb(*args, check: bool = True, timeout: float | None = None) -> str:
     """Run adb and return its output (stdout and stderr together), stripped."""
     if not ADB.exists():
         raise Failure("platform-tools missing. Run: aosp-academy setup")
-    p = run([ADB, *args], check=check, capture=True, timeout=timeout)
+    try:
+        p = run([ADB, *args], check=check, capture=True, timeout=timeout)
+    except subprocess.TimeoutExpired:
+        # A network transport that's down (a reboot over the tunnel) makes adb hang rather than fail.
+        if check:
+            raise Failure(f"adb {' '.join(str(a) for a in args[:2])} timed out after {timeout} s")
+        return ""
     return p.stdout.strip()
 
 
@@ -65,6 +71,8 @@ def assert_one_device() -> None:
             raise Failure(f"ANDROID_SERIAL is {chosen}, which isn't connected and authorized.")
         return
     if len(authorized) == 1:
+        # Remembered for the waits: a network transport has to be reconnected after a reboot.
+        os.environ["ANDROID_SERIAL"] = authorized[0]
         return
     if not authorized:
         raise Failure("No authorized device: connect the phone (USB, or adb connect over Wi-Fi or the tunnel).")
@@ -100,10 +108,14 @@ def wait_authorized() -> None:
     whose key isn't built into the image sees the phone as "unauthorized" until someone taps Allow.
     """
     told = False
+    serial = os.environ.get("ANDROID_SERIAL", "")
     while True:
         state = adb("get-state", check=False)
         if state == "device":
             return
+        if is_tcp(serial):
+            # A network transport doesn't come back by itself after a reboot: reconnect.
+            adb("connect", serial, check=False, timeout=15)
         if "unauthorized" in state and not told:
             say('  >> Tap "Allow" on the phone\'s "Allow USB debugging?" prompt (tick "Always allow from this computer"). Waiting ...', "yellow")
             told = True

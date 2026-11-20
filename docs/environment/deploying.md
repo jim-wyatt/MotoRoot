@@ -78,7 +78,9 @@ A fresh DSU install has Wi-Fi off and no saved network, so the network checks in
 {"ssid": "<network name>", "security": "wpa2", "passphrase": "<passphrase>"}
 ```
 
-`security` is passed to the phone's `cmd wifi connect-network` (`wpa2` here; that command also takes `open`, `owe` and `wpa3`). The file is git-ignored and blocked by the pre-commit hook, and the passphrase goes to the phone over USB only, never into the CLI's output. Never commit it, paste it into an issue, or put its contents in a message. Without the file the deploy skips the step, and the report says so.
+`security` is passed to the phone's `cmd wifi connect-network` (`wpa2` here; that command also takes `open`, `owe` and `wpa3`). The file is git-ignored and blocked by the pre-commit hook, and the passphrase never goes into the CLI's output. Never commit it, paste it into an issue, or put its contents in a message. Without the file the deploy skips the step, and the report says so.
+
+The network reaches the new image through **staging** (below): the deploy doesn't need adb in the new image to join it. If the staged network doesn't validate within a minute, the deploy joins it directly instead.
 
 ### The WireGuard tunnel (optional)
 
@@ -87,9 +89,15 @@ With a WireGuard hub, the phone can have a tunnel of its own, so adb reaches it 
 - **`wg0.conf`**, in `wg setconf` format: an `[Interface]` with the phone's `PrivateKey` only (no `Address` or `DNS` lines), and the hub as `[Peer]` (`PublicKey`, `Endpoint`, `AllowedIPs`, `PersistentKeepalive = 25`, which keeps the NAT mapping open while the phone is idle).
 - **`wg0.env`**, the addresses and routes: `ADDRESS4=`, `ADDRESS6=`, `ROUTES4=` and `ROUTES6=` (routes space-separated, for example the tunnel's subnet).
 
-Make the phone's key pair on the device node (`wg genkey > work/wireguard/phone.key`, then `wg pubkey < work/wireguard/phone.key`) and give the hub only the public key. The private key goes to the phone over USB only, into a root-only directory (`/data/local/aospacademy-wg`). The deploy then starts the `aospacademy_wireguard` service, and the image brings the tunnel up again at every boot until the next deploy. Then, from a PC on the tunnel: `adb connect <the phone's tunnel address>:5555`.
+Make the phone's key pair on the device node (`wg genkey > work/wireguard/phone.key`, then `wg pubkey < work/wireguard/phone.key`) and give the hub only the public key. The tunnel config reaches the new image through staging too, and the image keeps it in a root-only directory (`/data/local/aospacademy-wg`) and brings the tunnel up again at every boot until the next deploy. If the staged tunnel doesn't come up, the deploy pushes it directly instead. Then, from a PC on the tunnel: `adb connect <the phone's tunnel address>:5555`.
 
 `work/` is git-ignored and the files never belong in the repository, an issue or a message. With the phone on USB and the tunnel at once, adb lists it twice; `aosp-academy` uses the USB connection (or set `ANDROID_SERIAL` to choose).
+
+### Staging for the first boot
+
+A DSU install always starts the image with empty data, and Android refuses to install one DSU image from inside another, so every deploy goes through the stock system. While it's there, after discarding the old image, the deploy **stages** what the new image needs on its first boot in **`/metadata/aospacademy`**: `wifi.env` (the network from `work/wifi.json`) and `wg0.conf` and `wg0.env` (the tunnel). The metadata partition is shared by stock and the image, and a DSU install leaves it alone. The directory is root-only (700, files 600).
+
+The image's first-boot service joins the network, installs the tunnel config, starts the tunnel, and then deletes the directory whether or not that worked, so the secrets sit there only from staging until the first boot, a few minutes. The deploy checks the directory is gone. `/metadata` isn't covered by Android's per-user encryption; the stock system's own data already holds the same Wi-Fi network. Android's `cmd wifi connect-network` takes the passphrase only as an argument, so while it runs, the passphrase is in that process's command line. Android mounts `/proc` so that apps can't see other processes; only root and the shell's process-reading group can, and the passphrase is never logged or written to a file. The direct join over adb has the same exposure.
 
 ### The report
 

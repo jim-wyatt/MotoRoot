@@ -95,6 +95,36 @@ fi
 echo running > "$STATUS"
 note "start"
 
+# 0. Provisioning staged by aosp-academy deploy. Every DSU install starts with empty data, so the
+#    deploy, on the stock system, leaves the Wi-Fi network (wifi.env: SSID=, SECURITY=, PASSPHRASE=)
+#    and the tunnel config (wg0.conf, wg0.env) in /metadata/aospacademy: root-only files on the
+#    metadata partition, which stock and the image share and a DSU install doesn't touch. They are
+#    used here and then deleted at once, whether or not they worked, so no secret stays there. The
+#    passphrase goes to Wi-Fi only, never into a log.
+STAGE=/metadata/aospacademy
+if [ -d "$STAGE" ]; then
+    if [ -f "$STAGE/wifi.env" ]; then
+        sval() { sed -n "s/^$1=//p" "$STAGE/wifi.env" | head -n 1; }
+        cmd wifi set-wifi-enabled enabled >/dev/null 2>&1
+        sleep 3
+        if cmd wifi connect-network "$(sval SSID)" "$(sval SECURITY)" "$(sval PASSPHRASE)" >/dev/null 2>&1; then
+            note "staged Wi-Fi network added"
+        else
+            failed "staged Wi-Fi network"
+        fi
+    fi
+    if [ -f "$STAGE/wg0.conf" ] && [ -f "$STAGE/wg0.env" ]; then
+        if ( umask 077; mkdir -p /data/local/aospacademy-wg && cp "$STAGE/wg0.conf" "$STAGE/wg0.env" /data/local/aospacademy-wg/ ); then
+            note "staged tunnel config installed"
+            "$0" wireguard   # the boot-time service may have run before the config was here
+        else
+            failed "staged tunnel config"
+        fi
+    fi
+    rm -rf "$STAGE"
+    [ -e "$STAGE" ] && failed "removing $STAGE"
+fi
+
 # 1. Fossify Launcher as the home screen. It and AOSP's Launcher3 (which stays for SystemUI's
 #    gesture navigation and recents) answer HOME with equal priority, so the role controller's
 #    fallback picks neither and Android shows a chooser. Assign the HOME role once, explicitly; a

@@ -13,9 +13,9 @@ The commands on this page run in a shell opened with `aosp-academy shell` (from 
 
 Root on the stock system is **Magisk**: it is installed in `init_boot_a`, starts on every boot, and grants root per app through the Magisk app. Grant it only to development tools you trust and deny it to everything else ([System-level access](../concepts/system-access.md) explains why). Inside an aosp-academy image, root is AOSP's own userdebug `su` (`su 0 <command>`) instead, and Magisk's grants and modules don't apply there, because they live in the stock system's `/data`, which the image doesn't see.
 
-## The seven modules
+## The eight modules
 
-Seven [Magisk modules](../concepts/magisk-modules.md) make the stock system a Wi-Fi-only development device. Five are **overlay modules**: each one hides a set of preinstalled apps by mounting an empty directory over each app's directory at boot, so the app isn't there while the module is enabled and nothing on the firmware partitions changes. Two are **script modules** that set properties early in boot. All seven live in `stock/modules/`, each generated from a manifest in `stock/modules/manifests/`; [The Magisk modules](modules.md) explains how they are built and verified.
+Eight [Magisk modules](../concepts/magisk-modules.md) make the stock system a Wi-Fi-only development device. Five are **overlay modules**: each one hides a set of preinstalled apps by mounting an empty directory over each app's directory at boot, so the app isn't there while the module is enabled and nothing on the firmware partitions changes. Three are **script modules**: two set properties early in boot, and one brings up the WireGuard tunnel. All eight live in `stock/modules/`, each generated from a manifest in `stock/modules/manifests/`; [The Magisk modules](modules.md) explains how they are built and verified.
 
 | Module (id) | Kind | What it does |
 | --- | --- | --- |
@@ -26,8 +26,9 @@ Seven [Magisk modules](../concepts/magisk-modules.md) make the stock system a Wi
 | `vendor_extras_debloat` | overlay, 58 packages | Hides the remaining carrier, partner and Motorola consumer apps, plus Motorola's device-management and enterprise agents and Google's Mainline telemetry (see [below](#the-rest-of-the-vendor-layer)). |
 | `dev_debuggable` | script | Makes the system report itself as an engineering (`userdebug`) build, and keeps the larger log buffers across reboots (see [below](#the-two-development-modules)). |
 | `dev_adb_tcp` | script | Makes `adbd` listen on TCP port 5555 from boot, for ADB over Wi-Fi. |
+| `dev_wireguard` | script | Brings up the project's WireGuard tunnel at boot, from `/data/adb/aospacademy-wg`, so adb reaches the stock system over the tunnel as it reaches the image (see [below](#the-wireguard-tunnel-on-stock)). |
 
-The walkthrough installs the three `wifi_*` modules as part of its last stage. The other four are optional and installed on the prepared system, as below. Each manifest lists every package it hides with the package's on-disk directory and a one-line description of what it is.
+The walkthrough installs the three `wifi_*` modules as part of its last stage. The other five are optional and installed on the prepared system, as below (`dev_wireguard` by `aosp-academy stock tunnel`, or by a deploy). Each manifest lists every package it hides with the package's on-disk directory and a one-line description of what it is.
 
 Any module installs the same way, then takes effect at the next reboot:
 
@@ -40,7 +41,7 @@ adb reboot
 The ZIP names use dashes (`dev-debuggable.zip`); the module ids use underscores (`dev_debuggable`).
 
 !!! note "If the phone won't boot with a module enabled"
-    Hold **Volume Down** while it boots. Magisk's safe mode starts with every module disabled, so you can disable the culprit (`adb shell "su -c 'touch /data/adb/modules/<id>/disable'"`) and reboot normally. None of the seven modules has needed that, but it's the escape hatch for any module.
+    Hold **Volume Down** while it boots. Magisk's safe mode starts with every module disabled, so you can disable the culprit (`adb shell "su -c 'touch /data/adb/modules/<id>/disable'"`) and reboot normally. None of the eight modules has needed that, but it's the escape hatch for any module.
 
 ### The two development modules
 
@@ -73,6 +74,16 @@ and record it:
 ```sh
 aosp-academy device trace --config work/hprof.pbtxt --name settings-heap   # ~25 MB trace in work/traces/; open it at ui.perfetto.dev
 ```
+
+### The WireGuard tunnel on stock
+
+The image brings up the project's WireGuard tunnel at every boot ([the tunnel](../environment/deploying.md#the-wireguard-tunnel-optional)); `dev_wireguard` does the same on the stock system, with the same address and key (the two systems never run at once), so adb reaches the phone over the tunnel whichever system is running. That is what lets a deploy, which always passes through stock, run without a cable.
+
+```sh
+./aosp-academy stock tunnel      # on the stock system, with the cable in once
+```
+
+It builds `wg` from the pinned wireguard-tools with the pinned NDK (static arm64, into `work/build/wg`), copies it and `work/wireguard/wg0.conf` and `wg0.env` into `/data/adb/aospacademy-wg` (Magisk's root-only area: directory 700, files 600 or 700), installs the module if it isn't there or has changed, and brings the tunnel up at once; at later boots the module's `service.sh` does. It pushes only what changed, so running it again is cheap, and every deploy runs it while it's on stock. Stock's data is never wiped by a deploy, so the config stays until the stock system is reset. Without `work/wireguard`, nothing happens.
 
 ### ADB over Wi-Fi
 
@@ -222,6 +233,7 @@ adb shell "su -c 'touch /data/adb/modules/google_debloat/disable'"          # th
 adb shell "su -c 'touch /data/adb/modules/vendor_extras_debloat/disable'"   # carrier, partner and Motorola extras
 adb shell "su -c 'touch /data/adb/modules/dev_debuggable/disable'"          # back to ro.debuggable=0
 adb shell "su -c 'touch /data/adb/modules/dev_adb_tcp/disable'"             # ADB over USB only
+adb shell "su -c 'touch /data/adb/modules/dev_wireguard/disable'"           # no tunnel on stock
 adb reboot
 ```
 
