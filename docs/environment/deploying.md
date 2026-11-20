@@ -32,7 +32,7 @@ The exit code is 0 when everything passed, 1 when `device test` had failures (or
 ./aosp-academy fetch --check     # only say whether a newer image is waiting
 ```
 
-Which machine to pull from describes your network, not the project, so it isn't in the repository: `--save` keeps the host, user, repository path and port in **`work/remote-build.json`** (git-ignored). The build node's files are read from `<repo>/work/device-tools/gsi/own/` on it, over `scp` (OpenSSH, built into Windows 10 and later, Linux and macOS), with key login only (`BatchMode=yes`). SSH keep-alives (every 15 s, four missed) end a connection that dies silently in the VPN tunnel after about a minute instead of leaving `scp` waiting for ever; that happened on 2026-11-19.
+Which machine to pull from describes your network, not the project, so it isn't in the repository: `--save` keeps the host, user, repository path and port in **`work/remote-build.json`** (git-ignored). The build node's files are read from `<repo>/work/device-tools/gsi/own/` on it, over `scp` (OpenSSH, built into Windows 10 and later, Linux and macOS), with key login only (`BatchMode=yes`). SSH keep-alives (every 15 s, four missed) end a connection that dies silently in the VPN tunnel after about a minute instead of leaving `scp` waiting for ever.
 
 What `fetch` does, in order:
 
@@ -43,7 +43,7 @@ What `fetch` does, in order:
 5. **Fetch the sidecars before swapping anything in:** `build.prop` (required: without it nothing is replaced) and `vbmeta.img` (if published). Then remove the previous build's copies and move the new files into place, so an old `build.prop` or `vbmeta.img` never travels with a new image into the DSU zip.
 6. **Write `system.img.sha256`** beside the image and print the size, the time and the fingerprint.
 
-The image it replaces is deleted; there is no `system.prev.img`. Measured on build 5: 16 parts, 1754 MB in 258 s (about 6.8 MB/s), against about 13 minutes for the single file.
+The image it replaces is deleted; there is no `system.prev.img`. A fetch in parts takes about 4 minutes (16 parts, about 1.75 GB at about 6.8 MB/s), against about 13 minutes for the single file.
 
 ## Deploy, step by step
 
@@ -54,7 +54,7 @@ The image it replaces is deleted; there is no `system.prev.img`. Measured on bui
 3. **Back to stock.** If a DSU image is running, `gsi stock` disables it and reboots to the phone's own system: the DSU installer works only from there.
 4. **Discard** the installed image and its data (`gsi_tool disable`, `gsi_tool wipe`).
 5. **Install.** The image is wrapped in a zip with its `build.prop` and `vbmeta.img`, pushed to the phone's `Download` folder, and handed to Android's DSU installer with a `--userdata-gib` data partition. The zip on the PC is deleted as soon as it is pushed. The installer asks for the screen-lock PIN only on a phone with a secure lock screen. The CLI follows the installer's own status in logcat (`NOT_STARTED`, `IN_PROGRESS`, `READY`, or an error cause), waiting up to 30 minutes, then removes the pushed zip. Typical: `READY` 20 to 30 s after the push.
-6. **Boot**, persistent (`gsi_tool enable`) unless `--single-boot`. The CLI waits for the old system to drop off USB first (so its "boot completed" isn't taken for the new system's), then for authorisation (below), then for `sys.boot_completed`. It checks that `ro.product.name` is the image's product (`aospacademy...`, or `vedotom...` for images built before the rename).
+6. **Boot**, persistent (`gsi_tool enable`) unless `--single-boot`. The CLI waits for the old system to drop off USB first (so its "boot completed" isn't taken for the new system's), then for authorisation (below), then for `sys.boot_completed`. It checks that `ro.product.name` is the image's product (`aospacademy...`).
 7. **Drop the local copy** (unless `--keep-image`): `system.img`, `build.prop`, `vbmeta.img` go, and the hash moves to `deployed.sha256`. The image is on the phone, and a rebuild of the same commit gives it back.
 8. **Wi-Fi.** If `work/wifi.json` exists, switch Wi-Fi on and join that network, then wait up to 60 s for it to validate.
 9. **First boot.** Wait up to 300 s for the first-boot service's `status` file to read `done`, read its `log`, and warn about any line that says `failed` or `did not stick`. Then wait up to 60 s more for the `charge-limit` file, which the charge-limit service writes 30 s after boot.
@@ -65,7 +65,7 @@ The image it replaces is deleted; there is no `system.prev.img`. Measured on bui
 
 The image sets `ro.adb.secure=1`, and every fresh install starts with no authorised computer. Two cases:
 
-- **The PC's key is built into the image** (the build node had it in `work/adb_keys`; [What's in the image](image.md#adb-authorisation-and-the-trusted-keys)): adb works from the first boot, no tap. The report's `AdbKeys` row says `built in (N keys)`. From build 8 on, both of this project's PCs are trusted this way.
+- **The PC's key is built into the image** (the build node had it in `work/adb_keys`; [What's in the image](image.md#adb-authorisation-and-the-trusted-keys)): adb works from the first boot, no tap. The report's `AdbKeys` row says `built in (N keys)`. Both of this project's PCs are trusted this way.
 - **Any other PC:** the phone shows *Allow USB debugging?* on the first connection after every deploy, and adb sees the phone as `unauthorized` until someone taps **Allow** (tick *Always allow from this computer*). The deploy doesn't wait silently: it prints a "Tap Allow on the phone" line and waits.
 
 To trust a new PC without the tap, add its `adbkey.pub` line (from `~/.android/adbkey.pub` on that PC, never the private `adbkey`) to `work/adb_keys` on the build node and build again.
@@ -117,7 +117,7 @@ The `ChargeLimit` row reads only two named files, `blocking` and the battery's `
 | `frida` | `frida-server` started, `frida-ps -U` sees more than 20 processes, stopped (needs root) |
 | `mirror` | `scrcpy --list-displays` reaches the device (opens no window) |
 
-On an image, all 15 checks pass (build 9: 15/15). Each workflow is explained under [Develop apps](../apps/index.md).
+On an image, all 15 checks pass. Each workflow is explained under [Develop apps](../apps/index.md).
 
 ## What a deploy wipes
 
@@ -136,13 +136,13 @@ The image is the phone's everyday system until you switch back. A plain `adb reb
 ./aosp-academy device test         # are the development workflows fine right now?
 ```
 
-Measured on build 8: a reboot into the image takes about 45 s, and either switch about 55 s. A marker file in the image's data survived the round trip through stock, and the first-boot state was kept.
+A reboot into the image takes about 45 s, and either switch about 55 s. The image's data and its first-boot state survive the round trip through stock.
 
 ## Rolling back to an earlier image
 
 A rollback is a deploy of an earlier image, so it wipes the image's data like any other.
 
-- **From a rebuild:** request a build of the last good commit (the [validation history](validation.md#history) names the commit of every validated build), then `./aosp-academy deploy` as usual.
+- **From a rebuild:** request a build of the last good commit (the [current image](validation.md#current-image) names its commit, and the git tag `baseline-1` marks the first validated baseline), then `./aosp-academy deploy` as usual.
 - **From a saved copy:** put the earlier `system.img` and its own `build.prop` (and its `vbmeta.img`, if it had one) in `work/device-tools/gsi/own/`, and remove the other build's `vbmeta.img` if the earlier one had none, so nothing from another build is packed with it. Either write a matching `system.img.sha256` (`<sha256>  system.img`) or remove the old one, because the deploy refuses an image that doesn't match the checksum beside it. Then `./aosp-academy deploy --no-fetch`.
 
 Save a copy of the last validated `system.img` and `build.prop` before a risky change: the build node keeps only its newest image.

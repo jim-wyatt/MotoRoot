@@ -83,7 +83,7 @@ For example: `JOBS=12 PUBLISH_DIR=/srv/images ./aosp-academy image build`.
 
 ### Trusted PCs (optional)
 
-The image requires USB-debugging authorization (`ro.adb.secure=1`), and every deploy starts the image with empty data, so each new image would normally show *Allow USB debugging?* on the phone and wait for a tap. To skip that for your own PCs, put their **public** adb keys in `work/adb_keys` on the build node, one line each, copied from `adbkey.pub` in each PC's `~/.android/` folder (never the private `adbkey`). `image apply` builds them into the image as `/product/etc/security/adb_keys`. Without the file, the image trusts no PC in advance. The file is git-ignored and the hook blocks it, and an image built with it belongs to those machines: don't pass it on. The [decisions log](../reference/decisions.md) has the history.
+The image requires USB-debugging authorization (`ro.adb.secure=1`), and every deploy starts the image with empty data, so each new image would normally show *Allow USB debugging?* on the phone and wait for a tap. To skip that for your own PCs, put their **public** adb keys in `work/adb_keys` on the build node, one line each, copied from `adbkey.pub` in each PC's `~/.android/` folder (never the private `adbkey`). `image apply` builds them into the image as `/product/etc/security/adb_keys`. Without the file, the image trusts no PC in advance. The file is git-ignored and the hook blocks it, and an image built with it belongs to those machines: don't pass it on. The [decisions log](../reference/decisions.md) has the reasons.
 
 ## A build host in a container
 
@@ -101,13 +101,13 @@ Run `./aosp-academy image sync` the same way for the first sync.
 
 ## Memory
 
-Memory, not CPU, is what has stopped builds on this project, at two points.
+Memory, not CPU, is the limit, at two points.
 
-**The R8 phase.** The first build on the project's build node (32 cores, WSL capped at 26 GB, 16 GB of swap then) was killed by the kernel's out-of-memory handler at 76 %. The C++ phase is fine on all cores, but the later phase runs R8 (Java bytecode optimisation) as one multi-gigabyte JVM per job, and 32 of them filled the swap. `JOBS=12` keeps that phase inside memory. Nothing is lost by the kill: run the build again and ninja continues from the steps already done.
+**The R8 phase.** The C++ phase is fine on all cores, but the later phase runs R8 (Java bytecode optimisation) as one multi-gigabyte JVM per job. On the project's build node (32 cores, WSL capped at 26 GB), 32 of them fill the swap and the kernel's out-of-memory handler kills the build. `JOBS=12` keeps that phase inside memory. Nothing is lost by the kill: run the build again and ninja continues from the steps already done.
 
-**Analysis.** Before compiling anything, `soong_build` analyses the whole product in one Go process, so `JOBS` can't help. Go's collector by default lets the heap grow to twice the live data before it runs. On Android 16 that peaked at 23 GB resident and fitted the 26 GB instance. On `android-17.0.0_r1` it didn't: on 2026-11-19 `soong_build` sat at 24 GB resident with 33 GB allocated, filled the 32 GB of swap within minutes, stalled on memory for more than half of every second, and hadn't finished after 50 minutes, while Windows itself was down to 0.6 GB free.
+**Analysis.** Before compiling anything, `soong_build` analyses the whole product in one Go process, so `JOBS` can't help. Go's collector by default lets the heap grow to twice the live data before it runs. On `android-17.0.0_r1` that doesn't fit a 26 GB instance: unpatched, `soong_build` sits at 24 GB resident with 33 GB allocated, fills 32 GB of swap within minutes, stalls on memory for more than half of every second, and doesn't finish in 50 minutes.
 
-The fix is `image/patches/build-blueprint-0001-soong-heap-limit-80-percent-of-ram.patch`: Blueprint sets the Go runtime's soft memory limit (`debug.SetMemoryLimit`) to 80 % of the machine's RAM, read from `/proc/meminfo`, so the collector runs before the heap leaves RAM, at a CPU cost only once the heap gets there. An environment variable can't do the same, because the bootstrap ninja starts `soong_build` with `env -i`, so `GOMEMLIMIT` never reaches it. The limit follows the machine, not the release, so the patch is harmless on a 64 GB host. With it, the same analysis finished in 6 min 36 s. The live graph is still close to the whole instance (24 GB resident, swap peaking at 9 GB for a minute), so it is a fit, not a comfortable one.
+The image carries a fix, `image/patches/build-blueprint-0001-soong-heap-limit-80-percent-of-ram.patch`: Blueprint sets the Go runtime's soft memory limit (`debug.SetMemoryLimit`) to 80 % of the machine's RAM, read from `/proc/meminfo`, so the collector runs before the heap leaves RAM, at a CPU cost only once the heap gets there. An environment variable can't do the same, because the bootstrap ninja starts `soong_build` with `env -i`, so `GOMEMLIMIT` never reaches it. The limit follows the machine, not the release, so the patch is harmless on a 64 GB host. With it, the analysis takes about 6.5 minutes. The live graph is still close to the whole instance (24 GB resident, swap peaking at 9 GB for a minute), so it is a fit, not a comfortable one.
 
 If a later release outgrows this too, two levers are known and untried: a compressed swap device in the guest (the WSL kernel has `zram`: `zramctl --find --size 12G`, `mkswap`, `swapon -p 10`) would take the swapping off the disk; and `PRODUCT_SOURCE_ROOT_DIRS` can prune the module graph of trees the image never uses (of the 15,600 `Android.bp` files Soong parses on `android-17.0.0_r1`, about 3,000 are under `cts`, `platform_testing`, `development`, `test` and `tools`), at the risk of a missing-namespace error for anything the product still references.
 
@@ -116,9 +116,9 @@ If a later release outgrows this too, two levers are known and untried: a compre
 | Step | Time on the project's build node (32 cores, 32 GB) |
 | --- | --- |
 | First sync | a few hours, depending on the connection |
-| First full build | 2 h 35 min on Android 16, including one restart after the out-of-memory kill above; plan for about 2.5 hours |
-| Soong analysis on Android 17, with the heap patch | 6 min 36 s |
-| A rebuild after a change | minutes (incremental); 15 minutes after the product was renamed, most of it Soong re-analysing the tree |
+| First full build | about 2.5 hours |
+| Soong analysis, with the heap patch | about 6.5 minutes |
+| A rebuild after a change | minutes (incremental); about 15 minutes when Soong has to re-analyse the tree |
 
 There is no ccache, on purpose: every build rule runs in AOSP's sandbox, which mounts only `out/` and `/tmp` writable, so ccache fails on its first write, and AOSP's own notes (`build/make/core/ccache.mk`) say it adds little over incremental builds.
 
@@ -137,7 +137,7 @@ A build with `PUBLISH_DIR` set writes, into that folder:
 
 Each file is written under a temporary name and renamed, the old build's files go first, and the checksum is written last, so a fetch that overlaps a build never pairs a half-written image with the new checksum.
 
-On the device node, `aosp-academy fetch` pulls these over `scp` (the OpenSSH client built into Windows 10 and later, Linux and macOS). It reads `system.img.sha256` first and stops if the local image already matches, pulls the parts over 8 parallel connections (`--streams N`, 1 to 32), checks each part and the joined image, retries failed parts up to three times, and fetches `build.prop` and `vbmeta.img` before replacing anything. On the project's two nodes, which reach each other through a VPN that limits each connection rather than the total, 8 streams brought 1.8 GB over in about 4.5 minutes instead of 13. [Deploy and verify](../environment/deploying.md) covers the rest of the loop.
+On the device node, `aosp-academy fetch` pulls these over `scp` (the OpenSSH client built into Windows 10 and later, Linux and macOS). It reads `system.img.sha256` first and stops if the local image already matches, pulls the parts over 8 parallel connections (`--streams N`, 1 to 32), checks each part and the joined image, retries failed parts up to three times, and fetches `build.prop` and `vbmeta.img` before replacing anything. On the project's two nodes, which reach each other through a VPN that limits each connection rather than the total, 8 streams bring 1.8 GB over in about 4.5 minutes instead of 13. [Deploy and verify](../environment/deploying.md) covers the rest of the loop.
 
 `fetch` looks for the files in `<repo>/work/device-tools/gsi/own/` on the build node, where `<repo>` is the `--repo` you give it. There are two ways to arrange that:
 

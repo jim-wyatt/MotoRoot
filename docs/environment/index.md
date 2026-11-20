@@ -46,7 +46,7 @@ The phone is a test target, not a store: **every deploy wipes the image's own da
 
 If a new image is worse than the one before, put the earlier image back. There are two ways, depending on what you still have:
 
-- **Rebuild the earlier commit.** Request a build of the last good commit (every validation row names one). This is the reproducible path, and the only one once the published image has been replaced: the build script keeps only the newest image in `PUBLISH_DIR`.
+- **Rebuild the earlier commit.** Request a build of the last good commit (the [current image](validation.md#current-image) names its commit; the git tag `baseline-1` marks the first validated baseline). This is the reproducible path, and the only one once the published image has been replaced: the build script keeps only the newest image in `PUBLISH_DIR`.
 - **Re-install a saved image.** If a copy of the earlier `system.img` (with its own `build.prop`) was kept, place both in `work/device-tools/gsi/own/` on the device node and run `./aosp-academy deploy --no-fetch`. [Deploy and verify](deploying.md#rolling-back-to-an-earlier-image) gives the details. Keep a copy of the last validated image before you start a risky change, such as a [tag move](tag-moves.md).
 
 Either way, the rollback is a deploy, so the image's data is wiped. If the phone won't start the image at all, the DSU loader falls back to the stock system after a failed boot, and `./aosp-academy gsi discard` removes the broken image; see [Deploy and verify](deploying.md#going-back-to-stock).
@@ -58,8 +58,8 @@ Either way, the rollback is a deploy, so the image's data is wiped. If the phone
 - **[What's in the image](image.md)**: every part of `aospacademy_arm64`, and why it's there.
 - **[Build the image](building.md)**: the build node's side: apply, lunch, build, publish.
 - **[Deploy and verify](deploying.md)**: the device node's side: fetch, deploy, report, test, go back to stock.
-- **[Move to a new AOSP release](tag-moves.md)**: how to move the image to a new AOSP tag, with the Android 16 to 17 move as the worked example.
-- **[Validation](validation.md)**: the checklist a new image must pass, and the history of validated builds.
+- **[Move to a new AOSP release](tag-moves.md)**: how to move the image to a new AOSP tag.
+- **[Validation](validation.md)**: the checklist a new image must pass, and the image that passed it.
 - **[Backlog](backlog.md)**: what is still open.
 
 </div>

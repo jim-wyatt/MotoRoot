@@ -2,7 +2,7 @@
 
 What the device actually is, as it reports itself: the SoC and cores, the GPU, memory and storage, the display, the partition map, the sensors and the HALs. Useful for performance work in Android Studio, for knowing which partition is which before any low-level step, and for checking that another unit is the same hardware.
 
-Everything here was produced by the inventory command, now `aosp-academy device info`, on unit 2 on the stock system (2026-11-16, the build in the [validation record](index.md#validation-record)). The command's raw dumps contain identifiers (serial, IMEI, MAC addresses, installed apps) and stay in `work/device-info/`, which is git-ignored; this page is the curated, identifier-free summary.
+Everything here was produced by the inventory command, `aosp-academy device info`, on unit 2 on the stock system (the build in the [validation record](index.md#validation-record)). The command's raw dumps contain identifiers (serial, IMEI, MAC addresses, installed apps) and stay in `work/device-info/`, which is git-ignored; this page is the curated, identifier-free summary.
 
 ## Identity
 

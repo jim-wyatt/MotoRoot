@@ -40,8 +40,8 @@ Optional tools for the prepared device, and the image's own inputs. Bumping thes
     - The F-Droid client APK, for the stock system (install it by hand with `adb install`).
     - The **16 Fossify apps** built into the image. They are marked **`buildOnly`**: only the build node downloads them (`aosp-academy image inputs`), and `setup` skips them.
 - **`frida`**: `version` must equal frida-server's version above, and `toolsVersion` is the `frida-tools` release; `setup` pip-installs both into `work/.venv-frida`. The PC tools and the server must match.
-- **`gsi`**: Google's AOSP arm64 GSI for Android 17, build `CP2A.260605.012`, used by `aosp-academy gsi download`. It is not fetched by `setup`: it is about 1 GB and behind Google's terms, which you accept explicitly. Until 2026-11-19 this was the Android 16 GSI `BP4A.251205.006`.
-- **`aosp`**: what the build node builds. `manifest` is AOSP's manifest repository, `tag` the release (**`android-17.0.0_r1`**, build `CP2A.260605.016`, the source release of the same Android 17 drop as the pinned GSI binary, so what you build matches what was validated), `lunch` the build target (`aospacademy_arm64-trunk_staging-userdebug`) and `treeDir` the default `AOSP_DIR` (`~/aosp17`). Builds 1 to 9 came from `android-16.0.0_r4`.
+- **`gsi`**: Google's AOSP arm64 GSI for Android 17, build `CP2A.260605.012`, used by `aosp-academy gsi download`. It is not fetched by `setup`: it is about 1 GB and behind Google's terms, which you accept explicitly.
+- **`aosp`**: what the build node builds. `manifest` is AOSP's manifest repository, `tag` the release (**`android-17.0.0_r1`**, build `CP2A.260605.016`, the source release of the same Android 17 drop as the pinned GSI binary, so what you build matches what was validated), `lunch` the build target (`aospacademy_arm64-trunk_staging-userdebug`) and `treeDir` the default `AOSP_DIR` (`~/aosp17`).
 
 ### `inputs`
 
@@ -78,8 +78,8 @@ The F-Droid and Fossify APKs carry a second pin, **`signerSha256`**: the SHA-256
 
 Moving `deviceTools.aosp.tag` is a project of its own: [move to a new AOSP release](../environment/tag-moves.md).
 
-## The platform-tools move, 37.0.1 to 37.0.3
+## Platform-tools and the flashing stages
 
-`inputs.platformTools` was **37.0.1** when the bootloader and Magisk stages ran on both units in 2026-11. On 2026-11-19 it moved to **37.0.3**, the version the Android SDK installs, so that Android Studio's `adb` server and the project's are the same version and don't fight over the phone. The low-level stages haven't been repeated with 37.0.3: they run once per unit, and both units were prepared with 37.0.1. The old version and its Windows SHA-1 are recorded in the pin's `_note`.
+`inputs.platformTools` is **37.0.3**, the version the Android SDK installs, so that Android Studio's `adb` server and the project's are the same version and don't fight over the phone. The bootloader and Magisk stages were carried out on both units with platform-tools **37.0.1**, and haven't been run with 37.0.3: they run once per unit. The 37.0.1 version and its Windows SHA-1 are recorded in the pin's `_note`.
 
 To move platform-tools again, besides the steps above: stop any running ADB server (`adb kill-server`) and delete `work/platform-tools/` and `work/platform-tools.zip`. `setup` refuses to unpack over a folder that holds another version.
