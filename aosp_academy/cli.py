@@ -70,6 +70,12 @@ def parser() -> argparse.ArgumentParser:
     p.add_argument("--skip-sdk", action="store_true")
     p.add_argument("--skip-inputs", action="store_true", help="leave out the device procedure inputs and device tools")
     sub.add_parser("check", help="test the workstation end to end (never touches the phone)")
+    p = sub.add_parser("new-app", help="create an Android app project set up for this phone")
+    p.add_argument("dest", help="the new project's folder (must not exist, or be empty)")
+    p.add_argument("--package", required=True, help="application id and Kotlin package, e.g. com.example.myapp")
+    p.add_argument("--name", help="the app's name (default: the folder name)")
+    p.add_argument("--build", action="store_true", help="also build the debug APK")
+    p.add_argument("--test", action="store_true", help="also build and run the instrumented test on the phone")
     p = sub.add_parser("env", help="print the environment for a shell (pwsh: aosp-academy env | iex)")
     p.add_argument("--shell", choices=["pwsh", "cmd", "bash"])
     sub.add_parser("shell", help="open a shell with the pinned tools on PATH")
@@ -134,6 +140,9 @@ def main(argv: list[str] | None = None) -> int:
         if args.command == "setup":
             from . import setup
             return setup.setup(args)
+        if args.command == "new-app":
+            from . import newapp
+            return newapp.new_app(args.dest, args.package, args.name, args.build, args.test)
         if args.command == "check":
             from . import check
             return check.run_checks()

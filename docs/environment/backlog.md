@@ -43,7 +43,6 @@ Android 17's Soong analysis fits a 26 GB build node only with the heap-limit pat
 ## Smaller items
 
 - **Delete the old tree.** The build node still holds an older AOSP tree, `~/aosp` (135 GB), which nothing uses. The owner runs the `rm`.
-- **A sample app project as a fixture?** `device test` already builds, installs, launches and debugs a probe app. Whether a small Android Studio project in the repo pays for itself (a known-good Gradle build against the pinned SDK) is undecided.
 - **Patch names with dashes.** `apply-local.sh` maps every dash in a patch's project part to a slash, so a project with a dash in its path (`prebuilts/build-tools`) can't be patched. No current patch needs one; fix the naming before one does.
 - **`JOBS` from one place.** `sync.sh` and `build-image.sh` each default `JOBS` themselves (half the cores and all cores). The tree directory already comes from one place (`deviceTools.aosp.treeDir`).
 - **Fetch streams.** 8 parallel streams had not levelled off in the benchmark (1 stream 2.2 MB/s, 4 streams 5.3 MB/s, 8 streams 6.6 MB/s); `--streams 12` and `16` are untried.

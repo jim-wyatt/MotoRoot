@@ -28,8 +28,13 @@ Single files downloaded into `work/tools/`, each with a SHA-256 or SHA-1:
 | `r8-8.3.37.jar` | D8, which builds the stock helpers (`stock build`, `aosp-academy d8`) |
 | `apktool_3.0.3.jar` | decoding and rebuilding APK resources (`aosp-academy apktool`) |
 | `jadx-1.5.6.zip` (an archive, unpacked to `work/tools/jadx`) | the jadx command-line decompiler; the winget package is the GUI only |
+| `gradle-9.8.2-bin.zip` (an archive, unpacked to `work/tools/gradle`) | Gradle for `new-app`, which writes each new project's wrapper with it |
 
 An unpacked archive gets a `.pinned-sha256` stamp, so `setup` re-extracts it when the pin changes and `check` can confirm what's there came from the pinned file.
+
+### `appTemplate`
+
+The versions a project from `aosp-academy new-app` starts with: Gradle and its distribution SHA-256, the Android Gradle Plugin, compileSdk, targetSdk and minSdk, the build-tools, and the AndroidX test libraries of the template's instrumented test. A new project copies them into its own build files and wrapper, so changing them affects only projects created afterwards. Gradle here and in `archives` are the same version and checksum.
 
 ### `deviceTools`
 

@@ -22,6 +22,17 @@ There are two copies of `adb`, Android's debug bridge between the PC and the pho
 
 ## Create a project
 
+The quickest start is `aosp-academy new-app`. It writes a small Kotlin project already set for this device: compileSdk and targetSdk 37, the pinned build-tools, the Android Gradle Plugin and Gradle versions in `toolchain.json` (`appTemplate`), a Gradle wrapper that checks the distribution's SHA-256, and one instrumented test.
+
+```sh
+./aosp-academy new-app ../my-app --package com.example.myapp          # write the project
+./aosp-academy new-app ../my-app --package com.example.myapp --test   # ... then build it and run its test on the phone
+```
+
+`--test` builds the debug APK and runs `./gradlew connectedDebugAndroidTest`, which installs the app and its test APK on the phone, runs the test and uninstalls both: a check of the whole chain from the SDK to the device. The project doesn't depend on this repository afterwards; it needs only `ANDROID_HOME` and a JDK, which `setup` sets. Open the folder in Studio, or `git init` it as its own repository. Its `MainActivity` is a plain `android.app.Activity` with no libraries, so add Compose or AndroidX as the app needs them.
+
+To start from Studio's own templates instead:
+
 1. **New Project**, then **Empty Activity** (Jetpack Compose) or **Empty Views Activity** (XML layouts).
 2. Pick a package name (for example `com.example.firstapp`), the language (Kotlin is Studio's default) and a minimum SDK. Finish.
 3. Gradle, Android's build system, syncs the project. The first sync downloads Gradle and the libraries and takes a few minutes.
