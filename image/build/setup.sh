@@ -10,7 +10,7 @@
 # case-sensitive filesystem, and building across the /mnt/c boundary is unsupported and slow.
 set -euo pipefail
 
-AOSP_DIR="${AOSP_DIR:-$HOME/aosp}"
+AOSP_DIR="${AOSP_DIR:-$(python3 -c 'import json,os,sys; print(os.path.expanduser(json.load(open(sys.argv[1]))["deviceTools"]["aosp"].get("treeDir", "~/aosp")))' "$(dirname "${BASH_SOURCE[0]}")/../../toolchain.json")}"
 
 echo "== apt packages"
 sudo apt-get update -qq

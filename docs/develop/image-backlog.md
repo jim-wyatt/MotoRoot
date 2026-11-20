@@ -87,7 +87,7 @@ The install PC's side is fixed and pushed: `workstation\VedoTom.psm1` now holds 
 
 **Status (build machine, 2026-11-19):** items 1 to 5 are done in the repository, together with section 4's items 1 (parts: `build-image.sh` publishes 16 parts and `system.img.parts`; `Get-RemoteImage.ps1 -Streams`, default 8, retries a bad part once and falls back to the single file) and 2 (`Deploy-Image.ps1` waits up to 60 s for the charge-limit file). `build-after-sync.sh` records the sync log's size at start and judges only the last `sync exit:` line written after it, rather than truncating a log a running sync may still be writing. Section 4's item 3 still needs `qpnp_adaptive_charge.c`, which isn't in the AOSP tree.
 
-Smaller, when convenient: patch file names map every dash to a slash, which breaks for projects with dashes in their path (`prebuilts/build-tools`). `JOBS` and the tree directory (`treeDir` in `toolchain.json` is unused) could come from one place.
+Smaller, when convenient: patch file names map every dash to a slash, which breaks for projects with dashes in their path (`prebuilts/build-tools`). `JOBS` could come from one place (the tree directory does since 2026-11-19: the scripts default `AOSP_DIR` to `treeDir` in `toolchain.json`).
 
 ## 6. Policy decisions (the user, 2026-11-19)
 
@@ -103,12 +103,12 @@ These answer section 4's item 6 and the matching points in section 3. Items 1 an
 **Change (the user, 2026-11-19 afternoon): trusted PC keys.** Item 1's "don't bake any PC's key into the image" is replaced: the image now trusts the project's own PCs (the install PC and the Legion build machine) without the Allow tap, so deploys run unattended. Their public keys (one `adbkey.pub` line each) live in `work/adb_keys`, which is git-ignored, and never in the repository. `apply-local.sh` copies the file into the tree, and `vedotom_arm64.mk` sets `PRODUCT_ADB_KEYS` to it, which installs `/product/etc/security/adb_keys` (`/adb_keys` links there). Without the file the image trusts no PC, as before. Any other PC still needs the tap. An image built with keys belongs to these machines: don't pass it on.
 
 3. **WebView: accept that it ages with the tag** for now. Revisit if an app needs a newer one. Moving the tag (item 4) refreshes it.
-4. **Moving the AOSP tag: plan it** as a separate project, for the next Android 16 QPR tag. The image's security patch level is 2025-11-05. That means a sync of the new tag, rebasing the three patches and the `Android.bp` mirror, and a full re-validation. Not part of build 6.
+4. **Moving the AOSP tag: plan it** as a separate project, for the next Android 16 QPR tag. **Done as section 7, to Android 17 (2026-11-19).** The image's security patch level is 2025-11-05. That means a sync of the new tag, rebasing the three patches and the `Android.bp` mirror, and a full re-validation. Not part of build 6.
 5. **Removing the remaining unused system apps: no.** Mirroring the ~600 lines of upstream system-image definitions to drop BasicDreams, `com.android.egg`, Bips, PrintSpooler, HtmlViewer, BookmarkProvider, CallLogBackup and WallpaperBackup costs more upkeep on every tag move than the space is worth.
 
-## 7. Plan: moving the AOSP tag (drafted 2026-11-19, not started)
+## 7. Plan: moving the AOSP tag (drafted 2026-11-19; steps 0 to 2 done, step 3 in progress)
 
-**Where things stand.** The image is built from `android-16.0.0_r4` (BP4A.251205.006, security patch 2025-12-05). The AOSP manifest has no later Android 16 tag: the only newer one is **`android-17.0.0_r1`** (CP2A.260605.016, Android 17, security patch 2026-06-05). So "moving the tag" means **moving to Android 17**, a major version, not a patch bump. Android 17's QPR releases (QPR1 to QPR3 beta, patches up to 2026-10) exist only as Google's GSI binaries, not as source.
+**Where things stood when this was drafted (2026-11-19, morning).** The image was built from `android-16.0.0_r4` (BP4A.251205.006, security patch 2025-12-05). The AOSP manifest has no later Android 16 tag: the only newer one is **`android-17.0.0_r1`** (CP2A.260605.016, Android 17, security patch 2026-06-05). So "moving the tag" means **moving to Android 17**, a major version, not a patch bump. Android 17's QPR releases (QPR1 to QPR3 beta, patches up to 2026-10) exist only as Google's GSI binaries, not as source.
 
 **The main risk: the vendor layer is Android 13.** On the device: `ro.vndk.version=33`, `ro.board.api_level=33`, VINTF `target-level="7"`, while the system is Android 16. The image works because it still ships `com.android.vndk.v31` to `v34` and `compatibility_matrix.7.xml`. If Android 17 dropped VNDK v33 or FCM level 7, the vendor's HALs wouldn't start. Nothing else in the plan matters until that's tested, so step 0 is a cheap test that changes nothing in the repository.
 
@@ -118,7 +118,7 @@ These answer section 4's item 6 and the matching points in section 3. Items 1 an
 - Check what [gsi.md](../device/gsi.md) checked for Android 16: boot, Wi-Fi, display at 120 Hz, audio, both cameras, sensors, fingerprint, vibrator, USB debugging, `lshal` count against the 100 HALs on build 7, the `qpnp_adaptive_charge` parameters directory (check that it exists only; don't read the parameters), `gpuservice`, and SELinux denials. Capture it with `Dump-DeviceInfo.ps1 -Label gsi17`.
 - **Go:** it boots and the hardware list matches Android 16's. **No go:** stay on `android-16.0.0_r4` and re-test with each new Android 17 source drop.
 
-**1. Second tree, on a branch.** Do the move on a git branch `aosp-17`, so `main` keeps building Android 16 for fixes. The Legion syncs the new tag into a separate tree (`AOSP_DIR=~/aosp17`; about 335 GB used, 622 GB free on WSL's disk), with `sync.sh` reading the branch's `toolchain.json`. Keep `~/aosp` until Android 17 has run for a week.
+**1. Second tree, on a branch.** Do the move on a git branch `aosp-17`, so `main` keeps building Android 16 for fixes (a safety net given up the same evening: Android 16 was dropped for good and `aosp-17` merged into `main`, see step 4). The Legion syncs the new tag into a separate tree (`AOSP_DIR=~/aosp17`; about 335 GB used, 622 GB free on WSL's disk), with `sync.sh` reading the branch's `toolchain.json`. Keep `~/aosp` until Android 17 has run for a week.
 
 **2. Port this project's changes.** Each item names its own check.
 - `lunch`: the release configuration name (`trunk_staging`) may change; `lunch` with no arguments lists the tag's targets.
@@ -151,13 +151,16 @@ These answer section 4's item 6 and the matching points in section 3. Items 1 an
 | First-boot service (`cmd role`, `settings`, `pm`, `seclabel u:r:su:s0`) | not diffed (shell interfaces); the 17 GSI's `cmd wifi`, `settings` and `pm` behaved normally | covered by the first build's validation |
 
 **3. Build, deploy, validate.** Re-run every check that builds 4 to 8 passed (the [validation](../device/validation.md) rows), plus step 0's hardware list. Compare against build 8, item by item.
+- **Started 2026-11-19 on the Legion.** The first attempt never left Soong analysis: Android 17's `soong_build` outgrew the 26 GB WSL instance and filled its 32 GB of swap, where Android 16's analysis had fitted. Fixed the same evening with a fourth patch, `build-blueprint-0001-soong-heap-limit-80-percent-of-ram.patch` (a Go soft memory limit at 80 % of RAM; the why and how are in [aosp-build.md](aosp-build.md) under "Where the build lives"), and the build restarted with it.
 
 **4. Switch over.** Merge `aosp-17` into `main`. Then:
 - move `deviceTools.aosp.tag` and the `deviceTools.gsi` pin to Android 17;
 - update [aosp-build.md](aosp-build.md), [gsi.md](../device/gsi.md) and the validation page;
 - after a week without problems, delete `~/aosp`.
 
-**Going back** is possible at any step: `main` still builds Android 16, and `Deploy-Image.ps1 -NoFetch` with build 8's saved `system.img` restores the current image.
+**Done 2026-11-19, ahead of the week.** The user dropped Android 16 for good that evening, so the pins (`deviceTools.gsi` to `CP2A.260605.012`; `deviceTools.aosp.tag` was already `android-17.0.0_r1`), [aosp-build.md](aosp-build.md) and [gsi.md](../device/gsi.md) moved to Android 17 on `aosp-17`, the scripts now default `AOSP_DIR` to `deviceTools.aosp.treeDir` (`~/aosp17`), and `main` was fast-forwarded to the branch while the first Android 17 build was still compiling. Still open: the validation rows for that image, and deleting `~/aosp` (135 GB; the user runs the `rm`).
+
+**Going back** was possible at every step until the switch-over: `main` built Android 16, and `Deploy-Image.ps1 -NoFetch` with a saved `system.img` restored the current image. Since the switch-over only the second half holds: build 9's `system.img` (Android 16, `53c37cd8…`) stays on the Legion until the first Android 17 image passes validation.
 
 **Timing.** Google has published AOSP source less often since 2025 (this tag is the "26Q2" release). If a newer Android 17 source drop is close, waiting for it might save a second port, but this plan doesn't assume a date. Step 0 is worth doing now either way: if the Android 13 vendor can't run Android 17, the rest is moot.
 

@@ -64,15 +64,15 @@ The GitHub repo (`jim-wyatt/VedoTom` to `jim-wyatt/aosp-academy`) and its Pages 
 
 | Command | Replaces |
 | --- | --- |
-| `vedotom setup [--studio] [--accept-sdk-licenses] [--role device\|build]` | `Bootstrap-DevEnv.ps1` |
-| `vedotom check` | `Test-DevEnv.ps1` |
-| `vedotom env [--shell pwsh\|cmd\|bash]` / `vedotom shell` | `Enter-DevShell.ps1` (environment for a shell, or a subshell with it) |
-| `vedotom image inputs\|setup\|sync\|build` | the input download, `setup.sh`, `sync.sh`, `build-gsi.sh` (build node) |
-| `vedotom fetch [--check] [--streams N]` | `Get-RemoteImage.ps1` |
-| `vedotom deploy [--no-fetch] [--single-boot] [--keep-image] [--yes]` | `Deploy-Image.ps1` |
-| `vedotom gsi install\|boot\|stock\|discard\|status` | `Install-Gsi.ps1` |
-| `vedotom device test\|settings\|info\|trace\|frida` | `Test-Device`, `Set-DevSettings`, `Dump-DeviceInfo`, `Trace-Device`, `Start-Frida` |
-| `vedotom stock build [--promote]` / `vedotom stock magisk-image` | `Build-Device.ps1`, `Prepare-MagiskImage.ps1` |
+| `aosp-academy setup [--studio] [--accept-sdk-licenses]`\|build]` | `Bootstrap-DevEnv.ps1` |
+| `aosp-academy check` | `Test-DevEnv.ps1` |
+| `aosp-academy env [--shell pwsh\|cmd\|bash]` / `aosp-academy shell` | `Enter-DevShell.ps1` (environment for a shell, or a subshell with it) |
+| `aosp-academy image inputs\|setup\|sync\|build` | the input download, `setup.sh`, `sync.sh`, `build-gsi.sh` (build node) |
+| `aosp-academy fetch [--check] [--streams N]` | `Get-RemoteImage.ps1` |
+| `aosp-academy deploy [--no-fetch] [--single-boot] [--keep-image] [--yes]` | `Deploy-Image.ps1` |
+| `aosp-academy gsi install\|boot\|stock\|discard\|status` | `Install-Gsi.ps1` |
+| `aosp-academy device test\|settings\|info\|trace\|frida` | `Test-Device`, `Set-DevSettings`, `Dump-DeviceInfo`, `Trace-Device`, `Start-Frida` |
+| `aosp-academy stock build [--promote]` / `aosp-academy stock magisk-image` | `Build-Device.ps1`, `Prepare-MagiskImage.ps1` |
 
 ## Target docs
 

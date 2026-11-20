@@ -13,7 +13,7 @@ What stays the same while the GSI runs: the bootloader, the kernel and vendor mo
 
 ## The image
 
-The pinned image is Google's official **AOSP arm64 GSI for Android 16**, the latest stable build (`deviceTools.gsi` in `toolchain.json` has the build id, URL and SHA-256). It matches the device's own Android generation, which keeps the vendor interface in its comfort zone. Google publishes it under [its GSI terms](https://developer.android.com/topic/generic-system-image/releases); the download step asks you to accept them explicitly, the same way the bootstrap does for the SDK.
+The pinned image is Google's official **AOSP arm64 GSI for Android 17** (`CP2A.260605.012`), the stable release of the same Android 17 drop as the source tag this project builds from (`deviceTools.gsi` in `toolchain.json` has the build id, URL and SHA-256). It is one generation above the stock Android 16 system and three above the Android 13 vendor layer, and it booted and ran the hardware on this device on 2026-11-19 (the [validation page](validation.md)). Until that day the pin was the Android 16 GSI `BP4A.251205.006`, which the sections below were written against; the procedure is the same. Google publishes it under [its GSI terms](https://developer.android.com/topic/generic-system-image/releases); the download step asks you to accept them explicitly, the same way the bootstrap does for the SDK.
 
 ## Steps
 
