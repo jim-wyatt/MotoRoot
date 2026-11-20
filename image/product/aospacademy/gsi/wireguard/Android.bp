@@ -17,6 +17,9 @@ cc_binary {
     name: "aospacademy_wg",
     stem: "wg",
     product_specific: true,
+    // Plain C: no libc++, which would otherwise be installed into product/lib64 and would have to be
+    // listed in aospacademy_system_image as well.
+    stl: "none",
     srcs: [
         "src/wg.c",
         "src/config.c",
