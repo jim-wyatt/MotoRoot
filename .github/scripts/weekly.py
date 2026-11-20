@@ -130,6 +130,10 @@ def upstream(out: str | None) -> int:
         avail = [p.split(";", 1)[1] for p in stable if p.startswith(kind + ";")]
         avail = [v for v in avail if re.fullmatch(r"(android-)?[\d.]+", v)]
         best = max(avail, key=_ver, default=None)
+        # A newer minor platform of the same API (android-37.2 over 37.0) offers APIs the image's
+        # release doesn't have; it matters only when the AOSP tag moves, so only a new API is news.
+        if kind == "platforms" and best and _ver(best)[:1] == _ver(cur)[:1]:
+            continue
         if best and _ver(best) > _ver(cur):
             found.append(f"SDK `{kind};{best}` (pinned: `{cur}`)")
     pt = PINS["inputs"]["platformTools"]["version"]
