@@ -2,7 +2,7 @@
 
 What the device actually is, as it reports itself: the SoC and cores, the GPU, memory and storage, the display, the partition map, the sensors and the HALs. Useful for performance work in Android Studio, for knowing which partition is which before any low-level step, and for checking that another unit is the same hardware.
 
-Everything here was produced by `.\dev\Dump-DeviceInfo.ps1` on unit 2 (2026-11-16, the build on the [validation page](validation.md)). The script's raw dumps contain identifiers (serial, IMEI, MAC addresses, installed apps) and stay in `work\device-info\`, which is git-ignored; this page is the curated, identifier-free summary.
+Everything here was produced by `.\deploy\Dump-DeviceInfo.ps1` on unit 2 (2026-11-16, the build on the [validation page](validation.md)). The script's raw dumps contain identifiers (serial, IMEI, MAC addresses, installed apps) and stay in `work\device-info\`, which is git-ignored; this page is the curated, identifier-free summary.
 
 ## Identity
 
@@ -113,7 +113,7 @@ The kernel reports a design capacity of **5,130 mAh** (`charge_full_design`). Th
 ## Re-generate this page
 
 ```powershell
-.\dev\Dump-DeviceInfo.ps1          # writes work\device-info\<timestamp>\ and prints the summary
+.\deploy\Dump-DeviceInfo.ps1          # writes work\device-info\<timestamp>\ and prints the summary
 ```
 
 Run it on a new unit to check it matches, or after a firmware change. Copy facts from the printed summary, never from the raw files, and keep serial numbers, IMEIs, MAC addresses and display unique ids out of the docs; the pre-commit hook blocks the obvious ones but not all.

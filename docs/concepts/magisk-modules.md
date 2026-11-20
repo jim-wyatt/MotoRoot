@@ -56,7 +56,7 @@ Install one with:
 
 ## The seven modules in this project
 
-The project ships seven modules in `device/modules/`: five that hide directories, for five different reasons, and two that set properties at boot. Each is generated from a manifest in `device/modules/manifests/` by one builder, and you can rebuild all of them with `.\dev\Build-Device.ps1`.
+The project ships seven modules in `stock/modules/`: five that hide directories, for five different reasons, and two that set properties at boot. Each is generated from a manifest in `stock/modules/manifests/` by one builder, and you can rebuild all of them with `.\stock\Build-StockArtifacts.ps1`.
 
 ### `wifi-ota-guard` — hide a system app by overlaying nothing
 
@@ -80,7 +80,7 @@ The fifth overlay hides the 58 carrier, partner and Motorola consumer packages t
 
 ### Script modules
 
-Not every change is a file. Two optional modules in `device/modules/` carry no `system/` tree at all, only a `post-fs-data.sh` that sets a property before the rest of Android starts: `dev_debuggable` sets `ro.debuggable=1` so the device reports itself as an engineering build, and `dev_adb_tcp` makes `adbd` listen on Wi-Fi. The same builder packages them from the same kind of manifest; the manifest names the script instead of listing packages. [Make it an engineering device](../device/dev-setup.md) installs them.
+Not every change is a file. Two optional modules in `stock/modules/` carry no `system/` tree at all, only a `post-fs-data.sh` that sets a property before the rest of Android starts: `dev_debuggable` sets `ro.debuggable=1` so the device reports itself as an engineering build, and `dev_adb_tcp` makes `adbd` listen on Wi-Fi. The same builder packages them from the same kind of manifest; the manifest names the script instead of listing packages. [Make it an engineering device](../device/dev-setup.md) installs them.
 
 !!! info "`.replace` — the empty-overlay trick"
     The three Wi-Fi modules use Magisk's documented convention: a special `.replace` marker in a module directory tells Magisk to overlay that whole path as empty, hiding whatever the system shipped there. It's the cleanest possible "remove without removing".

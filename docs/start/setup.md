@@ -32,7 +32,7 @@ Open PowerShell **as yourself** (not as administrator; installers will ask for e
 
 ```powershell
 Set-ExecutionPolicy -Scope Process Bypass
-.\dev\Bootstrap-DevEnv.ps1 -AndroidStudio -AcceptAndroidSdkLicenses
+.\workstation\Install-Workstation.ps1 -AndroidStudio -AcceptAndroidSdkLicenses
 ```
 
 - `-AndroidStudio` also installs the full IDE (about 1.5 GB). Leave it off if you only want the command-line tools; you can add it later.
@@ -41,7 +41,7 @@ Set-ExecutionPolicy -Scope Process Bypass
 Expect a few Windows **User Account Control** prompts as the JDK, the USB driver, 7-Zip and Android Studio install. The whole run takes 10–30 minutes depending on your connection; the NDK download is the slow part.
 
 ??? note "What the script installs, exactly"
-    Everything is pinned to a specific version in `dev/toolchain.json`, and every download is hash-checked before it's used.
+    Everything is pinned to a specific version in `toolchain.json`, and every download is hash-checked before it's used.
 
     | Category | Tools |
     | --- | --- |
@@ -51,7 +51,7 @@ Expect a few Windows **User Account Control** prompts as the JDK, the USB driver
     | Phone tools | Google Platform Tools **37.0.1** (the exact version the procedure was tested with), scrcpy |
     | Inspection | jadx, apktool, 7-Zip |
     | Device inputs | The exact DFRoot, KernelSU and Magisk APKs the procedure uses, Google's Test DPC QR image, Val Protocol at its tested commit |
-    | Python | Two virtual environments: `work\.venv` for the bootloader tooling, `dev\.venv-docs` for this site |
+    | Python | Two virtual environments: `work\.venv` for the bootloader tooling, `work\.venv-docs` for this site |
     | Safety | A Git pre-commit hook that blocks device images and identifiers |
 
     Nothing in this step talks to a phone.
@@ -61,7 +61,7 @@ Expect a few Windows **User Account Control** prompts as the JDK, the USB driver
 From now on, every terminal you use for this project starts with one line:
 
 ```powershell
-. .\dev\Enter-DevShell.ps1
+. .\workstation\Enter-DevShell.ps1
 ```
 
 (That's a dot, a space, then the path. "Dot-sourcing" runs the script *in your current window* so the variables it sets stay available.)
@@ -88,7 +88,7 @@ If you use **VS Code**, open the repository folder and a new terminal (++ctrl+sh
 ## 5. Prove it works
 
 ```powershell
-.\dev\Test-DevEnv.ps1
+.\workstation\Test-Workstation.ps1
 ```
 
 This runs a few dozen checks that actually *use* each tool: it compiles Java, produces Android bytecode, decompiles it again, cross-compiles a C program for the phone's CPU, and re-verifies every pinned download. The last line should read `0 failed`. If anything fails, the [troubleshooting page](../reference/troubleshooting.md) covers the common causes.

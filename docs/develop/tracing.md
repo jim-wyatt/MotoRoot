@@ -7,7 +7,7 @@
 From the dev shell:
 
 ```powershell
-.\dev\Trace-Device.ps1 -Seconds 15 -Name app-launch
+.\deploy\Trace-Device.ps1 -Seconds 15 -Name app-launch
 ```
 
 It sends a text config over ADB, records for 15 seconds (do the thing you want to look at on the phone meanwhile), pulls the result to `work\traces\app-launch.pftrace`, and removes the copy on the device. The default config records CPU scheduling and frequency, process and memory stats, the system log, and the standard `atrace` categories for app, UI and binder work, which is the right starting point for most questions.

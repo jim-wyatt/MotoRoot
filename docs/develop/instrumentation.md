@@ -7,7 +7,7 @@
 
 ## What the bootstrap set up
 
-Two halves, pinned to the same version in `dev/toolchain.json` (they must match):
+Two halves, pinned to the same version in `toolchain.json` (they must match):
 
 - **On the device:** `frida-server`, an ARM64 binary that runs as root and does the injecting. Downloaded from Frida's GitHub release, hash-verified, extracted to `work\device-tools\frida-server`.
 - **On the PC:** `frida-tools` in `work\.venv-frida`, which the dev shell puts on PATH: `frida`, `frida-ps`, `frida-trace`, `frida-discover`.

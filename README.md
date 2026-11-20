@@ -19,12 +19,12 @@ git clone https://github.com/jim-wyatt/VedoTom.git $env:USERPROFILE\VedoTom
 cd $env:USERPROFILE\VedoTom
 # Download the Motorola USB driver into work\ (see docs: Getting started)
 Set-ExecutionPolicy -Scope Process Bypass
-.\dev\Bootstrap-DevEnv.ps1 -AndroidStudio -AcceptAndroidSdkLicenses   # installs & verifies the whole toolchain
-. .\dev\Enter-DevShell.ps1                                            # in every new terminal
-.\dev\Test-DevEnv.ps1                                                 # self-test: exercises every tool, exit code = failures
+.\workstation\Install-Workstation.ps1 -AndroidStudio -AcceptAndroidSdkLicenses   # installs & verifies the whole toolchain
+. .\workstation\Enter-DevShell.ps1                                            # in every new terminal
+.\workstation\Test-Workstation.ps1                                                 # self-test: exercises every tool, exit code = failures
 ```
 
-One script installs and hash-verifies the full stack: JDK, Android SDK, NDK, platform-tools, Android Studio, jadx, apktool, scrcpy, and the device-preparation inputs. Everything is pinned in [`dev/toolchain.json`](dev/toolchain.json).
+One script installs and hash-verifies the full stack: JDK, Android SDK, NDK, platform-tools, Android Studio, jadx, apktool, scrcpy, and the device-preparation inputs. Everything is pinned in [`toolchain.json`](toolchain.json).
 
 ## Repository layout
 

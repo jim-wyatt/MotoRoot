@@ -4,27 +4,27 @@
     {
       "label": "Bootstrap dev environment",
       "type": "shell",
-      "command": "pwsh -NoProfile -ExecutionPolicy Bypass -File .\\dev\\Bootstrap-DevEnv.ps1",
+      "command": "pwsh -NoProfile -ExecutionPolicy Bypass -File .\\workstation\\Install-Workstation.ps1",
       "problemMatcher": []
     },
     {
       "label": "Rebuild device artifacts and compare",
       "type": "shell",
-      "command": "pwsh -NoProfile -ExecutionPolicy Bypass -Command \". .\\dev\\Enter-DevShell.ps1 | Out-Null; .\\dev\\Build-Device.ps1\"",
+      "command": "pwsh -NoProfile -ExecutionPolicy Bypass -Command \". .\\workstation\\Enter-DevShell.ps1 | Out-Null; .\\stock\\Build-StockArtifacts.ps1\"",
       "group": { "kind": "build", "isDefault": true },
       "problemMatcher": []
     },
     {
       "label": "Self-test dev environment",
       "type": "shell",
-      "command": "pwsh -NoProfile -ExecutionPolicy Bypass -File .\\dev\\Test-DevEnv.ps1",
+      "command": "pwsh -NoProfile -ExecutionPolicy Bypass -File .\\workstation\\Test-Workstation.ps1",
       "group": "test",
       "problemMatcher": []
     },
     {
       "label": "Mirror phone (scrcpy)",
       "type": "shell",
-      "command": "pwsh -NoProfile -ExecutionPolicy Bypass -Command \". .\\dev\\Enter-DevShell.ps1 | Out-Null; $env:ADB = $adb; scrcpy\"",
+      "command": "pwsh -NoProfile -ExecutionPolicy Bypass -Command \". .\\workstation\\Enter-DevShell.ps1 | Out-Null; $env:ADB = $adb; scrcpy\"",
       "problemMatcher": []
     }
   ]

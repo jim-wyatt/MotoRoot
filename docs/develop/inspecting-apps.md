@@ -46,7 +46,7 @@ jadx-gui "$Work\vending.apk"                         # or browse interactively
 Try it on the project's own helper to see the round trip — the [self-test](../reference/environment.md) does exactly this:
 
 ```powershell
-jadx -d "$Work\helper-src" .\device\helpers\UpdateHelper.dex
+jadx -d "$Work\helper-src" .\stock\helpers\UpdateHelper.dex
 ```
 
 ### apktool — decode resources and the manifest
@@ -68,7 +68,7 @@ aapt2 dump badging "$Work\vending.apk" | Select-String 'package|launchable|sdkVe
 
 ## A practical exercise
 
-Inspect the carrier apps the device-prep stage disables, to see *why* they're not needed on a Wi-Fi dev device. Their package names and on-disk paths are listed in `device/modules/manifests/wifi-carrier-debloat.json`. Pull one (before disabling it) and read its manifest with `apktool` to see which carrier services and permissions it declares. This is the same due-diligence you'd do before trusting any preinstalled app.
+Inspect the carrier apps the device-prep stage disables, to see *why* they're not needed on a Wi-Fi dev device. Their package names and on-disk paths are listed in `stock/modules/manifests/wifi-carrier-debloat.json`. Pull one (before disabling it) and read its manifest with `apktool` to see which carrier services and permissions it declares. This is the same due-diligence you'd do before trusting any preinstalled app.
 
 ## jadx vs. apktool — which?
 

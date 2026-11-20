@@ -2,7 +2,7 @@
 
 This is the complete device-preparation procedure, stage by stage, with every command and the reasoning behind it. It is derived from parsimo2010's tested guide ([credits](../reference/credits.md)) and has been carried out on two units; the exact configuration it applies to, both runs, and everything that was and wasn't verified are on the [validation page](validation.md). Read the [disclaimer](../reference/disclaimer.md) before you start.
 
-Work in a [dev shell](../start/setup.md#4-open-the-dev-shell) (`. .\dev\Enter-DevShell.ps1`), which puts you at the repository root, sets `$adb`, `$fb`, `$Work`, `$Backup` and `$py`, and puts the pinned Platform Tools first on PATH. **Close Android Studio** so only the pinned `adb` is running. Keep the same window open: later stages reuse its variables.
+Work in a [dev shell](../start/setup.md#4-open-the-dev-shell) (`. .\workstation\Enter-DevShell.ps1`), which puts you at the repository root, sets `$adb`, `$fb`, `$Work`, `$Backup` and `$py`, and puts the pinned Platform Tools first on PATH. **Close Android Studio** so only the pinned `adb` is running. Keep the same window open: later stages reuse its variables.
 
 !!! danger "Points of no return"
     Stage 6 **erases** the device and can, if LK fails, make it unbootable with no proven recovery. Do not start it until stages 1–5 are complete and you've confirmed your backups and prepared files are on the PC.
@@ -139,7 +139,7 @@ Back up the update metadata first, then push and inspect the helper (`inspect` o
 ```powershell
 & $adb shell su -c 'tar -cf /data/local/tmp/update-engine-before-reset.tar /data/misc/update_engine/prefs /data/misc/update_engine_log /metadata/ota'
 & $adb pull /data/local/tmp/update-engine-before-reset.tar "$Backup\update-engine-before-reset.tar"
-& $adb push .\device\helpers\UpdateHelper.dex /data/local/tmp/moto-update-helper.dex
+& $adb push .\stock\helpers\UpdateHelper.dex /data/local/tmp/moto-update-helper.dex
 & $adb shell su -c 'CLASSPATH=/data/local/tmp/moto-update-helper.dex app_process /system/bin UpdateHelper inspect'
 ```
 
@@ -167,7 +167,7 @@ Motorola's notification and its automatic-restart alarm are separate app state a
 $OtaLine = (& $adb shell pm list packages -U com.motorola.ccc.ota) -join ''
 if ($OtaLine -notmatch 'package:com\.motorola\.ccc\.ota\s+uid:(\d+)') { throw 'Cannot identify updater UID' }
 $OtaUid = $Matches[1]
-& $adb push .\device\helpers\UpdaterCleanup.dex /data/local/tmp/moto-updater-cleanup.dex
+& $adb push .\stock\helpers\UpdaterCleanup.dex /data/local/tmp/moto-updater-cleanup.dex
 & $adb shell su -c 'chmod 0444 /data/local/tmp/moto-updater-cleanup.dex'
 & $adb shell su $OtaUid -c 'CLASSPATH=/data/local/tmp/moto-updater-cleanup.dex app_process /system/bin UpdaterCleanup cancel'
 & $adb shell dumpsys alarm | Select-String '^\s+RTC.*com.motorola.ccc.ota'     # no matching alarm
@@ -199,7 +199,7 @@ The secret `Valeria` must match key generation in stage 6. The patcher's verifie
 **Prepare the Magisk image** from *your own* `init_boot_a`. The included script runs Magisk 31.1's own patch logic on the device, writes only a file, and never flashes anything. It refuses to run unless exactly one approved device is connected, it is the tested build on slot A, root works, and the current `init_boot_a` still matches the backup you pass in:
 
 ```powershell
-.\device\scripts\Prepare-MagiskImage.ps1 -WorkDir $Work -StockImage "$Backup\init_boot_a.img"
+.\stock\Prepare-MagiskImage.ps1 -WorkDir $Work -StockImage "$Backup\init_boot_a.img"
 # → work\magisk-patched-init_boot.img  (8 MiB; device and PC hashes compared)
 ```
 
@@ -339,7 +339,7 @@ Install the updater block first, before Wi-Fi goes back on, and verify it after 
 
 ```powershell
 # Reversibly hide the Motorola updater
-& $adb push .\device\modules\wifi-ota-guard.zip /data/local/tmp/
+& $adb push .\stock\modules\wifi-ota-guard.zip /data/local/tmp/
 & $adb shell su -c 'magisk --install-module /data/local/tmp/wifi-ota-guard.zip'
 & $adb shell settings put global ota_disable_automatic_update 1
 & $adb reboot
@@ -349,16 +349,16 @@ Install the updater block first, before Wi-Fi goes back on, and verify it after 
 & $adb shell ps -A | Select-String 'ccc.ota'
 ```
 
-Then the two debloat modules. They are for a **Wi-Fi-only** device: they can break cellular setup, service management, voicemail and SIM functions. `wifi-carrier-debloat` hides the 22 Verizon/TracFone activation, remote-SIM-lock, carrier-management and PAKS finance packages. `wifi-extra-debloat` hides a further 19: AT&T, Cricket and Facebook partner stubs; Motorola telemetry (bug2go, modem and Wi-Fi statistics, the crash-log agent, lifetime data); Moto Care, MyKey, the hidden engineering menu, Ready For desktop mode, visual voicemail, carrier entitlement, and Digital Wellbeing. Each module's manifest in `device/modules/manifests/` lists every package with its on-disk path. Neither module checks the device it's installed on, so before installing confirm every targeted package exists on your build with `& $adb shell pm path <package>`.
+Then the two debloat modules. They are for a **Wi-Fi-only** device: they can break cellular setup, service management, voicemail and SIM functions. `wifi-carrier-debloat` hides the 22 Verizon/TracFone activation, remote-SIM-lock, carrier-management and PAKS finance packages. `wifi-extra-debloat` hides a further 19: AT&T, Cricket and Facebook partner stubs; Motorola telemetry (bug2go, modem and Wi-Fi statistics, the crash-log agent, lifetime data); Moto Care, MyKey, the hidden engineering menu, Ready For desktop mode, visual voicemail, carrier entitlement, and Digital Wellbeing. Each module's manifest in `stock/modules/manifests/` lists every package with its on-disk path. Neither module checks the device it's installed on, so before installing confirm every targeted package exists on your build with `& $adb shell pm path <package>`.
 
 ```powershell
 # Reversibly disable the 22 carrier/activation apps
 & $adb shell su -c 'pm disable-user --user 0 com.android.devicelockcontroller'
-& $adb push .\device\modules\wifi-carrier-debloat.zip /data/local/tmp/
+& $adb push .\stock\modules\wifi-carrier-debloat.zip /data/local/tmp/
 & $adb shell su -c 'magisk --install-module /data/local/tmp/wifi-carrier-debloat.zip'
 
 # Reversibly hide the 19 partner, telemetry and extra Motorola apps
-& $adb push .\device\modules\wifi-extra-debloat.zip /data/local/tmp/
+& $adb push .\stock\modules\wifi-extra-debloat.zip /data/local/tmp/
 & $adb shell su -c 'magisk --install-module /data/local/tmp/wifi-extra-debloat.zip'
 & $adb reboot
 ```

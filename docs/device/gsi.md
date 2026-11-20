@@ -9,20 +9,20 @@ Android is built in two halves: the **system** (the framework, the apps, everyth
 What stays the same while the GSI runs: the bootloader, the kernel and vendor modules, `init_boot` (so Magisk is still in the boot chain), and your real `/data`. What changes: the whole system partition, so expect an AOSP launcher, no Motorola apps, no Google apps (this is the plain AOSP image, not the "+GMS" one), and rough edges wherever the generic image has no tuning for MediaTek hardware (camera quality, fingerprint, maybe audio routing). Wi-Fi normally works, because it's a vendor-side service.
 
 !!! warning "Experimental on this device"
-    DSU was designed for exactly this, but this unit is the first time it's been tried on this model; the [validation page](validation.md) records the outcome. The [disclaimer](../reference/disclaimer.md) applies. `Install-Gsi.ps1 -Action Boot` boots the GSI for **one boot only**: whatever happens, the next reboot (even a forced one by holding Power) returns to the installed system. This project's own images are the exception: `Deploy-Image.ps1` boots them with `-Persistent`, so the image stays the phone's system across reboots, and `.\dev\Install-Gsi.ps1 -Action Stock` disables it (still installed) and reboots to the stock system on slot A, which DSU never touches. Use `Deploy-Image.ps1 -SingleBoot` for a one-boot trial of an untested image.
+    DSU was designed for exactly this, but this unit is the first time it's been tried on this model; the [validation page](validation.md) records the outcome. The [disclaimer](../reference/disclaimer.md) applies. `Install-Gsi.ps1 -Action Boot` boots the GSI for **one boot only**: whatever happens, the next reboot (even a forced one by holding Power) returns to the installed system. This project's own images are the exception: `Deploy-Image.ps1` boots them with `-Persistent`, so the image stays the phone's system across reboots, and `.\deploy\Install-Gsi.ps1 -Action Stock` disables it (still installed) and reboots to the stock system on slot A, which DSU never touches. Use `Deploy-Image.ps1 -SingleBoot` for a one-boot trial of an untested image.
 
 ## The image
 
-The pinned image is Google's official **AOSP arm64 GSI for Android 16**, the latest stable build (`deviceTools.gsi` in `dev/toolchain.json` has the build id, URL and SHA-256). It matches the device's own Android generation, which keeps the vendor interface in its comfort zone. Google publishes it under [its GSI terms](https://developer.android.com/topic/generic-system-image/releases); the download step asks you to accept them explicitly, the same way the bootstrap does for the SDK.
+The pinned image is Google's official **AOSP arm64 GSI for Android 16**, the latest stable build (`deviceTools.gsi` in `toolchain.json` has the build id, URL and SHA-256). It matches the device's own Android generation, which keeps the vendor interface in its comfort zone. Google publishes it under [its GSI terms](https://developer.android.com/topic/generic-system-image/releases); the download step asks you to accept them explicitly, the same way the bootstrap does for the SDK.
 
 ## Steps
 
 All from the dev shell, phone connected over USB, Magisk root working:
 
 ```powershell
-.\dev\Install-Gsi.ps1 -Action Download -AcceptGoogleGsiTerms   # ~1 GB, verified against the pinned SHA-256
-.\dev\Install-Gsi.ps1 -Action Install                           # pushes the zip; waits for the install (enter the PIN on the phone if it asks)
-.\dev\Install-Gsi.ps1 -Action Boot                              # one-shot boot into the GSI
+.\deploy\Install-Gsi.ps1 -Action Download -AcceptGoogleGsiTerms   # ~1 GB, verified against the pinned SHA-256
+.\deploy\Install-Gsi.ps1 -Action Install                           # pushes the zip; waits for the install (enter the PIN on the phone if it asks)
+.\deploy\Install-Gsi.ps1 -Action Boot                              # one-shot boot into the GSI
 ```
 
 `Install` hands the zip to Android's own DSU installer (the same one behind *Developer options → DSU loader* on Pixels), which unpacks `system.img` into `/data/gsi/` and creates an 8 GiB userdata image (`-UserdataGiB` to change). A notification shows progress; `gsi_tool status` goes `normal → installing → installed`, and the script waits for it.
@@ -30,7 +30,7 @@ All from the dev shell, phone connected over USB, Magisk root working:
 `Boot` enables the GSI for a single boot and reboots. The first boot takes several minutes (the GSI sets itself up). Once up, `ro.gsid.image_running` is `1` and `ro.build.fingerprint` is Google's, not Motorola's:
 
 ```powershell
-.\dev\Install-Gsi.ps1 -Action Status
+.\deploy\Install-Gsi.ps1 -Action Status
 & $adb shell getprop ro.build.fingerprint          # google/aosp_arm64/...
 & $adb shell su -c id                              # does Magisk still answer? (recorded on the validation page)
 ```
@@ -43,7 +43,7 @@ Reboot. The one-shot boot is over and the Motorola system comes back with everyt
 
 ```powershell
 & $adb reboot                                      # back to the installed system
-.\dev\Install-Gsi.ps1 -Action Discard             # removes the GSI and its userdata
+.\deploy\Install-Gsi.ps1 -Action Discard             # removes the GSI and its userdata
 ```
 
 If the GSI never reaches the home screen, hold **Power** until the phone restarts; because the boot was one-shot, it comes back to the normal system, and `Discard` cleans up.
@@ -60,7 +60,7 @@ Tried on unit 2 on 2026-11-16 with the pinned `BP4A.251205.006` image, exactly a
 
 One script bug surfaced and is fixed: `gsi_tool status` reports partitions as installed the moment they're created, so the install step now waits for the installer's own `READY` status instead.
 
-**Capture the session before you leave it.** Two things exist only while the GSI runs: its boot log (which HALs registered, every SELinux denial, the `gpuservice` tombstones) and the vendor interface as the generic system negotiated it. `.\dev\Dump-DeviceInfo.ps1 -Label gsi-BP4A -Bugreport` records both, plus a full `adb bugreport`, into `work\device-info\` (private). On unit 2 that showed 17 `gpuservice` restarts in ten minutes, denials dominated by the vendor's `batt_health` domain, and the camera service registering only two devices. The drivers themselves are on the vendor partition and identical under stock, so dump those from stock, with root, when you need them.
+**Capture the session before you leave it.** Two things exist only while the GSI runs: its boot log (which HALs registered, every SELinux denial, the `gpuservice` tombstones) and the vendor interface as the generic system negotiated it. `.\deploy\Dump-DeviceInfo.ps1 -Label gsi-BP4A -Bugreport` records both, plus a full `adb bugreport`, into `work\device-info\` (private). On unit 2 that showed 17 `gpuservice` restarts in ten minutes, denials dominated by the vendor's `batt_health` domain, and the camera service registering only two devices. The drivers themselves are on the vendor partition and identical under stock, so dump those from stock, with root, when you need them.
 
 ## If it doesn't boot
 

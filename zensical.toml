@@ -1,5 +1,5 @@
-# Documentation site. Preview:  docs   (in the dev shell)   or   dev\.venv-docs\Scripts\zensical serve
-# Build:  dev\.venv-docs\Scripts\zensical build --strict --clean   ->  site\ (git-ignored)
+# Documentation site. Preview:  docs   (in the dev shell)   or   work\.venv-docs\Scripts\zensical serve
+# Build:  work\.venv-docs\Scripts\zensical build --strict --clean   ->  site\ (git-ignored)
 # Published by .github/workflows/docs.yml to GitHub Pages on every push to main.
 
 [project]

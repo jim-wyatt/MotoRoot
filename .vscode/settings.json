@@ -3,20 +3,20 @@
   "terminal.integrated.profiles.windows": {
     "VedoTom dev shell": {
       "source": "PowerShell",
-      "args": ["-NoExit", "-ExecutionPolicy", "Bypass", "-Command", ". .\\dev\\Enter-DevShell.ps1"]
+      "args": ["-NoExit", "-ExecutionPolicy", "Bypass", "-Command", ". .\\workstation\\Enter-DevShell.ps1"]
     }
   },
   "terminal.integrated.defaultProfile.windows": "VedoTom dev shell",
   "files.exclude": {
     "**/__pycache__": true,
-    "dev/.cache": true,
-    "dev/.venv-docs": true,
+    "work/cache": true,
+    "work/.venv-docs": true,
     "site": true
   },
   "search.exclude": {
     "work": true,
-    "dev/.tools": true,
-    "dev/build": true
+    "work/tools": true,
+    "work/build": true
   },
   "git.ignoreLimitWarning": true
 }

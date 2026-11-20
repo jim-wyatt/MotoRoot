@@ -43,7 +43,7 @@ $cc = "$env:ANDROID_NDK_HOME\toolchains\llvm\prebuilt\windows-x86_64\bin\aarch64
 Native on aarch64, kernel 5.15.180-android13-8-...
 ```
 
-You just cross-compiled: built on an x86-64 PC, ran on an ARM64 phone. The [self-test](../reference/environment.md) does this same compile and checks the output is a valid AArch64 ELF binary, so if `.\dev\Test-DevEnv.ps1` passed, your toolchain is good.
+You just cross-compiled: built on an x86-64 PC, ran on an ARM64 phone. The [self-test](../reference/environment.md) does this same compile and checks the output is a valid AArch64 ELF binary, so if `.\workstation\Test-Workstation.ps1` passed, your toolchain is good.
 
 ## Confirm what you built
 

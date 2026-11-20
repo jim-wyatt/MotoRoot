@@ -11,11 +11,11 @@ VedoTom/
 │   └── scripts/           Prepare-MagiskImage.ps1: file-only, never flashes
 ├── dev/                 The development environment (PC side)
 │   ├── toolchain.json     every version and hash, in one place
-│   ├── Bootstrap-DevEnv.ps1   installs everything
+│   ├── Install-Workstation.ps1   installs everything
 │   ├── Enter-DevShell.ps1     per-terminal setup (dot-source it)
 │   ├── VedoTom.psm1           device helpers the phone scripts share (root with either su, boot waits)
-│   ├── Build-Device.ps1       rebuilds and compares the device artifacts
-│   ├── Test-DevEnv.ps1        the self-test (PC side; never touches the phone)
+│   ├── Build-StockArtifacts.ps1       rebuilds and compares the device artifacts
+│   ├── Test-Workstation.ps1        the self-test (PC side; never touches the phone)
 │   ├── Test-Device.ps1        the phone-side smoke test: root, logs, NDK, an app, Perfetto, Frida, scrcpy
 │   ├── Set-DevSettings.ps1    development-target settings on the phone (animations, ADB, logs)
 │   ├── Trace-Device.ps1       records a Perfetto trace into work\traces
@@ -68,7 +68,7 @@ The dev shell puts you at the repository root and gives you these variables, whi
 | `$fb` | `work\platform-tools\fastboot.exe` | bootloader-mode commands |
 | `$py` | `work\.venv\Scripts\python.exe` | the Val Protocol scripts |
 
-Device-side files are referenced relative to the root: `.\device\modules\wifi-ota-guard.zip`, `.\device\scripts\Prepare-MagiskImage.ps1`.
+Device-side files are referenced relative to the root: `.\stock\modules\wifi-ota-guard.zip`, `.\stock\Prepare-MagiskImage.ps1`.
 
 And these commands:
 
@@ -77,18 +77,18 @@ And these commands:
 | `docs` | Serves this documentation at <http://localhost:8000> with live reload |
 | `apktool ...` | Decode or rebuild an APK's resources |
 | `r8d8 ...` | Google's D8 compiler: `.class` → `.dex` (the exact version the helpers were built with) |
-| `.\dev\Build-Device.ps1` | Rebuild the helpers and modules and compare with the committed copies |
-| `.\dev\Test-DevEnv.ps1` | Self-test everything on the PC |
-| `.\dev\Test-Device.ps1` | Check every development workflow against the connected phone |
+| `.\stock\Build-StockArtifacts.ps1` | Rebuild the helpers and modules and compare with the committed copies |
+| `.\workstation\Test-Workstation.ps1` | Self-test everything on the PC |
+| `.\deploy\Test-Device.ps1` | Check every development workflow against the connected phone |
 | `adbwifi` | Connect ADB to the phone over Wi-Fi ([engineering device](../device/dev-setup.md)) |
 | `Start-Frida` | Start Frida's agent on the device as root ([instrumentation](../develop/instrumentation.md)) |
-| `.\dev\Set-DevSettings.ps1` | Apply (or `-Reset`) the development-target settings ([engineering device](../device/dev-setup.md#development-target-settings)) |
-| `.\dev\Trace-Device.ps1` | Record a Perfetto system trace ([tracing](../develop/tracing.md)) |
-| `.\dev\Dump-DeviceInfo.ps1` | Dump the hardware inventory ([hardware](../device/hardware.md)) |
-| `.\dev\Install-Gsi.ps1` | Download, install, boot once and discard a GSI via DSU ([GSI](../device/gsi.md)) |
+| `.\deploy\Set-DevSettings.ps1` | Apply (or `-Reset`) the development-target settings ([engineering device](../device/dev-setup.md#development-target-settings)) |
+| `.\deploy\Trace-Device.ps1` | Record a Perfetto system trace ([tracing](../develop/tracing.md)) |
+| `.\deploy\Dump-DeviceInfo.ps1` | Dump the hardware inventory ([hardware](../device/hardware.md)) |
+| `.\deploy\Install-Gsi.ps1` | Download, install, boot once and discard a GSI via DSU ([GSI](../device/gsi.md)) |
 
 ## Why pin everything?
 
-Open `dev/toolchain.json`. Every tool has a version and a hash. This matters more here than in most projects: the device procedure was validated with *specific* versions, and a newer Magisk or a newer `adb` might behave differently in ways nobody has tested on this model. Pinning means your environment matches the one the procedure was proven on, and that someone else can reproduce yours exactly.
+Open `toolchain.json`. Every tool has a version and a hash. This matters more here than in most projects: the device procedure was validated with *specific* versions, and a newer Magisk or a newer `adb` might behave differently in ways nobody has tested on this model. Pinning means your environment matches the one the procedure was proven on, and that someone else can reproduce yours exactly.
 
 Next: [Your first ADB session](first-adb-session.md).

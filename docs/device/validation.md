@@ -107,7 +107,7 @@ Added after the preparation runs, all on unit 2, all reversible, as described in
 
 ## About the committed artifacts
 
-The helper DEX files and the module ZIPs in `device/` are rebuilt by this project from the sources beside them, and `.\dev\Build-Device.ps1` verifies that they reproduce. Relative to the files that ran on unit 1:
+The helper DEX files and the module ZIPs in `device/` are rebuilt by this project from the sources beside them, and `.\stock\Build-StockArtifacts.ps1` verifies that they reproduce. Relative to the files that ran on unit 1:
 
 - **Helpers** (`UpdateHelper.dex`, `UpdaterCleanup.dex`): the Java logic is unchanged; the sources gained documentation comments, which shifts the debug line-number tables in the DEX but not the bytecode that executes.
 - **Modules**: each ZIP contains the same `module.prop` and the same set of `.replace` markers as before, now built deterministically from a manifest (fixed entry order and timestamps) and carrying that manifest as `manifest.json` instead of the earlier `carrier-manifest.json` / `extra-manifest.json` name. Magisk ignores the extra file.

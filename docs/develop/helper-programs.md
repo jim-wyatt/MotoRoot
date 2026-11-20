@@ -1,6 +1,6 @@
 # Write a system helper
 
-This is the shortest path from source code to code running on the device, and it teaches the Android build pipeline better than any app would. The project already contains two real examples: `device/helpers/UpdateHelper.java` and `device/helpers/UpdaterCleanup.java`. You'll understand them, then write your own.
+This is the shortest path from source code to code running on the device, and it teaches the Android build pipeline better than any app would. The project already contains two real examples: `stock/helpers/UpdateHelper.java` and `stock/helpers/UpdaterCleanup.java`. You'll understand them, then write your own.
 
 ## What a "helper" is
 
@@ -23,12 +23,12 @@ Two compile steps, because Android doesn't run JVM bytecode. `javac` produces `.
 
 ## Read the project's helper
 
-`device/helpers/UpdateHelper.java` is a dozen lines of code plus the comment that explains them. It uses **reflection** to call one hidden system API, `android.os.UpdateEngine.resetStatus()` — the supported way to cancel a staged OTA, used in [Stage 4](../device/walkthrough.md#stage-4-if-an-update-is-staged). Reflection is needed because that class isn't in the public SDK, but it's present on the device at runtime. It's a clean example of reaching a system API an ordinary app can't.
+`stock/helpers/UpdateHelper.java` is a dozen lines of code plus the comment that explains them. It uses **reflection** to call one hidden system API, `android.os.UpdateEngine.resetStatus()` — the supported way to cancel a staged OTA, used in [Stage 4](../device/walkthrough.md#stage-4-if-an-update-is-staged). Reflection is needed because that class isn't in the public SDK, but it's present on the device at runtime. It's a clean example of reaching a system API an ordinary app can't.
 
 Rebuild both helpers from source and confirm they match the committed DEX byte-for-byte:
 
 ```powershell
-.\dev\Build-Device.ps1
+.\stock\Build-StockArtifacts.ps1
 ```
 
 ??? note "How Build-Device compiles them"

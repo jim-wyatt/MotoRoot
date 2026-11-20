@@ -4,7 +4,7 @@ The [walkthrough](walkthrough.md) ends with a rooted retail build. Google's own 
 
 ## The two development modules
 
-Both are [script modules](../concepts/magisk-modules.md#script-modules): a `post-fs-data.sh` that sets system properties early in boot, before `zygote`, `system_server` and `adbd` start. They live in `device/modules/` next to the three Wi-Fi modules and are built the same way. Every claim in this table was checked on unit 2; the [validation page](validation.md#engineering-device-tooling-unit-2-2026-11-16) has the measurements.
+Both are [script modules](../concepts/magisk-modules.md#script-modules): a `post-fs-data.sh` that sets system properties early in boot, before `zygote`, `system_server` and `adbd` start. They live in `stock/modules/` next to the three Wi-Fi modules and are built the same way. Every claim in this table was checked on unit 2; the [validation page](validation.md#engineering-device-tooling-unit-2-2026-11-16) has the measurements.
 
 | Module | Sets | What you get | Mind |
 | --- | --- | --- | --- |
@@ -14,9 +14,9 @@ Both are [script modules](../concepts/magisk-modules.md#script-modules): a `post
 Install both (or either) from the repository root, then reboot:
 
 ```powershell
-& $adb push .\device\modules\dev-debuggable.zip /data/local/tmp/
+& $adb push .\stock\modules\dev-debuggable.zip /data/local/tmp/
 & $adb shell su -c 'magisk --install-module /data/local/tmp/dev-debuggable.zip'
-& $adb push .\device\modules\dev-adb-tcp.zip /data/local/tmp/
+& $adb push .\stock\modules\dev-adb-tcp.zip /data/local/tmp/
 & $adb shell su -c 'magisk --install-module /data/local/tmp/dev-adb-tcp.zip'
 & $adb reboot
 ```
@@ -36,7 +36,7 @@ The proof that the userdebug report does something useful is a heap dump of an a
 'buffers: { size_kb: 32768 }
 data_sources: { config { name: "android.java_hprof" java_hprof_config { process_cmdline: "com.android.settings" } } }
 duration_ms: 3000' | Set-Content "$Work\traces\hprof.pbtxt" -Encoding ascii
-.\dev\Trace-Device.ps1 -Config "$Work\traces\hprof.pbtxt" -Name settings-heap   # ~25 MB trace; open it at ui.perfetto.dev
+.\deploy\Trace-Device.ps1 -Config "$Work\traces\hprof.pbtxt" -Name settings-heap   # ~25 MB trace; open it at ui.perfetto.dev
 ```
 
 !!! note "If the device won't boot with a module enabled"
@@ -74,7 +74,7 @@ Open it, let it download the repository index, and install apps from there. From
 
 #### Installing from F-Droid without touching the screen
 
-F-Droid has no command line, but its repository is verifiable by hand, which is how this project pins the apps it takes from F-Droid (the client itself and the Fossify suite in `dev/toolchain.json`): download `https://f-droid.org/repo/entry.jar`, check its signature with `jarsigner -verify` and `keytool -printcert -jarfile` against F-Droid's certificate (the same `43238d51…` as the client), download `index-v2.json` and check it against the SHA-256 the signed entry names, then take the package's APK hash and signer from the index and compare them with the downloaded APK (`sha256sum`, `apksigner verify --print-certs`). Install with `& $adb install -i org.fdroid.fdroid <apk>` so F-Droid records itself as the installer and keeps the app updated.
+F-Droid has no command line, but its repository is verifiable by hand, which is how this project pins the apps it takes from F-Droid (the client itself and the Fossify suite in `toolchain.json`): download `https://f-droid.org/repo/entry.jar`, check its signature with `jarsigner -verify` and `keytool -printcert -jarfile` against F-Droid's certificate (the same `43238d51…` as the client), download `index-v2.json` and check it against the SHA-256 the signed entry names, then take the package's APK hash and signer from the index and compare them with the downloaded APK (`sha256sum`, `apksigner verify --print-certs`). Install with `& $adb install -i org.fdroid.fdroid <apk>` so F-Droid records itself as the installer and keeps the app updated.
 
 ### Hiding the Google apps
 
@@ -92,7 +92,7 @@ What stays, deliberately: the Play Store (hidden up to module 1.0; restored in 1
 One detail matters for seven of these apps: the Play Store had updated them, so a newer copy lived in `/data/app` beside the system one. Hide only the system copy and Android keeps the update as an ordinary app. `pm uninstall-system-updates` drops the update first, so the hidden copy is the only copy:
 
 ```powershell
-& $adb push .\device\modules\google-debloat.zip /data/local/tmp/google-debloat.zip
+& $adb push .\stock\modules\google-debloat.zip /data/local/tmp/google-debloat.zip
 & $adb shell su -c 'magisk --install-module /data/local/tmp/google-debloat.zip'
 foreach ($p in 'com.google.android.googlequicksearchbox','com.google.android.projection.gearhead',
                'com.google.ambient.streaming','com.google.android.apps.carrier.carrierwifi','com.google.android.apps.restore',
@@ -117,7 +117,7 @@ The seventh module, `vendor-extras-debloat`, finishes the job on the Motorola si
 What stays: the camera, Dolby and aptX audio, face unlock, the launcher and its config, Moto Secure core and the Security Hub extension, gesture and display services, the MediaTek telephony, IMS and location services, the Trustonic TEE bridge, thermal, and the settings providers. Motorola's AI services and Android System Intelligence are left installed as well; hide them with a manifest of your own if you don't want them.
 
 ```powershell
-& $adb push .\device\modules\vendor-extras-debloat.zip /data/local/tmp/vendor-extras-debloat.zip
+& $adb push .\stock\modules\vendor-extras-debloat.zip /data/local/tmp/vendor-extras-debloat.zip
 & $adb shell su -c 'magisk --install-module /data/local/tmp/vendor-extras-debloat.zip'
 & $adb reboot
 ```
@@ -132,7 +132,7 @@ Once this page is done, day-to-day app work belongs in Android Studio; this repo
 
 ## Development-target settings
 
-Four ordinary Android settings make the phone a better target for building and testing apps. `dev\Set-DevSettings.ps1` applies them, checks each one, and exits with the number that didn't stick; `-Reset` returns every one to stock.
+Four ordinary Android settings make the phone a better target for building and testing apps. `deploy\Set-DevSettings.ps1` applies them, checks each one, and exits with the number that didn't stick; `-Reset` returns every one to stock.
 
 | Setting | Value | Why |
 | --- | --- | --- |
@@ -142,8 +142,8 @@ Four ordinary Android settings make the phone a better target for building and t
 | `persist.logd.size` | 16M | log buffers of 16 MiB instead of the stock 256 KiB, so the log from before a crash is still there |
 
 ```powershell
-.\dev\Set-DevSettings.ps1           # apply and verify
-.\dev\Set-DevSettings.ps1 -Reset    # back to stock
+.\deploy\Set-DevSettings.ps1           # apply and verify
+.\deploy\Set-DevSettings.ps1 -Reset    # back to stock
 ```
 
 The log size needs two things on this build. Setting `persist.logd.size` takes root (the script uses `su`), and logd ignores the property at boot and on `logd --reinit`: the buffers came up at 256 KiB with it set. `logcat -G` does apply it, until the next reboot, so `dev_debuggable` 1.3 carries a `service.sh` that re-applies the stored size once boot completes. Without that module the size lasts until the next reboot.

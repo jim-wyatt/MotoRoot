@@ -14,7 +14,7 @@ Common failures and their fixes. If the [self-test](environment.md) passes but s
     A different `adb` version got into `work\platform-tools`. Close any running server (`& $adb kill-server`), delete the folder, and re-run the bootstrap to re-extract the pinned copy.
 
 ??? failure "Self-test fails on `docs site builds` with no error text, or `zensical` exits 1 silently"
-    A Python venv records the absolute path it was created at, and its `Scripts\*.exe` launchers embed it. If the repository folder has been moved or renamed since the bootstrap ran, those launchers exit with code 1 and print nothing. Re-run `.\dev\Bootstrap-DevEnv.ps1`: it compares `pyvenv.cfg` with the current path and recreates a moved venv (`dev\.venv-docs` and `work\.venv` both). Deleting the venv folder by hand and re-running has the same effect.
+    A Python venv records the absolute path it was created at, and its `Scripts\*.exe` launchers embed it. If the repository folder has been moved or renamed since the bootstrap ran, those launchers exit with code 1 and print nothing. Re-run `.\workstation\Install-Workstation.ps1`: it compares `pyvenv.cfg` with the current path and recreates a moved venv (`work\.venv-docs` and `work\.venv` both). Deleting the venv folder by hand and re-running has the same effect.
 
 ??? failure "SDK license / `android.exe` errors during bootstrap"
     The SDK uses the newer `android` CLI with slash-style package names. If licenses weren't accepted, re-run the bootstrap in an interactive window, or pass `-AcceptAndroidSdkLicenses` after reading [the terms](https://developer.android.com/studio/terms).
@@ -81,4 +81,4 @@ Common failures and their fixes. If the [self-test](environment.md) passes but s
     A nav path in `zensical.toml` points to a file that doesn't exist, or a page links to a missing file. Create the file or fix the link; strict mode treats warnings as errors (which is what keeps the published site clean).
 
 ??? failure "The `docs` command isn't found"
-    Dot-source the dev shell first (`. .\dev\Enter-DevShell.ps1`), which defines it. It needs the docs venv, created by the bootstrap.
+    Dot-source the dev shell first (`. .\workstation\Enter-DevShell.ps1`), which defines it. It needs the docs venv, created by the bootstrap.

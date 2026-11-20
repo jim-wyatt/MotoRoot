@@ -1,6 +1,6 @@
 # VedoTom .gitignore
 # Rule 1 of this repo: never commit device images, identifiers, keys, or raw logs.
-# .githooks/pre-commit enforces the same rules at commit time (dev/Bootstrap-DevEnv.ps1 enables it).
+# .githooks/pre-commit enforces the same rules at commit time (workstation/Install-Workstation.ps1 enables it).
 
 # --- work/: the walkthrough's $Work folder --------------------------------------
 # Downloads, venv, and everything the phone procedure creates, including
@@ -65,10 +65,10 @@ testdpc-qrcode.png
 val-protocol/
 *.partial
 
-# --- Dev environment (dev/Bootstrap-DevEnv.ps1) --------------------------------
-dev/.cache/
-dev/.tools/
-dev/build/
+# --- Dev environment (workstation/Install-Workstation.ps1) --------------------------------
+work/cache/
+work/tools/
+work/build/
 
 # --- Python ----------------------------------------------------------------------
 .venv/

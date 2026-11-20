@@ -20,7 +20,7 @@ expect() {   # expect <blocked|allowed> <path> [content]
 }
 
 for p in work/notes.txt private-backups/lk_a.img x/private-backups/a lk-analysis/a.txt \
-         dev/.tools/r8.jar dev/build/x site/index.html .venv/lib/x.py dev/.venv-docs/x \
+         work/tools/r8.jar work/build/x site/index.html .venv/lib/x.py work/.venv-docs/x \
          traces/a.pftrace app/traces/b.txt blobs/vendor.so extracted/x captures/a.png screenshots/s.png \
          system.img dump.BIN app.apk driver.msi run.log key.pem release.jks keystore.properties \
          local.properties .env .env.local unlock-keys.txt \
@@ -35,8 +35,8 @@ fake_serial="$(printf '%s%s' TESTSER 0000)"
 expect blocked notes.txt "IMEI: $fake_imei"
 expect blocked notes.txt "ro.serialno=$fake_serial"
 
-for p in README.md dev/Test-DevEnv.ps1 device/modules/manifests/x.json docs/a.md adbkey.pub.md \
-         device/helpers/UpdateHelper.java dev/aosp/build-gsi.sh; do
+for p in README.md workstation/Test-Workstation.ps1 stock/modules/manifests/x.json docs/a.md adbkey.pub.md \
+         stock/helpers/UpdateHelper.java image/build/build-image.sh; do
   expect allowed "$p"
 done
 expect allowed notes.txt "sha256 2c8de56238978b9b8a681f7cc84c113e84b7c8ff78ea0b6c55fa13646a777dc5"
