@@ -1,26 +1,53 @@
-# Documentation site. Preview:  docs   (in the dev shell)   or   dev\.venv-docs\Scripts\zensical serve
-# Build:  dev\.venv-docs\Scripts\zensical build --strict --clean   ->  site\ (git-ignored)
+# Documentation site. Preview:  aosp-academy docs        Build:  aosp-academy docs build   ->  site/ (git-ignored)
 # Published by .github/workflows/docs.yml to GitHub Pages on every push to main.
 
 [project]
-site_name = "VedoTom"
-site_description = "An Android platform development environment built around a Moto G Power 2026 (XT2617V) development device"
-site_url = "https://jim-wyatt.github.io/VedoTom/"
-copyright = "&copy; 2026 Jim Wyatt, MIT. An independent, non-commercial educational project, not affiliated with any manufacturer, carrier or software vendor. Device procedure derived from parsimo2010's guide (MIT). Use is subject to the <a href='https://jim-wyatt.github.io/VedoTom/reference/disclaimer/'>disclaimer</a>."
-repo_url = "https://github.com/jim-wyatt/VedoTom"
-repo_name = "jim-wyatt/VedoTom"
+site_name = "aosp-academy"
+site_description = "Bootstrap and maintain a Moto G Power 2026 (XT2617V) as an AOSP development device: an independent, educational project"
+site_url = "https://jim-wyatt.github.io/aosp-academy/"
+copyright = "&copy; 2026 Jim Wyatt, MIT. An independent, non-commercial educational project, not affiliated with any manufacturer, carrier or software vendor. Device procedure derived from parsimo2010's guide (MIT). Use is subject to the <a href='https://jim-wyatt.github.io/aosp-academy/reference/disclaimer/'>disclaimer</a>."
+repo_url = "https://github.com/jim-wyatt/aosp-academy"
+repo_name = "jim-wyatt/aosp-academy"
 edit_uri = "edit/main/docs/"
 extra_css = ["stylesheets/extra.css"]
 
 nav = [
   { "Home" = "index.md" },
-  { "Getting started" = [
+  { "Get started" = [
     "start/index.md",
-    { "Set up the dev environment" = "start/setup.md" },
-    { "Tour the repository" = "start/repo-tour.md" },
-    { "Your first ADB session" = "start/first-adb-session.md" },
+    { "Set up a workstation" = "start/workstation.md" },
+    { "Set up a build node" = "start/build-node.md" },
+    { "Your first session" = "start/first-session.md" },
   ] },
-  { "Android internals" = [
+  { "Develop apps" = [
+    "apps/index.md",
+    { "What the device gives you" = "apps/the-image.md" },
+    { "An Android Studio project" = "apps/android-studio.md" },
+    { "Debug any process" = "apps/debugging.md" },
+    { "Trace with Perfetto" = "apps/tracing.md" },
+    { "Instrument with Frida" = "apps/instrumentation.md" },
+    { "Native code with the NDK" = "apps/native-code.md" },
+    { "Inspect app packages" = "apps/inspecting-apps.md" },
+  ] },
+  { "Change the environment" = [
+    "environment/index.md",
+    { "What's in the image" = "environment/image.md" },
+    { "Build the image" = "environment/building.md" },
+    { "Deploy and verify" = "environment/deploying.md" },
+    { "Move to a new AOSP release" = "environment/tag-moves.md" },
+    { "Validation" = "environment/validation.md" },
+    { "Backlog" = "environment/backlog.md" },
+  ] },
+  { "The device" = [
+    "device/index.md",
+    { "Hardware" = "device/hardware.md" },
+    { "Preparation walkthrough" = "device/walkthrough.md" },
+    { "The stock system" = "device/stock.md" },
+    { "System helpers" = "device/helpers.md" },
+    { "System modules" = "device/modules.md" },
+    { "DSU, GSIs and going back to stock" = "device/dsu.md" },
+  ] },
+  { "How Android works" = [
     "concepts/index.md",
     { "ADB and Fastboot" = "concepts/adb-and-fastboot.md" },
     { "Partitions and A/B slots" = "concepts/partitions-and-slots.md" },
@@ -29,32 +56,13 @@ nav = [
     { "System modules with Magisk" = "concepts/magisk-modules.md" },
     { "Device provisioning" = "concepts/device-provisioning.md" },
   ] },
-  { "Prepare the device" = [
-    "device/index.md",
-    { "Preparation walkthrough" = "device/walkthrough.md" },
-    { "Maintaining the device" = "device/maintenance.md" },
-    { "Make it an engineering device" = "device/dev-setup.md" },
-    { "Run vanilla Android with a GSI" = "device/gsi.md" },
-    { "Hardware inventory" = "device/hardware.md" },
-    { "Validation and limits" = "device/validation.md" },
-  ] },
-  { "Develop" = [
-    "develop/index.md",
-    { "Write a system helper" = "develop/helper-programs.md" },
-    { "Build a system module" = "develop/magisk-modules.md" },
-    { "Inspect app packages" = "develop/inspecting-apps.md" },
-    { "Native code with the NDK" = "develop/native-code.md" },
-    { "Instrument with Frida" = "develop/instrumentation.md" },
-    { "Trace with Perfetto" = "develop/tracing.md" },
-    { "Build your own system image" = "develop/aosp-build.md" },
-    { "Image backlog" = "develop/image-backlog.md" },
-    { "Your first app in Android Studio" = "develop/android-studio.md" },
-  ] },
   { "Reference" = [
     "reference/index.md",
-    { "Dev environment" = "reference/environment.md" },
-    { "Git workflow" = "reference/git-workflow.md" },
+    { "Commands" = "reference/cli.md" },
+    { "Pins (toolchain.json)" = "reference/pins.md" },
+    { "Decisions" = "reference/decisions.md" },
     { "Troubleshooting" = "reference/troubleshooting.md" },
+    { "Git workflow" = "reference/git-workflow.md" },
     { "Glossary" = "reference/glossary.md" },
     { "Credits and sources" = "reference/credits.md" },
     { "Disclaimer" = "reference/disclaimer.md" },

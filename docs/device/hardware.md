@@ -2,7 +2,7 @@
 
 What the device actually is, as it reports itself: the SoC and cores, the GPU, memory and storage, the display, the partition map, the sensors and the HALs. Useful for performance work in Android Studio, for knowing which partition is which before any low-level step, and for checking that another unit is the same hardware.
 
-Everything here was produced by `.\dev\Dump-DeviceInfo.ps1` on unit 2 (2026-11-16, the build on the [validation page](validation.md)). The script's raw dumps contain identifiers (serial, IMEI, MAC addresses, installed apps) and stay in `work\device-info\`, which is git-ignored; this page is the curated, identifier-free summary.
+Everything here was produced by the inventory command, now `aosp-academy device info`, on unit 2 on the stock system (2026-11-16, the build in the [validation record](index.md#validation-record)). The command's raw dumps contain identifiers (serial, IMEI, MAC addresses, installed apps) and stay in `work/device-info/`, which is git-ignored; this page is the curated, identifier-free summary.
 
 ## Identity
 
@@ -20,10 +20,10 @@ Everything here was produced by `.\dev\Dump-DeviceInfo.ps1` on unit 2 (2026-11-1
 
 | | |
 | --- | --- |
-| CPU | 8 cores: **6 × Cortex-A55 @ 2.0 GHz** (cpu0–5) and **2 × Cortex-A76 @ 2.4 GHz** (cpu6–7). ARM part ids 0xd05 / 0xd0b. Big-core work lands on cpu6–7, which is what to look for in a [Perfetto trace](../develop/tracing.md). |
+| CPU | 8 cores: **6 × Cortex-A55 @ 2.0 GHz** (cpu0–5) and **2 × Cortex-A76 @ 2.4 GHz** (cpu6–7). ARM part ids 0xd05 / 0xd0b. Big-core work lands on cpu6–7, which is what to look for in a [Perfetto trace](../apps/tracing.md). |
 | GPU | ARM **Mali-G57 MC2**, OpenGL ES 3.2 (driver r38p1) |
 | RAM | 7.5 GiB visible to the kernel (an 8 GB part) |
-| Virtualization | **Not available.** No `ro.boot.hypervisor.*` properties, no `/dev/kvm`, no `com.android.virt` APEX, so Android 16's built-in Linux Terminal can't run; see [Linux on the device](dev-setup.md#linux-on-the-device). |
+| Virtualization | **Not available.** No `ro.boot.hypervisor.*` properties, no `/dev/kvm`, no `com.android.virt` APEX, so Android 16's built-in Linux Terminal can't run; see [Linux on the device](stock.md#linux-on-the-device). |
 
 ## Storage and partitions
 
@@ -77,7 +77,7 @@ Those add up to roughly 6.6 GB of the 10.9 GB `super`, leaving about **4 GB unal
     tzapp_a/b         16     userdata      109232     utags            0.5     utagsBackup      0.5
     vbmeta_a/b         8     vbmeta_system_a/b  8     vcp_a/b            6     vendor_boot_a/b   64
     ```
-    Sizes in MiB. `preloader_*` entries are aliases of the two UFS boot LUNs rather than `sdc` partitions. The full table with block-device names is in `work\device-info\<run>\partitions.txt` after running the dump.
+    Sizes in MiB. `preloader_*` entries are aliases of the two UFS boot LUNs rather than `sdc` partitions. The full table with block-device names is in `work/device-info/<run>/partitions-byname.txt` and `partitions-proc.txt` after running the inventory.
 
 ## Display
 
@@ -108,12 +108,14 @@ The kernel reports a design capacity of **5,130 mAh** (`charge_full_design`). Th
 
 ## Platform services
 
-`lshal` lists **89 HAL interfaces**. Beyond the ones above: audio 6.0/7.x, boot control 1.0–1.2 (what `bootctl` talks to in [Stage 4](walkthrough.md#stage-4-if-an-update-is-staged)), gatekeeper, graphics allocator/mapper 4.0, thermal 1.0/2.0, sound trigger 2.x, and the usual `android.hidl.*` plumbing. The vendor's own `vendor.mediatek.*` interfaces sit alongside. `lshal` as root on the device prints the live list.
+`lshal` lists **89 HAL interfaces**. Beyond the ones above: audio 6.0/7.x, boot control 1.0–1.2 (what `bootctl` talks to in [the preparation walkthrough](walkthrough.md)), gatekeeper, graphics allocator/mapper 4.0, thermal 1.0/2.0, sound trigger 2.x, and the usual `android.hidl.*` plumbing. The vendor's own `vendor.mediatek.*` interfaces sit alongside. `lshal` as root on the device prints the live list.
 
 ## Re-generate this page
 
-```powershell
-.\dev\Dump-DeviceInfo.ps1          # writes work\device-info\<timestamp>\ and prints the summary
+```sh
+aosp-academy device info                 # writes work/device-info/<timestamp>/ and prints the summary
+aosp-academy device info --label gsi     # the same, with a label in the folder name
+aosp-academy device info --bugreport     # adds a full adb bugreport (several minutes)
 ```
 
-Run it on a new unit to check it matches, or after a firmware change. Copy facts from the printed summary, never from the raw files, and keep serial numbers, IMEIs, MAC addresses and display unique ids out of the docs; the pre-commit hook blocks the obvious ones but not all.
+Run it on a new unit to check it matches, or after a firmware change. It is read-only, and it needs root on the phone for the device tree, the partition lists and `lshal` (without root those files say `(no root)`). The printed summary is also saved as `summary.txt` next to the raw dumps. Copy facts from the summary, never from the raw files, and keep serial numbers, IMEIs, MAC addresses and display unique ids out of the docs; the pre-commit hook blocks the obvious ones but not all.

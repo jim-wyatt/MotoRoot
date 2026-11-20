@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Framework defaults for the aosp-academy image. Names and meanings are those of
+     frameworks/base/core/res/res/values/config.xml; only what we change is listed. -->
+<resources>
+    <!-- Dark theme by default: 0 auto, 1 light, 2 dark (UiModeManager). -->
+    <integer name="config_defaultNightMode">2</integer>
+    <!-- Gesture navigation by default: 0 three-button, 1 two-button, 2 gestural. -->
+    <integer name="config_navBarInteractionMode">2</integer>
+    <!-- Default holders of the DIALER and SMS roles: the Fossify apps bundled in the image. -->
+    <string name="config_defaultDialer" translatable="false">org.fossify.phone</string>
+    <string name="config_defaultSms" translatable="false">org.fossify.messages</string>
+    <!-- Network time from the NTP Pool Project instead of time.android.com. -->
+    <string-array name="config_ntpServers" translatable="false">
+        <item>ntp://pool.ntp.org</item>
+    </string-array>
+</resources>

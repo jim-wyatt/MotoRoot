@@ -1,75 +1,75 @@
-# Development environment
+# Working on this repository
 
-A reproducible Windows setup for working on this project and building Android software for the prepared XT2617V. Every version and download is pinned, with hashes, in [dev/toolchain.json](dev/toolchain.json). The user-facing documentation is the site built from `docs/`; this file is the short reference for people working on the repository itself.
+The user-facing documentation is the site built from `docs/` ([online](https://jim-wyatt.github.io/aosp-academy/)). This file is the short reference for changing the repository itself. Set up a workstation first (`aosp-academy setup`, see [docs/start/workstation.md](docs/start/workstation.md)); the commands below assume a shell from `aosp-academy shell`, at the repository root (`.\aosp-academy` on Windows, `./aosp-academy` elsewhere).
 
-## Quick start
+## Tests and checks
 
-```powershell
-Set-ExecutionPolicy -Scope Process Bypass
-.\dev\Bootstrap-DevEnv.ps1 -AndroidStudio      # idempotent; re-run any time
-. .\dev\Enter-DevShell.ps1                      # in every new window
-.\dev\Build-Device.ps1                          # rebuild helpers + modules, compare with the committed copies
-.\dev\Test-DevEnv.ps1                           # end-to-end self-test; exit code = failures
-.\dev\Test-Device.ps1                           # the same for the phone: root, logs, NDK, app install, Perfetto, Frida, scrcpy
+```text
+aosp-academy check                                  # the workstation end to end; exit code = failures
+python -I -m unittest discover -s tests             # the package's unit tests (no phone, no network)
+python -I -m unittest discover -s stock/modules -p "test_*.py"   # the module builder and the committed ZIPs
+aosp-academy device test                            # the phone side: root, logs, NDK, app, debug, trace, Frida, scrcpy
+aosp-academy docs build                             # the site, --strict
 ```
 
-`Test-DevEnv.ps1` exercises every tool, not just its version. It compiles and dexes the helpers, decompiles with jadx, cross-compiles an aarch64 Android 16 binary with the NDK, builds the docs site, imports val-protocol, re-verifies every pinned input, and checks the git safety settings (hook active, private paths ignored, no-reply commit email). It reports `origin`'s visibility but doesn't require it to be private: the repository is public by design, and the ignore rules plus the hook are what keep device data out of it. It never talks to the phone and never starts an ADB server.
+`check` uses each tool rather than reading its version, and runs the unit tests, the stock rebuild, the docs build and the shell-script checks. It never talks to the phone and never starts an ADB server. `device test` is its other half, on the connected phone, and `deploy` runs it after every install.
 
-In VS Code, the default terminal profile **VedoTom dev shell** dot-sources `Enter-DevShell.ps1` for you. The tasks in `.vscode/tasks.json` run the bootstrap, the rebuild (the default build task, Ctrl+Shift+B), the self-test and scrcpy.
+CI (`.github/workflows/checks.yml`) runs what needs no SDK, phone or AOSP tree: the module builder test, `toolchain.json` as JSON, every shell script for LF line endings, `bash -n` and ShellCheck errors, the pre-commit hook's own test (`bash .githooks/test-pre-commit.sh`), the unit tests, and `./aosp-academy --help`. `.github/workflows/docs.yml` builds the site on every push and pull request and publishes it from `main`.
 
-Add `-AcceptAndroidSdkLicenses` only after reading Google's Android SDK terms. Without it, the script asks you to accept them interactively.
+The package uses the **standard library only**: don't add a dependency that needs `pip install`. Describe a command in the docs only from what `aosp_academy/cli.py` and the module code do.
 
-## Layout
+## Pins
 
-| Folder | Contents |
-| --- | --- |
-| `device/` | Files the procedure sends to the device: `helpers/` (two `app_process` programs, source and DEX), `modules/` (seven Magisk modules, their manifests, and `build_modules.py`), `scripts/Prepare-MagiskImage.ps1`. Generic to the model, never to a unit. |
-| `dev/` | The PC side: `toolchain.json`, bootstrap, dev shell, self-test, `Build-Device.ps1`. Generated tool folders inside it are git-ignored. |
-| `docs/` | The documentation site. `docs/device/` is the authoritative procedure. |
-| `work/` | Downloads, venvs, backups, outputs. Git-ignored in full and blocked by the hook. |
+Every version and download is pinned, with its hash, in `toolchain.json`; nothing else names a version. To change one:
 
-## What you get
+1. Take the new URL and hash from the publisher (for SDK packages and platform-tools, Google's `repository2-3.xml`; for F-Droid and Fossify APKs, F-Droid's signed index, with the signing certificate as `signerSha256`).
+2. Edit `toolchain.json`, keeping its `_note` current: what the pin was and why it moved.
+3. Delete the old file from `work/` if the name is the same (a present file that doesn't match its pin is never overwritten), re-run `aosp-academy setup` (or `aosp-academy image inputs` on the build node for `buildOnly` pins), then `aosp-academy check`.
+4. **Don't change the `inputs` section** unless you are deliberately re-validating the device procedure. Those are the exact inputs of the tested runs; record a re-validation in `docs/environment/validation.md`.
 
-| Area | Tools |
-| --- | --- |
-| Java and DEX | Microsoft OpenJDK 21; pinned R8 8.3.37 (`r8d8` function), the version the helpers are built with |
-| Android SDK | cmdline-tools, platform-tools, `platforms;android-36` (Android 16, the device's OS), build-tools 36.1.0, NDK |
-| IDE | Android Studio (optional), and VS Code with recommended extensions |
-| Device | Pinned platform-tools **37.0.1** (the tested version, first on PATH), scrcpy for mirroring and control |
-| Reverse engineering | jadx (DEX/APK decompiler), apktool (`apktool` function), 7-Zip |
-| Device inputs | DFRoot 4.7, KernelSU 3.3.1, Magisk 31.1, Test DPC QR, val-protocol at its pinned commit, all hash-checked; Motorola driver verified by signature and hash |
-| Device tools | `work\device-tools\`: Frida server (hash-pinned, must match the PC `frida` version) the F-Droid APK (for the stock system) and the 16-app Fossify suite (bundled into the vedotom_arm64 image), each hash-pinned with its signing certificate and checked by the self-test |
-| Python | `work\.venv` with val-protocol's requirements and pyasn1; `work\.venv-frida` with `frida`/`frida-tools`; `dev\.venv-docs` for the site |
-| Safety | `.githooks/pre-commit` blocks device images, keys, logs, files over 1 MiB, the private working folders, and lines that look like IMEIs or serials |
+[docs/reference/pins.md](docs/reference/pins.md) explains each section.
 
-`Enter-DevShell.ps1` puts you at the repository root and sets `$Work`, `$adb`, `$fb`, `$Backup` and `$py`, which the walkthrough's commands use directly. Device-side files are referenced relative to the root (`.\device\...`). It also defines `adbwifi` (connect over Wi-Fi), `Start-Frida` and `Stop-Frida`, and imports `dev\VedoTom.psm1`, the device helpers every phone script shares: `Assert-OneDevice`, `Invoke-RootShell` (Magisk's `su -c` on stock, AOSP's `su 0` in a DSU image; never write `su -c` by hand in a script), `Wait-DeviceBoot -AfterReboot` and `Test-GsiRunning`; `dev\Set-DevSettings.ps1` applies the development-target settings on the phone, `dev\Trace-Device.ps1` records a Perfetto trace, `dev\Dump-DeviceInfo.ps1` writes a hardware inventory to `work\device-info\` (private: it contains identifiers), and `dev\Install-Gsi.ps1` downloads (after you accept Google's terms), installs, boots once and discards the pinned AOSP GSI through DSU, or your own build with `-Image`; `dev\Get-RemoteImage.ps1` fetches a verified image from a separate build machine, and `dev\Deploy-Image.ps1` takes it all the way onto the phone. `dev\aosp\*.sh` run inside WSL to set up, sync (`android-16.0.0_r4`, the tag behind the validated GSI) and build this project's `vedotom_arm64` target, AOSP's `aosp_arm64` plus `dev\aosp\product` and `dev\aosp\patches` (`build-after-sync.sh` chains the two, logging to `work\aosp-*.log`); the tree lives on WSL's disk, never in this repo. Keep those scripts LF: WSL's bash chokes on CRLF.
+## The pre-commit hook
+
+`aosp-academy setup` sets `core.hooksPath` to `.githooks`. The hook blocks device images, installers, logs, key material, adb keys, Wi-Fi credentials, traces, recordings, native libraries, files over 1 MiB, the private working folders, and added lines that look like IMEIs or serial numbers. Change it together with its test, `.githooks/test-pre-commit.sh`. `git commit --no-verify` only for a false positive you have checked.
+
+`work/` holds everything private: `private-backups/`, `lk-analysis/`, `lk-patch-analysis/` and `magisk-patch-files/` are per-unit data, and `remote-build.json`, `wifi.json` and `adb_keys` describe your machines and network. Keep `work/` off any cloud-synced folder as well.
+
+## Keep shell scripts LF
+
+bash and the phone's `sh` read a `\r` at the end of a line as part of the command, so every `.sh` file and the hook must have LF line endings. `.gitattributes` asks git for LF on every file except `*.cmd`. On Windows, tools that rewrite files can still add CRLF: in Python, write with `newline=""` (or bytes), not in text mode with the default newline. `aosp-academy check` and CI fail on a CRLF script; `sed -i 's/\r$//' <file>` repairs one. Inside the module ZIPs, the builder packs scripts as LF, without a byte-order mark, mode 755, whatever git checked out.
 
 ## Diagrams in the docs
 
-The site renders Mermaid 12 through the theme's own loader, which wraps node labels at a width far too narrow for 16 px text (labels fold into tall columns and spill past their boxes). Every `flowchart` therefore starts with `%%{init: {"flowchart": {"wrappingWidth": 300}}}%%`; copy that line into any new diagram. Sequence diagrams don't need it. `docs/stylesheets/extra.css` keeps a diagram's host element inside the content column. To check rendering without a browser session, headless Edge works (`msedge --headless=new --screenshot=... file:///.../site/<page>/index.html`); note that it clamps the viewport to 510 px, so phone widths can't be simulated that way.
+The site renders Mermaid through the theme's own loader, which wraps node labels at a width far too narrow for 16 px text (labels fold into tall columns and spill past their boxes). Every `flowchart` therefore starts with:
 
-## Rules for phone work
+```text
+%%{init: {"flowchart": {"wrappingWidth": 300}}}%%
+```
 
-- **Close Android Studio while following the walkthrough.** Studio runs its own, newer ADB server, and two server versions fighting over one device can drop the connection mid-operation.
-- Always call `$adb` and `$fb`. They point to the tested 37.0.1 binaries.
-- `work\private-backups\`, `work\lk-analysis\`, `work\lk-patch-analysis\` and `work\magisk-patch-files\` hold per-unit data. They are git-ignored and blocked by the hook; keep them off any cloud-synced folder as well.
+Sequence diagrams don't need it. `docs/stylesheets/extra.css` keeps a diagram inside the content column. To check rendering without a browser session, headless Edge works (`msedge --headless=new --screenshot=... file:///.../site/<page>/index.html`); it clamps the viewport to 510 px, so phone widths can't be simulated that way.
 
-## Changing pinned versions
+The site builds with `--strict`: every nav entry, link and anchor must resolve. Link between pages with relative `.md` links, and to repository files with full GitHub URLs.
 
-1. Edit `dev/toolchain.json` with the new URL and hash, taken from the publisher (for SDK packages, Google's `repository2-3.xml`).
-2. Re-run the bootstrap. A file that is present but doesn't match its pin is never silently overwritten.
-3. **Don't change the `inputs` section's pins** unless you are deliberately re-validating the device procedure. Those are the exact inputs from the tested runs; record a re-validation on `docs/device/validation.md`.
+## Rebuilding the stock artifacts
 
-## Rebuilding the device artifacts
+The two helper DEX files and the seven module ZIPs in `stock/` are committed build outputs, so the walkthrough can push them straight to the phone.
 
-`Build-Device.ps1` rebuilds the two helper DEX files and the seven module ZIPs into `dev/build/` and reports whether each matches the committed copy in `device/`. Module builds are deterministic (fixed entry order and timestamps), so they are compared by hash; helpers are compared byte for byte, and a mismatch there usually means a different `javac` build changed the debug line tables, not the behaviour. `-Promote` copies the rebuilt files over the committed ones; review `git diff` and commit the source and artifact together.
+```text
+aosp-academy stock build             # rebuild into work/build/stock and compare with stock/
+aosp-academy stock build --promote   # copy the changed ones over the committed copies
+```
 
-## The modules
+Helpers are built with `javac --release 8` and the pinned R8's D8, and compared byte for byte; a mismatch usually means a different `javac` build changed the debug line tables, not the bytecode. Modules are built by `stock/modules/build_modules.py` from `stock/modules/manifests/*.json`, deterministically (fixed entry order and timestamps). There are two kinds: **overlay** modules list `packages` (the builder refuses any path outside the `/product` and `/system_ext` app directories), and **script** modules name Magisk lifecycle scripts under `stock/modules/scripts/`. Each ZIP carries its manifest as `manifest.json`, so a module found later describes itself. `stock/modules/test_build_modules.py` checks that every committed ZIP holds exactly what its manifest builds (entry by entry: names, timestamps, modes, contents; not the archive hash, because deflate output differs between zlib builds) and that malformed manifests are refused. Review `git diff` and commit the source and the artifact together.
 
-All seven modules are generated from `device/modules/manifests/*.json` by `device/modules/build_modules.py`. Two kinds: **overlay** modules list `packages` (the builder validates every path and refuses anything outside `/product` and `/system_ext` app directories), and **script** modules name Magisk lifecycle scripts under `device/modules/scripts/` (packed as LF, no BOM, mode 755 regardless of how git checked them out; the self-test verifies that). To hide a different set of apps, add a manifest: find each package's APK with `& $adb shell pm path <package>`, record its directory as `hidden_directory`, rebuild, and reinstall. Each ZIP carries its manifest as `manifest.json`, so a module found later is self-describing. `device/modules/test_build_modules.py` (standard-library `unittest`) checks that every committed ZIP holds exactly what its manifest builds (entry by entry: names, timestamps, modes, contents; the deflate bytes can differ between zlib builds, so not the archive hash) and that malformed manifests are refused; it runs in the self-test and in CI (`.github/workflows/checks.yml`, which also syntax-checks every shell and PowerShell script). The two development modules (`dev_debuggable`, `dev_adb_tcp`) are documented in `docs/device/dev-setup.md`.
+## The image
 
-## Legal
+The product (`image/product/aospacademy/gsi/`), the patches (`image/patches/`, one upstream project per file, `<project-path-with-dashes>-NNNN-<what>.patch`) and the build wrappers (`image/build/`) change through the change loop: on a branch, built by the build node (`aosp-academy image build`), deployed and verified by the device node (`aosp-academy deploy`), then merged. See [docs/environment/](docs/environment/index.md). The AOSP tree lives on the build node, never in this repository.
+
+## Legal files
 
 - `LICENSE`: MIT, for the project.
-- `NOTICE.md`: the original MIT notice for the parts derived from parsimo2010's guide, and the licenses of the third-party software the bootstrap downloads.
-- `DISCLAIMER.md`: the terms of use. Keep `docs/reference/disclaimer.md` identical to it.
+- `NOTICE.md`: the original MIT notice for the parts derived from parsimo2010's guide, and the licenses of the third-party software `setup` downloads.
+- `DISCLAIMER.md`: the terms of use. `docs/reference/disclaimer.md` is the same text, differing only in its links (site-relative and GitHub URLs) and in saying that it is a copy; change both together.
+
+The project's name, and the image's, carry no trademarks: no "Android", "Moto", "droid" or other marks.

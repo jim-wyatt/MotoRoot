@@ -1,15 +1,15 @@
 # Third-party notices
 
-VedoTom is licensed under the [MIT License](LICENSE). It incorporates and builds on the work listed here. Nothing in this file changes those works' licenses; it records them.
+aosp-academy is licensed under the [MIT License](LICENSE). It incorporates and builds on the work listed here. Nothing in this file changes those works' licenses; it records them.
 
 ## Device-preparation procedure, helpers and modules (parsimo2010, MIT)
 
 The following parts of this repository are derived from the **Moto G Power 2026 Straight Talk WiFi and persistent root guide** by **parsimo2010**, imported from <https://github.com/parsimo2010/moto-g-power-2026-straight-talk-wifi-root-guide> at commit `9526ee0805a4c4a76ddb86908ae2c5599f32107c` ("guide kit version 1", 2026-11-14), and since restructured, documented and extended by this project:
 
-- the device-preparation procedure in `docs/device/` (walkthrough, maintenance, validation), which absorbs the original `GUIDE.md`, `README.md` and `VALIDATION.md`;
-- the helper programs in `device/helpers/` (`UpdateHelper.java`, `UpdaterCleanup.java`);
-- the `wifi-ota-guard` and `wifi-carrier-debloat` modules and the carrier package manifest in `device/modules/`, and the module builder they are generated with;
-- `device/scripts/Prepare-MagiskImage.ps1`.
+- the device-preparation procedure in `docs/device/` (the walkthrough and the stock system) and `docs/environment/validation.md`, which absorbs the original `GUIDE.md`, `README.md` and `VALIDATION.md`;
+- the helper programs in `stock/helpers/` (`UpdateHelper.java`, `UpdaterCleanup.java`);
+- the `wifi-ota-guard` and `wifi-carrier-debloat` modules and the carrier package manifest in `stock/modules/`, and the module builder they are generated with;
+- the Magisk image preparation, now `aosp-academy stock magisk-image` in `aosp_academy/stock.py`.
 
 The original author's license follows and continues to apply to those portions:
 
@@ -41,11 +41,11 @@ Referenced third-party projects retain their own licenses. Their firmware,
 APKs, and source implementations are not bundled.
 ```
 
-The `wifi-extra-debloat` module, the development environment in `dev/`, and the rest of the documentation were written for this project.
+The `wifi-extra-debloat` module, the development environment (`aosp_academy/`, `image/`, `toolchain.json`), and the rest of the documentation were written for this project.
 
 ## Software the procedure downloads (not redistributed)
 
-`dev/Bootstrap-DevEnv.ps1` downloads each of these from its publisher and verifies it against the hash recorded in `dev/toolchain.json`. None of them is included in this repository, none is modified, and none of their authors is affiliated with or endorses this project. Each is governed by its own license and terms; check the linked project for the current text.
+`aosp-academy setup` downloads each of these from its publisher and verifies it against the hash recorded in `toolchain.json`. None of them is included in this repository, none is modified, and none of their authors is affiliated with or endorses this project. Each is governed by its own license and terms; check the linked project for the current text.
 
 | Project | Author / publisher | License (as published by the project) | Used for |
 | --- | --- | --- | --- |

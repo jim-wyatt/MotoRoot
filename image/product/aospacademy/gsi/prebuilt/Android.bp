@@ -1,0 +1,150 @@
+// Prebuilt apps bundled into the product partition of the aosp-academy image.
+//
+// The APK files are not in the repository: image/build/apply-local.sh copies them here from
+// work/device-tools/, where the bootstrap downloads them against the SHA-256 and signing-
+// certificate pins in toolchain.json (apks.txt maps each module's file to its pinned name).
+// They are installed as they came from F-Droid: `preprocessed: true` tells Soong the APK is
+// already zip-aligned with its native libraries stored uncompressed, so it is checked and copied
+// rather than rewritten, and the publisher's signature stays intact. Dex pre-optimisation is off
+// for the same reason.
+
+package {
+    default_applicable_licenses: ["device_aospacademy_gsi_prebuilt_license"],
+}
+
+// The apps are GPL-3.0 (the Fossify suite); the declaration here covers the build glue only. Each app's own license travels inside its APK.
+license {
+    name: "device_aospacademy_gsi_prebuilt_license",
+    visibility: [":__subpackages__"],
+    license_kinds: [
+        "SPDX-license-identifier-GPL-3.0-only",
+    ],
+}
+
+android_app_import {
+    name: "FossifyLauncher",
+    apk: "FossifyLauncher.apk",
+    preprocessed: true,
+    product_specific: true,
+    dex_preopt: { enabled: false },
+}
+
+android_app_import {
+    name: "FossifyGallery",
+    apk: "FossifyGallery.apk",
+    preprocessed: true,
+    product_specific: true,
+    dex_preopt: { enabled: false },
+}
+
+android_app_import {
+    name: "FossifyFileManager",
+    apk: "FossifyFileManager.apk",
+    preprocessed: true,
+    product_specific: true,
+    dex_preopt: { enabled: false },
+}
+
+android_app_import {
+    name: "FossifyDocuments",
+    apk: "FossifyDocuments.apk",
+    preprocessed: true,
+    product_specific: true,
+    dex_preopt: { enabled: false },
+}
+
+android_app_import {
+    name: "FossifyCalendar",
+    apk: "FossifyCalendar.apk",
+    preprocessed: true,
+    product_specific: true,
+    dex_preopt: { enabled: false },
+}
+
+android_app_import {
+    name: "FossifyContacts",
+    apk: "FossifyContacts.apk",
+    preprocessed: true,
+    product_specific: true,
+    dex_preopt: { enabled: false },
+}
+
+android_app_import {
+    name: "FossifyPhone",
+    apk: "FossifyPhone.apk",
+    preprocessed: true,
+    product_specific: true,
+    dex_preopt: { enabled: false },
+}
+
+android_app_import {
+    name: "FossifyMessages",
+    apk: "FossifyMessages.apk",
+    preprocessed: true,
+    product_specific: true,
+    dex_preopt: { enabled: false },
+}
+
+android_app_import {
+    name: "FossifyClock",
+    apk: "FossifyClock.apk",
+    preprocessed: true,
+    product_specific: true,
+    dex_preopt: { enabled: false },
+}
+
+android_app_import {
+    name: "FossifyCalculator",
+    apk: "FossifyCalculator.apk",
+    preprocessed: true,
+    product_specific: true,
+    dex_preopt: { enabled: false },
+}
+
+android_app_import {
+    name: "FossifyNotes",
+    apk: "FossifyNotes.apk",
+    preprocessed: true,
+    product_specific: true,
+    dex_preopt: { enabled: false },
+}
+
+android_app_import {
+    name: "FossifyMusicPlayer",
+    apk: "FossifyMusicPlayer.apk",
+    preprocessed: true,
+    product_specific: true,
+    dex_preopt: { enabled: false },
+}
+
+android_app_import {
+    name: "FossifyCamera",
+    apk: "FossifyCamera.apk",
+    preprocessed: true,
+    product_specific: true,
+    dex_preopt: { enabled: false },
+}
+
+android_app_import {
+    name: "FossifyVoiceRecorder",
+    apk: "FossifyVoiceRecorder.apk",
+    preprocessed: true,
+    product_specific: true,
+    dex_preopt: { enabled: false },
+}
+
+android_app_import {
+    name: "FossifyPaint",
+    apk: "FossifyPaint.apk",
+    preprocessed: true,
+    product_specific: true,
+    dex_preopt: { enabled: false },
+}
+
+android_app_import {
+    name: "FossifyKeyboard",
+    apk: "FossifyKeyboard.apk",
+    preprocessed: true,
+    product_specific: true,
+    dex_preopt: { enabled: false },
+}

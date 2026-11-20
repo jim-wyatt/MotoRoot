@@ -1,0 +1,3 @@
+#!/bin/sh
+# aosp-academy launcher for Linux and macOS: runs the package from this checkout.
+exec python3 -I "$(dirname "$0")/aosp_academy/_launch.py" "$@"

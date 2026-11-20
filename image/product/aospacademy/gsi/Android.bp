@@ -1,0 +1,160 @@
+// The Soong definition of the aosp-academy system image.
+//
+// Since Android 16, AOSP builds the GSI's system.img from a Soong android_system_image module whose
+// dependency list must match what the product makefiles install, or the build stops
+// (build/make/tools/filelistdiff). Upstream's aosp_system_image and its android_gsi_defaults
+// (build/make/target/product/gsi/Android.bp) name the AOSP apps that the Fossify suite
+// replaces, and Soong lists cannot be subtracted from, so both are mirrored here with the
+// replaced apps left out and this project's modules added. Keep the two in step with upstream
+// when the tag moves: the diff tool will say exactly what drifted.
+
+package {
+    default_applicable_licenses: ["device_aospacademy_gsi_image_license"],
+}
+
+license {
+    name: "device_aospacademy_gsi_image_license",
+    visibility: [":__subpackages__"],
+    license_kinds: ["SPDX-license-identifier-MIT"],
+}
+
+aospacademy_gsi_symlinks = [
+    {
+        target: "/system/system_ext",
+        name: "system_ext",
+    },
+    {
+        target: "/system/product",
+        name: "product",
+    },
+    {
+        target: "/odm/odm_dlkm/etc",
+        name: "odm_dlkm/etc",
+    },
+    {
+        target: "/vendor/vendor_dlkm/etc",
+        name: "vendor_dlkm/etc",
+    },
+]
+
+// android_gsi_defaults without Browser2 (no browser in the image), Camera2, Dialer and messaging
+// (Fossify Camera, Phone, Messages).
+android_filesystem_defaults {
+    name: "aospacademy_gsi_defaults",
+    defaults: [
+        "system_image_defaults",
+        "system_ext_image_defaults",
+        "product_image_defaults",
+    ],
+    symlinks: aospacademy_gsi_symlinks,
+    dirs: ["cache"],
+    deps: [
+        // gsi_system_ext: handheld packages
+        "Launcher3QuickStep",
+        "Provision",
+        "Settings",
+        "StorageManager",
+        "SystemUI",
+        "preinstalled-packages-handheld-system-ext.xml",
+        // telephony packages
+        "CarrierConfig",
+        "preinstalled-packages-gsi-system-ext.xml", // new in android-17.0.0_r1
+
+        // gsi_release
+        "gsi_skip_mount.cfg",
+        "init.gsi.rc",
+        "init.vndk-nodef.rc",
+        "gsi_overlay_framework",
+        "gsi_overlay_systemui",
+
+        // VNDK
+        "com.android.vndk.v31",
+        "com.android.vndk.v32",
+        "com.android.vndk.v33",
+        "com.android.vndk.v34",
+
+        // gsi_product, minus Browser2, Camera2, Dialer, messaging
+        "LatinIME",
+        "apns-full-conf.xml",
+        "frameworks-base-overlays",
+        "preinstalled-packages-base-product.xml", // new in android-17.0.0_r1
+
+        // New in android-17.0.0_r1 (gsi_release.mk adds them for devices that shipped at API 34
+        // or older; this vendor is API 33).
+        // PRODUCT_PACKAGES_SHIPPING_API_LEVEL_33
+        "wificond",
+        // PRODUCT_PACKAGES_SHIPPING_API_LEVEL_34
+        "hwservicemanager",
+        "android.hidl.allocator@1.0-service",
+    ],
+    multilib: {
+        // No lib64 com.android.compos (AVF): aospacademy_arm64.mk doesn't inherit the
+        // Virtualization product packages.
+        both: {
+            // PRODUCT_PACKAGES_SHIPPING_API_LEVEL_34
+            deps: ["android.hidl.memory@1.0-impl"],
+        },
+    },
+    type: "ext4",
+}
+
+// aosp_system_image without Calendar, Contacts, DeskClock, Gallery2, Music and QuickSearchBox,
+// plus this project's modules (aospacademy_arm64.mk installs the same set).
+android_system_image {
+    name: "aospacademy_system_image",
+    defaults: ["aospacademy_gsi_defaults"],
+    deps: [
+        // handheld_system_ext
+        "AccessibilityMenu",
+        "AvatarPicker", // android-17.0.0_r1 lists it here, not under handheld_product
+        "WallpaperCropper",
+
+        // telephony_system_ext
+        "EmergencyInfo",
+        "preinstalled-packages-platform-telephony-system-ext.xml", // new in android-17.0.0_r1
+
+        // handheld_product (aospacademy_handheld_product.mk)
+        "preinstalled-packages-platform-handheld-product.xml",
+        "SettingsIntelligence",
+        "frameworks-base-overlays",
+
+        // telephony_product without Dialer (aospacademy_product.mk)
+        "ImsServiceEntitlement",
+        "preinstalled-packages-platform-telephony-product.xml",
+        "preinstalled-packages-telephony-system-ext.xml", // new in android-17.0.0_r1
+
+        // more AOSP packages (aospacademy_product.mk), without PhotoTable
+        "initial-package-stopped-states-aosp.xml",
+        "preinstalled-packages-platform-aosp-product.xml",
+        "ThemePicker",
+
+        // aosp-academy (aospacademy_arm64.mk)
+        "AospAcademyFrameworkOverlay",
+        "AospAcademyNetworkStackOverlay",
+        "FossifyLauncher",
+        "FossifyGallery",
+        "FossifyFileManager",
+        "FossifyDocuments",
+        "FossifyCalendar",
+        "FossifyContacts",
+        "FossifyPhone",
+        "FossifyMessages",
+        "FossifyClock",
+        "FossifyCalculator",
+        "FossifyNotes",
+        "FossifyMusicPlayer",
+        "FossifyCamera",
+        "FossifyVoiceRecorder",
+        "FossifyPaint",
+        "FossifyKeyboard",
+        "aospacademy-firstboot",
+        "init.aospacademy.rc",
+    ] + select(product_variable("debuggable"), {
+        true: ["frameworks-base-overlays-debug"],
+        default: [],
+    }),
+    enabled: select(soong_config_variable("gsi", "building_gsi"), {
+        true: true,
+        default: false,
+    }),
+}

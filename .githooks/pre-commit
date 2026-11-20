@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Blocks commits that could publish device data from this phone project.
-# Enabled by dev/Bootstrap-DevEnv.ps1 (git config core.hooksPath .githooks).
+# Enabled by aosp-academy setup (git config core.hooksPath .githooks).
 # If a block is a false positive and you have checked the file: git commit --no-verify
 
 max_bytes=$((1024 * 1024))
@@ -9,7 +9,7 @@ block() { echo "pre-commit: BLOCKED $1" >&2; fail=1; }
 
 while IFS= read -r -d '' f; do
   case "$f" in
-    work/*|*/private-backups/*|private-backups/*|backups/*|diagnostics/*|private/*|lk-analysis/*|lk-patch-analysis/*|magisk-patch-files/*|dev/.cache/*|dev/.tools/*|dev/build/*|dev/.venv-docs/*|site/*|\
+    work/*|*/private-backups/*|private-backups/*|backups/*|diagnostics/*|private/*|lk-analysis/*|lk-patch-analysis/*|magisk-patch-files/*|work/cache/*|work/tools/*|work/build/*|work/.venv-docs/*|site/*|\
     traces/*|*/traces/*|blobs/*|*/blobs/*|extracted/*|*/extracted/*|captures/*|*/captures/*|screenshots/*|*/screenshots/*|.venv*/*|*/.venv*/*)
       block "$f (private or generated folder)"; continue ;;
   esac

@@ -1,73 +1,76 @@
 # Git workflow
 
-How this repository is organized for safety, and the commands you'll use day to day.
+How this repository is organized for safety, how a change moves through it, and the commands you'll use day to day.
 
 ## The layout, and why
 
 ```text
-VedoTom/
-├── device/  what goes to the device: helpers, modules + manifests + builder, the Magisk prep script
-├── dev/     the PC side: bootstrap, dev shell, self-test, artifact rebuild
-├── docs/    this site, including the full device procedure
-└── work/    everything local and private — git-ignored in full
+aosp-academy/
+├── aosp_academy/   the command line            (generic: no unit, no network, no person)
+├── image/          the image's product, patches and build wrappers
+├── stock/          the stock system's helpers and modules
+├── tests/ docs/    unit tests; this site
+├── toolchain.json  every pin
+└── work/           everything local and private: git-ignored in full
 ```
 
-The split exists so the **one rule** is easy to keep: nothing private ever gets committed. All downloads, backups and build outputs go in `work/`, which is ignored wholesale. Everything in `device/` and `dev/` is generic to the model, never to your unit.
+The split exists so the **one rule** is easy to keep: nothing private ever gets committed. All downloads, backups, build outputs and private settings (the build node's address, your Wi-Fi details, adb keys) go in `work/`, which is ignored wholesale. Everything outside it is generic to the model, never to your unit or your network.
 
 ## The safety net
 
 Two layers stop device data reaching version control:
 
-1. **`.gitignore`** ignores `work/`, all image/key/log types, and the build outputs.
-2. **A pre-commit hook** (`.githooks/pre-commit`, enabled by the bootstrap) blocks a commit if it contains device images, keystores, local secrets, files over 1 MiB, the private working folders, or lines that look like an IMEI or serial.
+1. **`.gitignore`** ignores `work/`, every image, key, log and trace type, and the build outputs, wherever they turn up.
+2. **A pre-commit hook** (`.githooks/pre-commit`, enabled by `aosp-academy setup`) blocks a commit if it contains device images, installers, logs, key material, adb keys, Wi-Fi credentials, traces, screen recordings, native libraries pulled from a device, files over 1 MiB, the private working folders, or added lines that look like an IMEI or a serial number.
 
 ```mermaid
 %%{init: {"flowchart": {"wrappingWidth": 300}}}%%
 flowchart LR
     S[git commit] --> H{pre-commit hook}
-    H -->|device image / key / IMEI-like| X[blocked]
+    H -->|image, key, trace, IMEI-like line| X[blocked]
     H -->|clean| C[commit proceeds]
 ```
 
-A fresh clone isn't protected until the hook is enabled, which `Bootstrap-DevEnv.ps1` does via `git config core.hooksPath .githooks`. If you ever need to bypass a false positive on a file you've checked, `git commit --no-verify`, sparingly.
+A fresh clone isn't protected until the hook is enabled, which `setup` does with `git config core.hooksPath .githooks`. If the hook blocks a file you have checked and know to be safe, `git commit --no-verify` bypasses it, sparingly. `.githooks/test-pre-commit.sh` tests the hook in a throwaway repository (every forbidden kind of file must be blocked, ordinary files must pass), and CI runs it.
 
-The [self-test](environment.md) verifies all of this: hook active, private paths ignored, and that the commit email is a GitHub no-reply address. It reports the `origin` repository's visibility but doesn't require it to be private: this is a public project, and the ignore rules plus the hook are what keep device data out of it.
+`aosp-academy check` verifies all of this on your workstation: the hook is active, a list of private paths is ignored, and the commit email is a GitHub no-reply address, so your own email address doesn't end up in a public history. The repository is public by design; the ignore rules and the hook are what keep device data out of it.
+
+## How a change moves
+
+Every change goes on a branch and is merged into `main` once it has been checked. For a change to the image or to a build input, "checked" means the [change loop](../environment/index.md): the build node builds the branch, the device node deploys the image and verifies it, then the branch is merged. Build requests name a branch and a commit, so the image on the phone can always be traced to its source.
+
+```bash
+git switch main && git pull
+git switch -c my-change        # a branch for anything non-trivial
+# ... edit ...
+aosp-academy check             # the workstation side still passes
+git add -p                     # review each hunk
+git commit -m "What and why"   # the hook runs automatically
+git push -u origin my-change   # then open a pull request
+```
+
+Pull requests run two workflows. **Checks** (`.github/workflows/checks.yml`) needs no SDK, phone or AOSP tree: it rebuilds the Magisk modules and compares them with the committed ZIPs, checks that `toolchain.json` is valid JSON, checks every shell script for LF line endings, `bash -n` and ShellCheck errors, tests the pre-commit hook, runs the package's unit tests, and checks that `./aosp-academy --help` loads. **Documentation** (`.github/workflows/docs.yml`) builds this site with `zensical build --strict`.
 
 ## Where the procedure came from
 
-The device procedure, helpers and first two modules were imported from [parsimo2010's guide](credits.md) and then integrated into this project rather than mirrored. There is no `upstream` remote to track; if the original author publishes a change worth adopting, read it and apply it here deliberately, then update the [validation page](../device/validation.md) if it changes what has been tested. `NOTICE.md` records the imported commit.
+The device procedure, the helpers and the first two modules were imported from [parsimo2010's guide](credits.md) and then integrated into this project rather than mirrored. There is no `upstream` remote to track. If the original author publishes a change worth adopting, read it and apply it here deliberately, then update the [validation page](../environment/validation.md) if it changes what has been tested. `NOTICE.md` records the imported commit.
 
-## Regenerating the device artifacts
+## Rebuilding the stock artifacts
 
-The helper DEX files and module ZIPs in `device/` are build outputs that are committed so the walkthrough can push them straight to the device. After changing a helper source or a module manifest:
+The helper DEX files and module ZIPs in `stock/` are build outputs, committed so the walkthrough can push them straight to the phone. After changing a helper source or a module manifest:
 
-```powershell
-.\dev\Build-Device.ps1            # rebuilds into dev\build and reports which committed copies differ
-.\dev\Build-Device.ps1 -Promote   # copies the rebuilt files over the committed ones
-git diff --stat                   # review, then commit the source and the artifact together
+```text
+aosp-academy stock build            # rebuilds into work/build/stock and reports which committed copies differ
+aosp-academy stock build --promote  # copies the rebuilt files over the committed ones
+git diff --stat                     # review, then commit the source and the artifact together
 ```
 
-Module builds are deterministic, so an unchanged manifest always reproduces the committed ZIP byte for byte. The self-test runs the same comparison.
-
-## Daily commands
-
-```powershell
-git status
-git switch -c my-change       # branch for anything non-trivial
-# ... edit ...
-git add -p                     # review each hunk
-git commit -m "message"        # hook runs automatically
-git push -u origin my-change
-```
+Module builds are deterministic, so an unchanged manifest always reproduces the committed ZIP's contents. `aosp-academy check` runs the same comparison, so an edited manifest with a stale ZIP is caught.
 
 ## Publishing the docs
 
-Pushing to `main` triggers `.github/workflows/docs.yml`, which builds the site with `zensical build --strict` and deploys it to GitHub Pages. Pull requests build but don't deploy, so a broken docs change is caught before it publishes. Build locally first with `docs` (live preview) or:
-
-```powershell
-dev\.venv-docs\Scripts\zensical build --strict --clean
-```
+Pushing to `main` runs `.github/workflows/docs.yml`, which builds the site with `zensical build --strict --clean` and deploys it to GitHub Pages at <https://jim-wyatt.github.io/aosp-academy/>. Pull requests build but don't deploy, so a broken docs change is caught before it publishes. Preview locally with `aosp-academy docs` (live reload) or build with `aosp-academy docs build`.
 
 ## If something private was committed
 
-Stop and don't push. If it's only staged, `git restore --staged <file>`. If it's in your last local commit, `git reset --soft HEAD~1` and recommit without it. If it was already pushed, the history must be rewritten and anything exposed (a key, a serial) treated as compromised, which is exactly what the hook exists to prevent.
+Stop and don't push. If it's only staged, `git restore --staged <file>`. If it's in your last local commit, `git reset --soft HEAD~1` and commit again without it. If it was already pushed, the history must be rewritten and anything exposed (a key, a serial number, a network address) treated as compromised, which is exactly what the hook exists to prevent.

@@ -48,15 +48,15 @@ mymodule.zip
 
 Install one with:
 
-```powershell
-& $adb push mymodule.zip /data/local/tmp/
-& $adb shell su -c 'magisk --install-module /data/local/tmp/mymodule.zip'
-& $adb reboot
+```sh
+adb push mymodule.zip /data/local/tmp/
+adb shell "su -c 'magisk --install-module /data/local/tmp/mymodule.zip'"
+adb reboot
 ```
 
 ## The seven modules in this project
 
-The project ships seven modules in `device/modules/`: five that hide directories, for five different reasons, and two that set properties at boot. Each is generated from a manifest in `device/modules/manifests/` by one builder, and you can rebuild all of them with `.\dev\Build-Device.ps1`.
+The project ships seven modules in `stock/modules/`: five that hide directories, for five different reasons, and two that set properties at boot. Each is generated from a manifest in `stock/modules/manifests/` by one builder, and you can rebuild all of them with `aosp-academy stock build` ([The Magisk modules](../device/modules.md)).
 
 ### `wifi-ota-guard` — hide a system app by overlaying nothing
 
@@ -72,22 +72,22 @@ The carrier module leaves a second layer of preinstalled software untouched: par
 
 ### `google-debloat` — the Google layer, once F-Droid is there
 
-The optional fourth overlay hides 27 Google packages: the Play auto-install hooks, the Google app and its hotword services, the consumer apps (Chrome, Gmail, YouTube, Maps, Photos and the rest) and the account extras. The Play Store, Play services, the keyboard, WebView and the apps with a system role stay. It is the one module whose installation has a prerequisite step, because the Play Store had updated some of these apps into `/data`; [Make it an engineering device](../device/dev-setup.md) explains that and lists everything it keeps.
+The optional fourth overlay hides 27 Google packages: the Play auto-install hooks, the Google app and its hotword services, the consumer apps (Chrome, Gmail, YouTube, Maps, Photos and the rest) and the account extras. The Play Store, Play services, the keyboard, WebView and the apps with a system role stay. It is the one module whose installation has a prerequisite step, because the Play Store had updated some of these apps into `/data`; [The stock system](../device/stock.md#hiding-the-google-apps) explains that and lists everything it keeps.
 
 ### `vendor-extras-debloat` — the rest of the vendor layer
 
-The fifth overlay hides the 58 carrier, partner and Motorola consumer packages that the first three left behind, plus Motorola's device-management and enterprise agents and Google's Mainline telemetry. Most were already uninstalled for the first user; hiding them keeps them from returning. The camera, audio, face unlock, launcher and every hardware service stay; the list and the reasoning are on [Make it an engineering device](../device/dev-setup.md).
+The fifth overlay hides the 58 carrier, partner and Motorola consumer packages that the first three left behind, plus Motorola's device-management and enterprise agents and Google's Mainline telemetry. Most were already uninstalled for the first user; hiding them keeps them from returning. The camera, audio, face unlock, launcher and every hardware service stay; the list and the reasoning are on [The stock system](../device/stock.md#the-rest-of-the-vendor-layer).
 
 ### Script modules
 
-Not every change is a file. Two optional modules in `device/modules/` carry no `system/` tree at all, only a `post-fs-data.sh` that sets a property before the rest of Android starts: `dev_debuggable` sets `ro.debuggable=1` so the device reports itself as an engineering build, and `dev_adb_tcp` makes `adbd` listen on Wi-Fi. The same builder packages them from the same kind of manifest; the manifest names the script instead of listing packages. [Make it an engineering device](../device/dev-setup.md) installs them.
+Not every change is a file. Two optional modules in `stock/modules/` carry no `system/` tree at all, only lifecycle scripts, chiefly a `post-fs-data.sh` that sets a property before the rest of Android starts: `dev_debuggable` sets `ro.debuggable=1` so the device reports itself as an engineering build, and `dev_adb_tcp` makes `adbd` listen on Wi-Fi. (`dev_debuggable` also has a `service.sh` that runs late in boot and a SELinux rule.) The same builder packages them from the same kind of manifest; the manifest names the scripts instead of listing packages. [The stock system](../device/stock.md#the-two-development-modules) describes and installs them.
 
 !!! info "`.replace` — the empty-overlay trick"
-    The three Wi-Fi modules use Magisk's documented convention: a special `.replace` marker in a module directory tells Magisk to overlay that whole path as empty, hiding whatever the system shipped there. It's the cleanest possible "remove without removing".
+    The five overlay modules use Magisk's documented convention: a special `.replace` marker in a module directory tells Magisk to overlay that whole path as empty, hiding whatever the system shipped there. It's the cleanest possible "remove without removing".
 
 !!! note "Modules live in `/data`"
     Magisk keeps installed modules in `/data/adb/modules`. They survive reboots, but a **factory reset** wipes `/data` and takes the modules with it. Reinstall them afterwards.
 
-You'll build your own module in [Build a system module](../develop/magisk-modules.md).
+You'll build your own module in [The Magisk modules](../device/modules.md).
 
 Next: [Device provisioning](device-provisioning.md).

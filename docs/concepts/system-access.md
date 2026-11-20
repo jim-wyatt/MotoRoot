@@ -4,7 +4,7 @@
 
 ## Android is Linux, and Linux has users
 
-Every process on Android runs as a numbered **user id (uid)**. You met two of them in [your first ADB session](../start/first-adb-session.md):
+Every process on Android runs as a numbered **user id (uid)**. You met two of them in [your first session](../start/first-session.md):
 
 - `uid=2000(shell)` — the account `adb shell` gives you. Deliberately limited.
 - Each app gets its **own** uid (like `u0_a123`), and the Linux kernel stops one uid from touching another's files. That per-app isolation *is* the Android app sandbox.
@@ -59,6 +59,10 @@ After the bootloader is unlocked, the procedure installs **Magisk** into `init_b
 - It is **persistent**: it survives reboots.
 - It is **managed**: apps request root, and you grant or deny each one in Magisk, the way you'd manage any permission.
 - It is **reversible**: restore the original `init_boot` and Magisk is gone.
+
+### Root inside the aosp-academy image
+
+The aosp-academy image, booted through [DSU](../device/dsu.md) on top of the prepared stock system, is a `userdebug` build of AOSP, so it brings its own root: AOSP's `su`, used as `su 0 <command>`. Magisk is still in the boot chain underneath, but its grants and modules live in the stock system's `/data`, which the image doesn't see.
 
 ```mermaid
 %%{init: {"flowchart": {"wrappingWidth": 300}}}%%

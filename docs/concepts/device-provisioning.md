@@ -55,4 +55,4 @@ You'll see these terms in `adb shell dumpsys device_policy`. They're worth knowi
 
 The procedure checks, after removing Test DPC, that *no* device owner, profile owner, or device admin remains — so the device is genuinely yours to develop on, with nothing managing it.
 
-Next: move on to [Prepare the device](../device/index.md), or, if you still want background, revisit any [internals page](index.md).
+Next: move on to [The device](../device/index.md), or, if you still want background, revisit any [internals page](index.md).
