@@ -50,9 +50,13 @@ Prints the same environment as statements for a shell, so you can load it into o
 
 Run the pinned apktool 3.0.3 and the pinned R8's D8 with the JDK from `JAVA_HOME`; every argument after the command name is passed through. [Inspect app packages](../apps/inspecting-apps.md) and [system helpers](../device/helpers.md) use them.
 
+### `new-app <folder> --package <id> [--name N] [--build] [--test]`
+
+Creates an Android app project set up for this phone, from `aosp_academy/templates/app`: a minimal Kotlin app and one instrumented test, on the `appTemplate` versions in `toolchain.json` (compileSdk and targetSdk 37, minSdk 26, the pinned build-tools, the Android Gradle Plugin and Gradle). It writes the project's Gradle wrapper with the pinned Gradle (downloaded into `work/tools/gradle` and checked on first use), with the distribution's SHA-256 in `gradle-wrapper.properties`. The folder must be new or empty; the package needs at least two lower-case segments. `--build` also builds the debug APK; `--test` also runs the instrumented test on the phone, which installs and then uninstalls the app and its test APK. See [Android Studio](../apps/android-studio.md#create-a-project).
+
 ### `adb-wifi`
 
-Connects `adb` to the phone over Wi-Fi on port 5555. It reads the phone's Wi-Fi address over USB first, so the cable must be in, and it stops with a clear message, rather than timing out, when the phone and the PC are on different networks. Something on the phone must be listening on 5555: the `dev_adb_tcp` module on the stock system ([system modules](../device/modules.md)), or `adb tcpip 5555`.
+Connects `adb` to the phone over Wi-Fi on port 5555. It reads the phone's Wi-Fi address over USB first, so the cable must be in, and it stops with a clear message, rather than timing out, when the phone and the PC are on different networks. Something on the phone must be listening on 5555: the image does from the first boot, the stock system does with the `dev_adb_tcp` module ([system modules](../device/modules.md)), and otherwise `adb tcpip 5555` over USB.
 
 ## The device node
 

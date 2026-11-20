@@ -82,6 +82,13 @@
       "sha256": "545ea2be9c242511bc145755cf4bda2485ade42966e096f8b4d3da2a230e8974",
       "extractTo": "jadx",
       "purpose": "jadx command-line decompiler (the winget package is GUI-only)"
+    },
+    {
+      "name": "gradle-9.8.2-bin.zip",
+      "url": "https://services.gradle.org/distributions/gradle-9.8.2-bin.zip",
+      "sha256": "21bd5da2de49b642904077f38c0efdc7778e92b3ed0889392dca61b97e389607",
+      "extractTo": "gradle",
+      "purpose": "Gradle for aosp-academy new-app (it writes each new project's wrapper, pinned to the same version and checksum)"
     }
   ],
   "deviceTools": {
@@ -308,5 +315,18 @@
       "signer": "O=Motorola Mobility Inc.",
       "_note": "No stable direct URL; download manually from the support page. The bootstrap verifies it if present."
     }
+  },
+  "appTemplate": {
+    "_comment": "aosp-academy new-app: the versions a new app project starts with. The project's own wrapper and build files pin them from then on.",
+    "gradle": "9.8.2",
+    "gradleSha256": "21bd5da2de49b642904077f38c0efdc7778e92b3ed0889392dca61b97e389607",
+    "agp": "9.5.0",
+    "compileSdk": 37,
+    "targetSdk": 37,
+    "minSdk": 26,
+    "buildTools": "37.0.0",
+    "androidxTestRunner": "1.7.0",
+    "androidxTestCore": "1.7.0",
+    "androidxTestExtJunit": "1.3.0"
   }
 }

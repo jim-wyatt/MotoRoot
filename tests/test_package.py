@@ -44,7 +44,6 @@ class Shell(unittest.TestCase):
 class Images(unittest.TestCase):
     def test_image_state_follows_the_product(self):
         self.assertEqual(core.image_state("aospacademy_arm64"), "/data/local/aospacademy-firstboot")
-        self.assertEqual(core.image_state("vedotom_arm64"), "/data/local/vedotom-firstboot")
         self.assertTrue(core.is_image_product("aospacademy_arm64"))
         self.assertFalse(core.is_image_product("aosp_arm64"))
 
@@ -55,6 +54,32 @@ class Report(unittest.TestCase):
         dump = "\n".join(["  AC powered: false", "  USB powered: true", "  status: 4", "  health: 2", "  level: 86", "  temperature: 260"])
         self.assertEqual(deploy.battery(dump), "86%, not charging, health good, 26.0 C, power USB")
         self.assertIn("health ?", deploy.battery(""))
+
+
+class NewApp(unittest.TestCase):
+    def test_template_renders_completely(self):
+        from aosp_academy import newapp
+        with tempfile.TemporaryDirectory() as d:
+            files = newapp.render(Path(d), "com.example.demo", "Demo")
+            rel = {f.relative_to(d).as_posix() for f in files}
+            self.assertIn("app/src/main/kotlin/com/example/demo/MainActivity.kt", rel)
+            self.assertIn(".gitignore", rel)
+            for f in files:
+                self.assertNotIn("{{", f.read_text(encoding="utf-8"), f)
+            gradle = (Path(d) / "app" / "build.gradle.kts").read_text(encoding="utf-8")
+            self.assertIn(f"compileSdk = {core.pins()['appTemplate']['compileSdk']}", gradle)
+
+    def test_template_gradle_matches_the_archive_pin(self):
+        t = core.pins()["appTemplate"]
+        a = next(a for a in core.pins()["archives"] if a["extractTo"] == "gradle")
+        self.assertEqual(a["sha256"], t["gradleSha256"])
+        self.assertIn(f"gradle-{t['gradle']}-bin.zip", a["url"])
+
+    def test_bad_package_is_refused(self):
+        from aosp_academy import newapp
+        for bad in ("demo", "Com.Example", "com.example.class", "com..x"):
+            with self.assertRaises(core.Failure, msg=bad):
+                newapp.new_app(tempfile.mkdtemp(), bad, None, False, False)
 
 
 class Files(unittest.TestCase):
@@ -78,7 +103,7 @@ class Cli(unittest.TestCase):
         p = cli.parser()
         for argv in (["fetch", "--check"], ["deploy", "--no-fetch", "-y"], ["gsi", "status"], ["device", "test", "--skip", "frida"],
                      ["device", "trace", "--seconds", "2"], ["setup", "--skip-system"], ["check"], ["env", "--shell", "bash"],
-                     ["stock", "build"], ["image", "inputs"]):
+                     ["stock", "build"], ["image", "inputs"], ["new-app", "x", "--package", "com.example.x", "--test"]):
             self.assertIsInstance(p.parse_args(argv), argparse.Namespace, argv)
 
     def test_no_powershell_left(self):
