@@ -29,10 +29,21 @@ bash "$HERE/apply-local.sh" || exit 1
 source build/envsetup.sh
 echo "== lunch $LUNCH"
 lunch "$LUNCH" || { echo "lunch failed; run 'lunch' in $AOSP_DIR to list this tag's targets and fix deviceTools.aosp.lunch" >&2; exit 1; }
+OUT="$(get_build_var OUT_DIR)"
+PRODUCT_OUT="$(get_build_var PRODUCT_OUT)"
+# Every build gets its own build date. soong_ui writes the current time to $OUT/build_date.txt on
+# every run, but the build.prop generator takes that file as an order-only input, on purpose
+# (build/soong/android/build_prop.go: "shouldn't depend on BUILD_DATETIME_FILE to prevent from
+# rebuilding on every incremental build"), so an incremental build in which nothing else feeding
+# build.prop changed keeps the previous build's ro.build.date (builds 11, 12 and 14 all carried
+# build 11's). Removing the generated files makes ninja run the generator again, which reads the
+# new date. The cost is small: the property files, the system image staging and the image itself,
+# about two minutes; the fingerprint does not change, because the build number (eng.<user>) is
+# written only when it changes.
+find "$OUT/soong/.intermediates" -path '*-build.prop/*/build.prop' -type f -delete 2>/dev/null
 echo "== build started $(date)"
 echo "== m -j$JOBS"
 m -j"$JOBS" || { echo "build failed" >&2; exit 1; }
-PRODUCT_OUT="$(get_build_var PRODUCT_OUT)"
 [ -f "$PRODUCT_OUT/system.img" ] || { echo "no system.img in $PRODUCT_OUT" >&2; exit 1; }
 echo "== build finished $(date)"
 [ -f "$PRODUCT_OUT/system/build.prop" ] || { echo "no system/build.prop in $PRODUCT_OUT" >&2; exit 1; }
