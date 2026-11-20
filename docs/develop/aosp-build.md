@@ -10,7 +10,7 @@ Not yours: the kernel, the vendor HALs, firmware and the modem. They stay Motoro
 
 ## Where the build lives
 
-The AOSP tree is 300–400 GB with its output, needs a case-sensitive Linux filesystem, and builds very slowly across WSL's `/mnt/c` boundary, so it lives on **WSL's own disk** (`~/aosp` in the Ubuntu instance), not in this repository and not on a Windows path. This repository drives it: the scripts in `dev/aosp/` run inside WSL, and the finished image comes back to `work\device-tools\gsi\own\`, where `Install-Gsi.ps1` boots it.
+The AOSP tree is 300–400 GB with its output, needs a case-sensitive Linux filesystem, and builds very slowly across WSL's `/mnt/c` boundary, so it lives on **WSL's own disk** (`~/aosp17` in the Ubuntu instance: the `deviceTools.aosp.treeDir` of `dev/toolchain.json`, which the scripts read, with `AOSP_DIR` as the override), not in this repository and not on a Windows path. This repository drives it: the scripts in `dev/aosp/` run inside WSL, and the finished image comes back to `work\device-tools\gsi\own\`, where `Install-Gsi.ps1` boots it.
 
 Requirements that matter: 16 cores and 32 GB of RAM make the first build a matter of hours rather than a day; WSL's default memory cap is half of RAM, which gets the big link steps killed, so `%UserProfile%\.wslconfig` sets `memory=26GB` and `swap=32GB` under `[wsl2]` (apply with `wsl --shutdown`); on another machine, set `memory` to the RAM less about 6 GB. Swap started at 16 GB and was doubled after `soong_build` itself was OOM-killed during analysis. Disk: the WSL instance here has a 1 TB virtual disk.
 
@@ -20,7 +20,7 @@ Analysis is the other memory peak, and it is a single process, so `JOBS` can't h
 
 ## The pin
 
-`deviceTools.aosp` in `dev/toolchain.json` names the release tag **`android-16.0.0_r4`**, the AOSP release that produced the GSI binary `BP4A.251205.006` validated on this device, so what you build is what was tested, before you change anything. The lunch target is `vedotom_arm64-trunk_staging-userdebug`, this project's product on top of `aosp_arm64` (see *Changing something*).
+`deviceTools.aosp` in `dev/toolchain.json` names the release tag **`android-17.0.0_r1`**, the Android 17 release whose GSI binary (`CP2A.260605.012`, pinned as `deviceTools.gsi`) was booted on this device first, so what you build is what was tested, before you change anything. Builds 1 to 9 came from `android-16.0.0_r4` (`BP4A.251205.006`); Android 16 was dropped for good on 2026-11-19, and section 7 of the [backlog](image-backlog.md) records the move. The lunch target is `vedotom_arm64-trunk_staging-userdebug`, this project's product on top of `aosp_arm64` (see *Changing something*).
 
 ## Steps
 
@@ -93,7 +93,7 @@ Changes live in this repository, not only in the tree, and `apply-local.sh` (run
 
 Both changes were confirmed on the device the same evening: the image boots with no animation and `gpuservice` stays up, logging one warning instead of dying every 30 seconds. The rebuild after switching products took 15 minutes, most of it Soong re-analysing the tree for the new product name. One rule to know: the GSI forbids `PRODUCT_SYSTEM_PROPERTIES` (its artifact-path requirement), so properties go in `PRODUCT_PRODUCT_PROPERTIES`, which lands in the product partition's `build.prop` (under `/system/product/etc/` in a GSI) and is read just the same.
 
-The inner loop is: edit under `~/aosp` (in WSL; a VS Code *WSL* window is handy for that), `build-gsi.sh` again, `Install-Gsi.ps1 -Action Discard` then `-Action Install -Image …` and `-Action Boot`. Good first targets: `frameworks/base` for the framework, `packages/apps/Settings`, `packages/apps/Launcher3`, `system/sepolicy` for policy; `build/make/target/product/gsi_release.mk` and `aosp_arm64.mk` for what goes into the image. `m <module>` builds one module; `m` builds the image.
+The inner loop is: edit under the tree (`~/aosp17`, in WSL; a VS Code *WSL* window is handy for that), `build-gsi.sh` again, `Install-Gsi.ps1 -Action Discard` then `-Action Install -Image …` and `-Action Boot`. Good first targets: `frameworks/base` for the framework, `packages/apps/Settings`, `packages/apps/Launcher3`, `system/sepolicy` for policy; `build/make/target/product/gsi_release.mk` and `aosp_arm64.mk` for what goes into the image. `m <module>` builds one module; `m` builds the image.
 
 ## Building on one machine, installing from another
 

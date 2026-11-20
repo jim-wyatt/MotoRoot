@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!-- Connectivity-check endpoints for the VedoTom image. Names and meanings are those of
-     packages/modules/NetworkStack/res/values/config.xml (android-16.0.0_r4). GrapheneOS runs these
+     packages/modules/NetworkStack/res/values/config.xml (android-17.0.0_r1, unchanged since
+     android-16.0.0_r4). GrapheneOS runs these
      for any client; they answer 204 like Google's connectivitycheck.gstatic.com. -->
 <resources>
     <string name="config_captive_portal_http_url" translatable="false">http://connectivitycheck.grapheneos.network/generate_204</string>

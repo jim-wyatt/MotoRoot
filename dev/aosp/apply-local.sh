@@ -19,7 +19,7 @@ set -uo pipefail
 HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPO_ROOT="$(cd "$HERE/../.." && pwd)"
 TOOLS="$REPO_ROOT/work/device-tools"
-AOSP_DIR="${AOSP_DIR:-$HOME/aosp}"
+AOSP_DIR="${AOSP_DIR:-$(python3 -c 'import json,os,sys; print(os.path.expanduser(json.load(open(sys.argv[1]))["deviceTools"]["aosp"].get("treeDir", "~/aosp")))' "$(dirname "${BASH_SOURCE[0]}")/../toolchain.json")}"
 cd "$AOSP_DIR" || { echo "no AOSP tree in $AOSP_DIR" >&2; exit 1; }
 [ -d .repo ] || { echo "$AOSP_DIR is not a repo tree; run sync.sh first" >&2; exit 1; }
 

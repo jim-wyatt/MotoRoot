@@ -12,7 +12,7 @@ set -o pipefail
 
 HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPO_ROOT="$(cd "$HERE/../.." && pwd)"
-AOSP_DIR="${AOSP_DIR:-$HOME/aosp}"
+AOSP_DIR="${AOSP_DIR:-$(python3 -c 'import json,os,sys; print(os.path.expanduser(json.load(open(sys.argv[1]))["deviceTools"]["aosp"].get("treeDir", "~/aosp")))' "$(dirname "${BASH_SOURCE[0]}")/../toolchain.json")}"
 # Parallel jobs. All cores is right for the C++ phase, but the later R8/d8 phase runs one multi-GB JVM
 # per job; on a 32-core box with WSL capped at 26 GB that filled 16 GB of swap and the kernel killed
 # ninja at 76%. JOBS=12 keeps that phase inside memory; the build resumes where it stopped.

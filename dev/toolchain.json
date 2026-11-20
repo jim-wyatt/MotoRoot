@@ -221,17 +221,17 @@
       "_note": "pip pins for work/.venv-frida: frida==version (must match the server above), frida-tools==toolsVersion"
     },
     "gsi": {
-      "_note": "Google's AOSP arm64 GSI for Android 16, latest stable build; booted through DSU by dev/Install-Gsi.ps1 (docs/device/gsi.md). Not fetched by the bootstrap: the download is ~1 GB and behind Google's terms, which the script asks you to accept.",
-      "name": "aosp_arm64-exp-BP4A.251205.006-14401865-2171cf0e.zip",
-      "url": "https://dl.google.com/developers/android/baklava/images/gsi/aosp_arm64-exp-BP4A.251205.006-14401865-2171cf0e.zip",
-      "sha256": "2171cf0ea849f8eaa399f4bad2165fab80b0fd9e98d37723a705dca6c41e49ea",
-      "build": "BP4A.251205.006",
-      "android": "16",
-      "securityPatch": "2025-12",
+      "_note": "Google's AOSP arm64 GSI for Android 17, the stable release of the same drop as the source tag below; booted through DSU by dev/Install-Gsi.ps1 (docs/device/gsi.md) and run on this device on 2026-11-19 (step 0 of the tag move, docs/develop/image-backlog.md section 7). Not fetched by the bootstrap: the download is ~1 GB and behind Google's terms, which the script asks you to accept. Until 2026-11-19 this was the Android 16 GSI BP4A.251205.006 (sha256 2171cf0e...).",
+      "name": "aosp_arm64-exp-CP2A.260605.012-15430684-8e545e1e.zip",
+      "url": "https://dl.google.com/developers/android/cinnamonbun/images/gsi/aosp_arm64-exp-CP2A.260605.012-15430684-8e545e1e.zip",
+      "sha256": "8e545e1e1e977c3b43b4e54a3af463f3e7d1c3177b120e772138334e15f48f75",
+      "build": "CP2A.260605.012",
+      "android": "17",
+      "securityPatch": "2026-06",
       "terms": "https://developer.android.com/topic/generic-system-image/releases"
     },
     "aosp": {
-      "_note": "Source for building your own GSI in WSL (dev/aosp/*.sh, docs/develop/aosp-build.md). The tag is the AOSP release that produced the pinned GSI binary above (BP4A.251205.006 = android-16.0.0_r4 per source.android.com/docs/setup/reference/build-numbers), so what you build matches what was validated. The lunch target is verified against `lunch` after the first sync.",
+      "_note": "Source for building your own GSI in WSL (dev/aosp/*.sh, docs/develop/aosp-build.md). The tag is the AOSP release of the same Android 17 drop as the pinned GSI binary above (android-17.0.0_r1 is CP2A.260605.016 per source.android.com/docs/setup/reference/build-numbers; the GSI binary is CP2A.260605.012), so what you build matches what was validated. Builds 1 to 9 came from android-16.0.0_r4 (BP4A.251205.006); Android 16 was dropped on 2026-11-19. The lunch target is verified against `lunch` after the first sync. treeDir is where the scripts put the tree in WSL (AOSP_DIR overrides it).",
       "manifest": "https://android.googlesource.com/platform/manifest",
       "tag": "android-17.0.0_r1",
       "lunch": "vedotom_arm64-trunk_staging-userdebug",

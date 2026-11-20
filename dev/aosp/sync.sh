@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
-# dev/aosp/sync.sh - check out the pinned AOSP release into $AOSP_DIR (default ~/aosp).
+# dev/aosp/sync.sh - check out the pinned AOSP release into $AOSP_DIR (default: deviceTools.aosp.treeDir
+# in dev/toolchain.json, ~/aosp17 here).
 #
 # Run inside WSL after setup.sh:  wsl -- bash dev/aosp/sync.sh
 # The tag comes from dev/toolchain.json (deviceTools.aosp.tag) so the source matches the GSI
@@ -8,7 +9,7 @@
 set -euo pipefail
 
 HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-AOSP_DIR="${AOSP_DIR:-$HOME/aosp}"
+AOSP_DIR="${AOSP_DIR:-$(python3 -c 'import json,os,sys; print(os.path.expanduser(json.load(open(sys.argv[1]))["deviceTools"]["aosp"].get("treeDir", "~/aosp")))' "$HERE/../toolchain.json")}"
 TAG="$(python3 -c 'import json,sys; print(json.load(open(sys.argv[1]))["deviceTools"]["aosp"]["tag"])' "$HERE/../toolchain.json")"
 MANIFEST="$(python3 -c 'import json,sys; print(json.load(open(sys.argv[1]))["deviceTools"]["aosp"]["manifest"])' "$HERE/../toolchain.json")"
 JOBS="${JOBS:-$(( $(nproc) / 2 ))}"
