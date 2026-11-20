@@ -36,6 +36,8 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
+          # Links to this repository's own files are files in the checkout, and github.com throttles
+          # runners on them (503): excluded below.
           f=lychee-x86_64-unknown-linux-gnu.tar.gz
           curl -sSfLO "https://github.com/lycheeverse/lychee/releases/download/lychee-v${LYCHEE_VERSION}/$f"
           echo "$LYCHEE_SHA256  $f" | sha256sum -c -
@@ -43,6 +45,7 @@ jobs:
           ./lychee --no-progress --max-retries 3 --retry-wait-time 10 --accept '200..=299,403,429' \
             --scheme https --scheme http \
             --exclude 'example\.(com|invalid)' --exclude '192\.0\.2\.' --exclude 'localhost' --exclude '127\.0\.0\.1' \
+            --exclude 'github\.com/jim-wyatt/aosp-academy/(blob|tree)/' \
             'docs/**/*.md' README.md
 
   new-app:
