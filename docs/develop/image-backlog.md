@@ -106,7 +106,7 @@ These answer section 4's item 6 and the matching points in section 3. Items 1 an
 4. **Moving the AOSP tag: plan it** as a separate project, for the next Android 16 QPR tag. The image's security patch level is 2025-11-05. That means a sync of the new tag, rebasing the three patches and the `Android.bp` mirror, and a full re-validation. Not part of build 6.
 5. **Removing the remaining unused system apps: no.** Mirroring the ~600 lines of upstream system-image definitions to drop BasicDreams, `com.android.egg`, Bips, PrintSpooler, HtmlViewer, BookmarkProvider, CallLogBackup and WallpaperBackup costs more upkeep on every tag move than the space is worth.
 
-## 7. Plan: moving the AOSP tag (drafted 2026-11-19, not started)
+## 7. Plan: moving the AOSP tag (drafted 2026-11-19; steps 0 to 2 done, step 3 in progress)
 
 **Where things stand.** The image is built from `android-16.0.0_r4` (BP4A.251205.006, security patch 2025-12-05). The AOSP manifest has no later Android 16 tag: the only newer one is **`android-17.0.0_r1`** (CP2A.260605.016, Android 17, security patch 2026-06-05). So "moving the tag" means **moving to Android 17**, a major version, not a patch bump. Android 17's QPR releases (QPR1 to QPR3 beta, patches up to 2026-10) exist only as Google's GSI binaries, not as source.
 
@@ -151,6 +151,7 @@ These answer section 4's item 6 and the matching points in section 3. Items 1 an
 | First-boot service (`cmd role`, `settings`, `pm`, `seclabel u:r:su:s0`) | not diffed (shell interfaces); the 17 GSI's `cmd wifi`, `settings` and `pm` behaved normally | covered by the first build's validation |
 
 **3. Build, deploy, validate.** Re-run every check that builds 4 to 8 passed (the [validation](../device/validation.md) rows), plus step 0's hardware list. Compare against build 8, item by item.
+- **Started 2026-11-19 on the Legion.** The first attempt never left Soong analysis: Android 17's `soong_build` outgrew the 26 GB WSL instance and filled its 32 GB of swap, where Android 16's analysis had fitted. Fixed the same evening with a fourth patch, `build-blueprint-0001-soong-heap-limit-80-percent-of-ram.patch` (a Go soft memory limit at 80 % of RAM; the why and how are in [aosp-build.md](aosp-build.md) under "Where the build lives"), and the build restarted with it.
 
 **4. Switch over.** Merge `aosp-17` into `main`. Then:
 - move `deviceTools.aosp.tag` and the `deviceTools.gsi` pin to Android 17;
