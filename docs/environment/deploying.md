@@ -145,7 +145,7 @@ A reboot into the image takes about 45 s, and either switch about 55 s. The imag
 
 A rollback is a deploy of an earlier image, so it wipes the image's data like any other.
 
-- **From a rebuild:** request a build of the last good commit (the [current image](validation.md#current-image) names its commit, and the git tag `baseline-1` marks the first validated baseline), then `./aosp-academy deploy` as usual.
+- **From a rebuild:** request a build of the last good commit (the [current image](validation.md#current-image) names its commit, and the `baseline-N` git tags mark validated images: `git tag -n1 'baseline-*'`), then `./aosp-academy deploy` as usual.
 - **From a saved copy:** put the earlier `system.img` and its own `build.prop` (and its `vbmeta.img`, if it had one) in `work/device-tools/gsi/own/`, and remove the other build's `vbmeta.img` if the earlier one had none, so nothing from another build is packed with it. Either write a matching `system.img.sha256` (`<sha256>  system.img`) or remove the old one, because the deploy refuses an image that doesn't match the checksum beside it. Then `./aosp-academy deploy --no-fetch`.
 
 Save a copy of the last validated `system.img` and `build.prop` before a risky change: the build node keeps only its newest image.

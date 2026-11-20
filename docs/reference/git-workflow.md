@@ -58,6 +58,17 @@ Pull requests run two workflows. **Checks** (`.github/workflows/checks.yml`) nee
 
 **Documentation** (`.github/workflows/docs.yml`) builds this site with `zensical build --strict`.
 
+**Weekly** (`.github/workflows/weekly.yml`) runs every Monday and on demand (`gh workflow run weekly`), never on pull requests. It checks what can change without a commit here:
+
+- **pins**: every pinned URL in `toolchain.json` still resolves, and every file up to 150 MB still matches its checksum (`python .github/scripts/weekly.py pins` runs the same check locally).
+- **links**: the docs' and README's external links still work ([lychee](https://github.com/lycheeverse/lychee), a pinned release, checksum verified).
+- **new-app**: `aosp-academy new-app --build` still builds on a clean runner with the pinned SDK packages, which catches the Android Gradle Plugin, Gradle or Google's Maven repository moving under the template.
+- **upstream**: newer AOSP tags, SDK platforms, build-tools, NDK, platform-tools, Android Gradle Plugin or Gradle than the pins. It keeps one open issue, *Upstream releases newer than the pins*, up to date and closes it when everything is current. A newer release isn't automatically one to take: see [Changing a pin](pins.md#changing-a-pin) and [Move to a new AOSP release](../environment/tag-moves.md).
+
+A failure in the first three opens an issue, *Weekly check failed*, or comments on it if it's still open.
+
+**Dependabot** (`.github/dependabot.yml`) opens pull requests for newer GitHub Actions versions and for the docs site's Python packages (`docs/requirements.txt`). The pins in `toolchain.json` are moved by hand.
+
 ## Where the procedure came from
 
 The device procedure, the helpers and the first two modules were imported from [parsimo2010's guide](credits.md) and then integrated into this project rather than mirrored. There is no `upstream` remote to track. If the original author publishes a change worth adopting, read it and apply it here deliberately, then update the [validation page](../environment/validation.md) if it changes what has been tested. `NOTICE.md` records the imported commit.
