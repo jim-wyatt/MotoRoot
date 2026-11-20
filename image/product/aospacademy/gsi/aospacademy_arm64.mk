@@ -88,6 +88,15 @@ PRODUCT_PRODUCT_PROPERTIES += \
 # public; an image built with keys is specific to these machines, so it stays on them.
 PRODUCT_ADB_KEYS := $(wildcard device/aospacademy/gsi/adb_keys)
 
+# adb over Wi-Fi from the first boot: adbd reads persist.adb.tcp.port when it starts and listens on
+# TCP 5555 as well as USB, so `aosp-academy adb-wifi` (adb connect <phone-ip>:5555) works with no
+# `adb tcpip` step and no pairing. The same as the stock system's dev_adb_tcp module. Key
+# authorisation still applies (ro.adb.secure=1 above): only a PC whose key is built in or allowed on
+# the screen gets a shell. The port is reachable from the whole network, so use trusted networks.
+# A persist.* default: `adb shell su 0 setprop persist.adb.tcp.port 0` and a reboot make it USB only.
+PRODUCT_PRODUCT_PROPERTIES += \
+    persist.adb.tcp.port=5555
+
 # Our look and defaults: dark theme, gesture navigation, our wallpaper (from which Material You
 # derives the system colours), Fossify Phone and Messages as the default dialer and SMS app.
 # See overlay/ (a static framework RRO).
