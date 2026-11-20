@@ -8,7 +8,7 @@ from datetime import datetime
 from pathlib import Path
 
 from . import adb
-from .core import WORK, Failure, say, warn
+from .core import ROOT, WORK, Failure, file_hash, image_state, is_image_product, say, warn
 
 # ---------------------------------------------------------------- settings
 DEV_GLOBALS = {
@@ -25,6 +25,13 @@ DEV_GLOBALS = {
     # An authorized PC stays authorized instead of re-confirming after seven idle days.
     "adb_allowed_connection_time": "0",
 }
+DEV_SYSTEM = {
+    # Manual brightness at 64 of 255 (about 25 % backlight): Stay awake keeps the OLED panel on for
+    # as long as the phone is on the cable, so not at full brightness. After the screen timeout it
+    # still dims to the minimum on its own.
+    "screen_brightness_mode": "0",
+    "screen_brightness": "64",
+}
 LOG_SIZE = "16M"
 
 
@@ -37,14 +44,14 @@ def settings(reset: bool) -> int:
     """
     adb.assert_one_device()
     failed = 0
-    for k, v in DEV_GLOBALS.items():
+    for ns, k, v in [("global", k, v) for k, v in DEV_GLOBALS.items()] + [("system", k, v) for k, v in DEV_SYSTEM.items()]:
         if reset:
-            adb.sh(f"settings delete global {k}")
+            adb.sh(f"settings delete {ns} {k}")
             want = "null"
         else:
-            adb.sh(f"settings put global {k} {v}")
+            adb.sh(f"settings put {ns} {k} {v}")
             want = v
-        got = adb.sh(f"settings get global {k}")
+        got = adb.sh(f"settings get {ns} {k}")
         if got == want:
             say(f"  ok    {k} = {got}", "green")
         else:
@@ -74,6 +81,74 @@ def settings(reset: bool) -> int:
         warn(f"log buffer: {g}")
         failed += 1
     return failed
+
+
+# ---------------------------------------------------------------- try
+FIRSTBOOT_REPO = ROOT / "image" / "product" / "aospacademy" / "gsi" / "firstboot" / "aospacademy-firstboot.sh"
+FIRSTBOOT_TARGET = "/product/bin/aospacademy-firstboot"
+TRY_DIR = "/data/local/aospacademy-try"
+
+
+def try_firstboot(rerun: bool, undo: bool) -> int:
+    """Run the repository's first-boot script on the running image, without a build.
+
+    It bind-mounts the script over /product/bin/aospacademy-firstboot as root. Nothing is written
+    to a partition and verity is untouched (unlike adb remount, which has to disable it); a reboot
+    or --undo puts the built-in script back. --rerun clears the first-boot state and starts the
+    service again, as on a fresh install. Only the script can be tried this way: init reads .rc
+    files once at boot, and overlays and read-only properties are part of the build.
+    """
+    adb.assert_one_device()
+    product = adb.prop("ro.product.name")
+    if not (adb.gsi_running() and is_image_product(product)):
+        raise Failure("device try needs the aosp-academy image running (aosp-academy gsi status).")
+    if "uid=0(" not in adb.root("id"):
+        raise Failure("No root on the phone: the image's su is needed for the bind mount.")
+    mounted = lambda: FIRSTBOOT_TARGET in adb.root("cat /proc/1/mounts")  # init's view, not adbd's
+    if undo:
+        if mounted():
+            adb.root(f"umount $(readlink -f {FIRSTBOOT_TARGET})")
+        say("The built-in first-boot script is back." if not mounted() else "Could not unmount it; a reboot will.",
+            "green" if not mounted() else "yellow")
+        return 0 if not mounted() else 1
+    tmp = "/data/local/tmp/aospacademy-firstboot.try"
+    adb.adb("push", str(FIRSTBOOT_REPO), tmp)
+    label = adb.root(f"ls -Z {FIRSTBOOT_TARGET}").split()[0]
+    adb.root(f"mkdir -p {TRY_DIR} && mv {tmp} {TRY_DIR}/aospacademy-firstboot && chmod 755 {TRY_DIR}/aospacademy-firstboot"
+             f" && chcon {label} {TRY_DIR}/aospacademy-firstboot")
+    real = adb.root(f"readlink -f {FIRSTBOOT_TARGET}")  # /system/product/...: mount wants the real path
+    if mounted():
+        adb.root(f"umount {real}")
+    # /data is mounted nosuid, and a bind mount keeps that flag. The kernel refuses an SELinux
+    # domain change on exec from a nosuid mount, so init's start of the service (seclabel su) would
+    # fail with status 127 while a root shell runs the same file fine. Remount the bind suid.
+    adb.root(f"mount -o bind {TRY_DIR}/aospacademy-firstboot {real} && mount -o remount,bind,suid {real}")
+    # Compare what init itself would run (/proc/1/root) with the repository's file.
+    want = file_hash(FIRSTBOOT_REPO)
+    got = adb.root(f"sha256sum /proc/1/root{FIRSTBOOT_TARGET}").split()[0] if mounted() else ""
+    if got != want:
+        raise Failure(f"The bind mount did not take (init sees {got[:12] or 'nothing'}, the repository has {want[:12]}).")
+    say(f"The repository's first-boot script is live at {FIRSTBOOT_TARGET} until a reboot (or: device try --undo).", "green")
+    if not rerun:
+        say("It runs at the next trigger (a charge-limit change: setprop persist.aospacademy.charge_limit <n>), or now with --rerun.")
+        return 0
+    state = image_state(product)
+    say(f"Re-running first boot: clearing {state} and starting aospacademy_firstboot ...")
+    adb.root(f"rm -rf {state} && start aospacademy_firstboot")
+    status, t = "", 0
+    while t < 120:
+        time.sleep(3)
+        t += 3
+        status = adb.root(f"cat {state}/status 2>/dev/null")
+        if status.startswith("done"):
+            break
+    for line in adb.root(f"cat {state}/log 2>/dev/null").splitlines():
+        say(f"  {line}")
+    if not status.startswith("done"):
+        warn(f"First boot had not finished after {t} s (status: '{status}').")
+        return 1
+    say(f"First boot: {status}", "green" if status == "done failures=0" else "yellow")
+    return 0 if status == "done failures=0" else 1
 
 
 # ---------------------------------------------------------------- trace
