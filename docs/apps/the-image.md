@@ -55,6 +55,8 @@ The image sets `ro.adb.secure=1`, as on a retail phone: a PC has to be authorise
 - **The project's own PCs** (the device node and the build node) are trusted from the first boot: their public adb keys were built into the image at `/product/etc/security/adb_keys`. The keys come from a git-ignored file on the build node and are never in the repository, so an image built with them belongs to those machines and isn't passed on.
 - **Any other PC** gets Android's *Allow USB debugging?* prompt on the phone the first time it connects. Tick *Always allow from this computer*. Each deploy starts with empty data, so the prompt comes back once after every deploy. While adb shows the phone as `unauthorized`, `aosp-academy` commands that wait for the phone say so and keep waiting.
 
+adbd also listens on **TCP port 5555** from the first boot (`persist.adb.tcp.port=5555`), so `./aosp-academy adb-wifi` connects over Wi-Fi with no `adb tcpip` step and no pairing. The same key authorisation applies, but the port is reachable from the whole network: use it on networks you trust. `adb shell su 0 setprop persist.adb.tcp.port 0` and a reboot make the image USB only.
+
 ## Apps and default roles
 
 On top of AOSP the image carries one thing: the **Fossify** suite, 16 open-source apps (GPL-3.0, signed by Fossify, distributed by F-Droid, each pinned in `toolchain.json` by hash and signing certificate). They replace the AOSP apps one for one and fill the default roles, which matters when your app hands off to another app with an intent:
