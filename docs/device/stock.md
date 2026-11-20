@@ -150,10 +150,12 @@ Android 16 ships a built-in Linux Terminal (a Debian VM on the Android Virtualiz
 
 ## Development-target settings
 
-Five ordinary Android settings and one property make the phone a better target for building and testing apps. `aosp-academy device settings` applies them, checks each one, and exits with the number that didn't stick; `--reset` returns every one to stock. The aosp-academy image sets the same values itself at first boot, so this command is for the stock system, or to put them back after an experiment.
+Seven ordinary Android settings and one property make the phone a better target for building and testing apps. `aosp-academy device settings` applies them, checks each one, and exits with the number that didn't stick; `--reset` returns every one to stock. The aosp-academy image sets the same values itself at first boot, so this command is for the stock system, or to put them back after an experiment.
 
 | Setting | Value | Why |
 | --- | --- | --- |
+| `development_settings_enabled` | 1 | Developer options shown in Settings, without tapping the build number seven times |
+| `stay_on_while_plugged_in` | 15 | Stay awake: the screen stays on while the phone charges (AC, USB, wireless or dock), so it never locks under a test run |
 | `window_animation_scale`, `transition_animation_scale`, `animator_duration_scale` | 0 (off) | Espresso and other UI tests expect animations off, and screens settle at once |
 | `verifier_verify_adb_installs` | 0 | `adb install` no longer waits for Play Protect to verify the app first |
 | `adb_allowed_connection_time` | 0 | an authorized PC stays authorized, instead of re-confirming its key after seven days without connecting (matters for ADB over Wi-Fi) |
