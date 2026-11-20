@@ -56,7 +56,7 @@ def _first_boot() -> tuple[str, list[str]]:
             warn(f"first boot: {l}")
     # The charge-limit service writes its result 30 s after boot completes; wait up to 60 s for it.
     w = 0
-    while w < 60 and not adb.root(f"cat {IMAGE_STATE}/charge-limit"):
+    while w < 60 and not adb.root(f"cat {IMAGE_STATE}/charge-limit 2>/dev/null"):
         time.sleep(5)
         w += 5
     return status, log
@@ -74,7 +74,7 @@ def report(status: str = "", log: list[str] | None = None) -> None:
     validated = bool(sh('dumpsys connectivity | grep -E "^ *NetworkAgentInfo.*VALIDATED"'))
     probes = ", ".join(sorted(set(re.findall(r"PROBE_HTTPS? https?://([^/\s]+)", sh('dumpsys network_stack | grep -E "PROBE_HTTPS? "')))))
     ntp = re.search(r"mLastSuccessfulNtpServerUri=(\S+)", sh("dumpsys network_time_update_service"))
-    cl = adb.root(f"cat {IMAGE_STATE}/charge-limit")
+    cl = adb.root(f"cat {IMAGE_STATE}/charge-limit 2>/dev/null")
     rows = {
         "Fingerprint": adb.prop("ro.build.fingerprint"),
         "Home": sh("cmd role get-role-holders android.app.role.HOME"),

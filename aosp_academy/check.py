@@ -136,8 +136,10 @@ def run_checks() -> int:
         if WINDOWS:
             # Git Bash, not WSL's bash.exe (which can't read Windows paths).
             git = shutil.which("git")
-            gb = Path(git).resolve().parent.parent / "bin" / "bash.exe" if git else None
-            bash = str(gb) if gb and gb.exists() else None
+            # git.exe is Git\cmd\git.exe from cmd or PowerShell, Git\<mingw64|ucrt64>\bin\git.exe from
+            # Git Bash itself: walk up to the install's bin\bash.exe either way.
+            gb = next((d / "bin" / "bash.exe" for d in Path(git).resolve().parents if (d / "bin" / "bash.exe").exists()), None) if git else None
+            bash = str(gb) if gb else None
         if not bash:
             raise RuntimeError("no bash on PATH (Git Bash on Windows)")
         files = [*sorted((ROOT / "image" / "build").glob("*.sh")), *sorted((ROOT / "stock" / "modules" / "scripts").rglob("*.sh")),
