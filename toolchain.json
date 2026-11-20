@@ -256,11 +256,23 @@
   "inputs": {
     "_note": "The device procedure's exact tested inputs (docs/device/walkthrough.md, validation.md). Downloaded into work/ ($Work), which is git-ignored. Change these only when deliberately re-validating the procedure.",
     "platformTools": {
-      "version": "37.0.1",
-      "_note": "The tested platform-tools. Google lists only the newest release in its index, so other hosts are pinned when first validated there.",
+      "version": "37.0.3",
+      "_note": "The platform-tools every device command uses (work/platform-tools), per host OS, SHA-1 from Google's repository2-3.xml. It matches what the Android SDK installs, so Android Studio's adb server and ours are the same version. 37.0.1 (Windows SHA-1 e03e78b1...) ran the bootloader and Magisk stages on both units in 2026-11; moved to 37.0.3 on 2026-11-19.",
       "windows": {
-        "url": "https://dl.google.com/android/repository/platform-tools_r37.0.1-win.zip",
-        "sha1": "e03e78b1d80b396f1c3358e31251cb31740e1110"
+        "url": "https://dl.google.com/android/repository/platform-tools_r37.0.3-win.zip",
+        "sha1": "7fea85bc18d0480bc81d3603952d666f49496e5a"
+      },
+      "linux": {
+        "url": "https://dl.google.com/android/repository/platform-tools_r37.0.3-linux.zip",
+        "sha1": "e1579b288a7ae4e9bc28dedec6a154d78b3c04ed"
+      },
+      "mac-x64": {
+        "url": "https://dl.google.com/android/repository/platform-tools_r37.0.3-darwin.zip",
+        "sha1": "d48920e2650321710b4d15d3acd9e277d59cd55b"
+      },
+      "mac-arm64": {
+        "url": "https://dl.google.com/android/repository/platform-tools_r37.0.3-darwin.zip",
+        "sha1": "d48920e2650321710b4d15d3acd9e277d59cd55b"
       }
     },
     "apks": [

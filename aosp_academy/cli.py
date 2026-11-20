@@ -57,6 +57,35 @@ def parser() -> argparse.ArgumentParser:
     f = dsub.add_parser("frida", help="start or stop frida-server on the phone (root)")
     f.add_argument("action", choices=["start", "stop"])
     dsub.add_parser("report", help="what the running image sets (as at the end of deploy)")
+    mi = dsub.add_parser("mirror", help="mirror and control the phone with scrcpy", add_help=False)
+    mi.add_argument("rest", nargs=argparse.REMAINDER, help="passed to scrcpy")
+
+    p = sub.add_parser("setup", help="install and verify the workstation (idempotent)")
+    p.add_argument("--studio", action="store_true", help="also install Android Studio (Windows)")
+    p.add_argument("--accept-sdk-licenses", action="store_true", help="accept the Android SDK licenses non-interactively, after reading them")
+    p.add_argument("--skip-system", action="store_true", help="leave out winget / the system package check")
+    p.add_argument("--skip-sdk", action="store_true")
+    p.add_argument("--skip-inputs", action="store_true", help="leave out the device procedure inputs and device tools")
+    sub.add_parser("check", help="test the workstation end to end (never touches the phone)")
+    p = sub.add_parser("env", help="print the environment for a shell (pwsh: aosp-academy env | iex)")
+    p.add_argument("--shell", choices=["pwsh", "cmd", "bash"])
+    sub.add_parser("shell", help="open a shell with the pinned tools on PATH")
+    p = sub.add_parser("docs", help="preview (serve) or build the documentation site")
+    p.add_argument("action", nargs="?", default="serve", choices=["serve", "build"])
+    for name, what in (("apktool", "the pinned apktool"), ("d8", "the pinned R8's D8")):
+        p = sub.add_parser(name, help=f"run {what}", add_help=False)
+        p.add_argument("rest", nargs=argparse.REMAINDER)
+    sub.add_parser("adb-wifi", help="connect adb over Wi-Fi")
+
+    p = sub.add_parser("stock", help="stock-system preparation artifacts")
+    ssub = p.add_subparsers(dest="stock_command", required=True, metavar="<what>")
+    b = ssub.add_parser("build", help="rebuild the helpers and modules and compare them with stock/")
+    b.add_argument("--promote", action="store_true", help="copy changed artifacts over the committed ones")
+    m = ssub.add_parser("magisk-image", help="make a Magisk-patched init_boot image file (never flashes)")
+    m.add_argument("stock_image", help="your own init_boot_a backup (work/private-backups/...)")
+
+    p = sub.add_parser("image", help="build node: inputs, setup, sync, apply, build (Linux)")
+    p.add_argument("action", choices=["inputs", "setup", "sync", "apply", "build", "verify"])
     return ap
 
 
@@ -87,11 +116,43 @@ def main(argv: list[str] | None = None) -> int:
                 device.trace(args.seconds, args.name, args.config)
             elif c == "frida":
                 device.frida_start() if args.action == "start" else device.frida_stop()
+            elif c == "mirror":
+                import os
+                import subprocess
+                from . import tools
+                return subprocess.call(["scrcpy", *args.rest], env={**os.environ, **tools.environment()})
             elif c == "report":
                 from . import adb, deploy
                 adb.assert_one_device()
                 deploy.report()
             return 0
+        if args.command == "setup":
+            from . import setup
+            return setup.setup(args)
+        if args.command == "check":
+            from . import check
+            return check.run_checks()
+        if args.command in ("env", "shell", "docs", "apktool", "d8", "adb-wifi"):
+            from . import env
+            if args.command == "env":
+                return env.env(args.shell)
+            if args.command == "shell":
+                return env.open_shell()
+            if args.command == "docs":
+                return env.docs(args.action)
+            if args.command == "adb-wifi":
+                return env.adb_wifi()
+            return env.java_tool(args.command, args.rest)
+        if args.command == "stock":
+            from . import stock
+            if args.stock_command == "build":
+                r = stock.build(args.promote)
+                return 0 if args.promote else sum(1 for x in r if not x[1])
+            stock.magisk_image(args.stock_image)
+            return 0
+        if args.command == "image":
+            from . import image
+            return image.main(args.action)
     except Failure as e:
         say(f"error: {e}", "red")
         return 2

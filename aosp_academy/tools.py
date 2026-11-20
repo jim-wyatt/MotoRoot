@@ -67,14 +67,19 @@ def pinned_dir(kind: str, quiet: bool = False) -> Path | None:
     return present[-1] if present else None
 
 
-def platform_jar(api: int | None = None) -> Path | None:
-    """android.jar of the newest pinned platform (or the given API level)."""
+def platform_api(name: str) -> int:
+    """The API level of a platform directory name: android-36 -> 36, android-37.0 -> 37."""
+    return int(name.split("-", 1)[1].split(".")[0])
+
+
+def platform_jar() -> Path | None:
+    """android.jar of the newest pinned platform."""
     s = sdk()
     if not s:
         return None
-    levels = [int(p.split("-")[-1]) for p in pins()["androidSdk"]["packages"] if p.startswith("platforms/android-")]
-    for level in ([api] if api else sorted(levels, reverse=True)):
-        j = s / "platforms" / f"android-{level}" / "android.jar"
+    names = [p.split("/", 1)[1] for p in pins()["androidSdk"]["packages"] if p.startswith("platforms/")]
+    for name in sorted(names, key=platform_api, reverse=True):
+        j = s / "platforms" / name / "android.jar"
         if j.exists():
             return j
     return None

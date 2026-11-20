@@ -2,29 +2,42 @@
   "version": "2.0.0",
   "tasks": [
     {
-      "label": "Bootstrap dev environment",
+      "label": "Set up the workstation",
       "type": "shell",
-      "command": "pwsh -NoProfile -ExecutionPolicy Bypass -File .\\workstation\\Install-Workstation.ps1",
+      "command": "python -I aosp_academy/_launch.py setup",
       "problemMatcher": []
     },
     {
-      "label": "Rebuild device artifacts and compare",
+      "label": "Rebuild stock artifacts and compare",
       "type": "shell",
-      "command": "pwsh -NoProfile -ExecutionPolicy Bypass -Command \". .\\workstation\\Enter-DevShell.ps1 | Out-Null; .\\stock\\Build-StockArtifacts.ps1\"",
+      "command": "python -I aosp_academy/_launch.py stock build",
       "group": { "kind": "build", "isDefault": true },
       "problemMatcher": []
     },
     {
-      "label": "Self-test dev environment",
+      "label": "Check the workstation",
       "type": "shell",
-      "command": "pwsh -NoProfile -ExecutionPolicy Bypass -File .\\workstation\\Test-Workstation.ps1",
+      "command": "python -I aosp_academy/_launch.py check",
       "group": "test",
       "problemMatcher": []
     },
     {
-      "label": "Mirror phone (scrcpy)",
+      "label": "Test the phone",
       "type": "shell",
-      "command": "pwsh -NoProfile -ExecutionPolicy Bypass -Command \". .\\workstation\\Enter-DevShell.ps1 | Out-Null; $env:ADB = $adb; scrcpy\"",
+      "command": "python -I aosp_academy/_launch.py device test",
+      "group": "test",
+      "problemMatcher": []
+    },
+    {
+      "label": "Deploy the newest image",
+      "type": "shell",
+      "command": "python -I aosp_academy/_launch.py deploy",
+      "problemMatcher": []
+    },
+    {
+      "label": "Mirror the phone (scrcpy)",
+      "type": "shell",
+      "command": "python -I aosp_academy/_launch.py device mirror",
       "problemMatcher": []
     }
   ]

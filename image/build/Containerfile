@@ -1,0 +1,31 @@
+# A reproducible build host for the aospacademy_arm64 image. Optional: the scripts also run on any
+# prepared x86-64 Linux host (image/build/setup.sh prepares one).
+#
+#   podman build -t aosp-academy-build -f image/build/Containerfile .      (or docker build)
+#   podman run --rm -it \
+#     -v "$PWD":/repo -v "$HOME/aosp17":/aosp -e AOSP_DIR=/aosp \
+#     -e PUBLISH_DIR=/repo/work/publish -e JOBS=16 \
+#     aosp-academy-build ./aosp-academy image build
+#
+# The AOSP tree (300-400 GB with its output) stays outside the container on a case-sensitive
+# filesystem; mount it at /aosp. A build needs about 32 GB of RAM (see docs: building the image).
+FROM ubuntu:26.04
+
+ARG DEBIAN_FRONTEND=noninteractive
+# The packages AOSP lists for its build hosts, plus repo, git-lfs and JDK 21 (as setup.sh installs).
+RUN apt-get update -qq && apt-get install -y -qq --no-install-recommends \
+      git-core gnupg flex bison build-essential zip curl zlib1g-dev libc6-dev-i386 \
+      x11proto-core-dev libx11-dev lib32z1-dev libgl1-mesa-dev libxml2-utils xsltproc unzip \
+      fontconfig python3 python3-pip rsync repo git-lfs openjdk-21-jdk-headless ca-certificates \
+    && rm -rf /var/lib/apt/lists/* \
+    && git lfs install --system --skip-repo
+
+# repo refuses to sync without a git identity; a neutral one, overridable at run time.
+RUN git config --system user.name "aosp-academy builder" \
+    && git config --system user.email "builder@aosp-academy.invalid" \
+    && git config --system --add safe.directory '*'
+
+# Builds run as an ordinary user: AOSP refuses to build as root.
+RUN useradd -m -u 1000 builder
+USER builder
+WORKDIR /repo

@@ -1,5 +1,5 @@
 #!/system/bin/sh
-# dev_debuggable: apply the log buffer size that deploy\Set-DevSettings.ps1 stores.
+# dev_debuggable: apply the log buffer size that dev\Set-DevSettings.ps1 stores.
 #
 # persist.logd.size is the property Developer options' "Logger buffer sizes" writes, but logd on
 # this build does not apply it at boot or on logd --reinit (verified on Android 16: the buffers

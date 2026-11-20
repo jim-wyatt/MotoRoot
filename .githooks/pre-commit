@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Blocks commits that could publish device data from this phone project.
-# Enabled by workstation/Install-Workstation.ps1 (git config core.hooksPath .githooks).
+# Enabled by aosp-academy setup (git config core.hooksPath .githooks).
 # If a block is a false positive and you have checked the file: git commit --no-verify
 
 max_bytes=$((1024 * 1024))

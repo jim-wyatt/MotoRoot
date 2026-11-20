@@ -1,22 +1,18 @@
 {
-  "python.defaultInterpreterPath": "${workspaceFolder}/work/.venv/Scripts/python.exe",
+  "python.defaultInterpreterPath": "python",
   "terminal.integrated.profiles.windows": {
-    "VedoTom dev shell": {
-      "source": "PowerShell",
-      "args": ["-NoExit", "-ExecutionPolicy", "Bypass", "-Command", ". .\\workstation\\Enter-DevShell.ps1"]
+    "aosp-academy shell": {
+      "path": "python",
+      "args": ["-I", "aosp_academy/_launch.py", "shell"]
     }
   },
-  "terminal.integrated.defaultProfile.windows": "VedoTom dev shell",
+  "terminal.integrated.defaultProfile.windows": "aosp-academy shell",
   "files.exclude": {
     "**/__pycache__": true,
-    "work/cache": true,
-    "work/.venv-docs": true,
     "site": true
   },
   "search.exclude": {
-    "work": true,
-    "work/tools": true,
-    "work/build": true
+    "work": true
   },
   "git.ignoreLimitWarning": true
 }

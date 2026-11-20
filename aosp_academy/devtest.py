@@ -52,10 +52,10 @@ class Checks:
     def report(self) -> int:
         w = [max(len(r[i]) for r in self.rows) for i in range(3)]
         for r in self.rows:
-            color = {"PASS": "green", "FAIL": "red", "SKIP": "yellow"}[r[0]]
+            color = {"PASS": "green", "FAIL": "red"}.get(r[0], "yellow")
             say(f"{r[0]:<{w[0]}}  {r[1]:<{w[1]}}  {r[2]:<{w[2]}}  {r[3]}", color)
-        n = {s: sum(1 for r in self.rows if r[0] == s) for s in ("PASS", "FAIL", "SKIP")}
-        say(f"{len(self.rows)} checks: {n['PASS']} passed, {n['FAIL']} failed, {n['SKIP']} skipped", "red" if n["FAIL"] else "green")
+        n = {s: sum(1 for r in self.rows if r[0] == s) for s in ("PASS", "FAIL", "SKIP", "WARN")}
+        say(f"{len(self.rows)} checks: {n['PASS']} passed, {n['FAIL']} failed, {n['SKIP'] + n['WARN']} skipped or warned", "red" if n["FAIL"] else "green")
         return n["FAIL"]
 
 
@@ -83,7 +83,7 @@ def _app() -> str:
     bt, jar, jh = tools.pinned_dir("build-tools", quiet=True), tools.platform_jar(), tools.java_home()
     if not (bt and jar and jh):
         raise Failure("build-tools, a platform or the JDK is missing (aosp-academy setup)")
-    target = int(jar.parent.name.split("-")[-1])
+    target = tools.platform_api(jar.parent.name)
     d = TMP / "app"
     src = d / "src" / "dev" / "aospacademy" / "probe"
     for p in (src, d / "classes", d / "dex"):

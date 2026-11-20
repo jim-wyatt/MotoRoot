@@ -64,7 +64,7 @@ The GitHub repo (`jim-wyatt/VedoTom` to `jim-wyatt/aosp-academy`) and its Pages 
 
 | Command | Replaces |
 | --- | --- |
-| `aosp-academy setup [--studio] [--accept-sdk-licenses]`\|build]` | `Bootstrap-DevEnv.ps1` |
+| `aosp-academy setup [--studio] [--accept-sdk-licenses]` | `Bootstrap-DevEnv.ps1` |
 | `aosp-academy check` | `Test-DevEnv.ps1` |
 | `aosp-academy env [--shell pwsh\|cmd\|bash]` / `aosp-academy shell` | `Enter-DevShell.ps1` (environment for a shell, or a subshell with it) |
 | `aosp-academy image inputs\|setup\|sync\|build` | the input download, `setup.sh`, `sync.sh`, `build-gsi.sh` (build node) |
