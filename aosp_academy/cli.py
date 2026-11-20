@@ -100,6 +100,7 @@ def parser() -> argparse.ArgumentParser:
     b.add_argument("--promote", action="store_true", help="copy changed artifacts over the committed ones")
     m = ssub.add_parser("magisk-image", help="make a Magisk-patched init_boot image file (never flashes)")
     m.add_argument("stock_image", help="your own init_boot_a backup (work/private-backups/...)")
+    ssub.add_parser("tunnel", help="the WireGuard tunnel on the stock system (wg, config, dev_wireguard module)")
 
     p = sub.add_parser("image", help="build node: inputs, setup, sync, apply, build (Linux)")
     p.add_argument("action", choices=["inputs", "setup", "sync", "apply", "build", "verify", "after-sync"])
@@ -176,6 +177,8 @@ def main(argv: list[str] | None = None) -> int:
             if args.stock_command == "build":
                 r = stock.build(args.promote)
                 return 0 if args.promote else sum(1 for x in r if not x[1])
+            if args.stock_command == "tunnel":
+                return 0 if stock.tunnel() else 1
             stock.magisk_image(args.stock_image)
             return 0
         if args.command == "image":

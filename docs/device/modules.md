@@ -1,6 +1,6 @@
 # The Magisk modules
 
-[Magisk modules](../concepts/magisk-modules.md) are how this project changes the stock system's behaviour without touching the read-only system partitions. The prepared stock system runs seven of them; [The stock system](stock.md#the-seven-modules) says what each one does. This page is about how they are made: the manifests that describe them, the builder that turns a manifest into a ZIP, how the committed ZIPs are verified, and how to write a module of your own.
+[Magisk modules](../concepts/magisk-modules.md) are how this project changes the stock system's behaviour without touching the read-only system partitions. The prepared stock system runs eight of them; [The stock system](stock.md#the-eight-modules) says what each one does. This page is about how they are made: the manifests that describe them, the builder that turns a manifest into a ZIP, how the committed ZIPs are verified, and how to write a module of your own.
 
 Modules belong to the stock system. Inside an aosp-academy image they don't apply: Magisk keeps them in the stock system's `/data`, which the image doesn't see.
 
@@ -62,7 +62,7 @@ All run as **root**. A broken script can slow or stop boot, so test step by step
 
 ## How the project builds its modules
 
-The project's seven modules are built by one script, not zipped by hand, which is a good pattern once modules get repetitive. `stock/modules/build_modules.py` reads every manifest in `stock/modules/manifests/`, validates it, and writes one ZIP per manifest. It runs on the PC only and never talks to a phone.
+The project's eight modules are built by one script, not zipped by hand, which is a good pattern once modules get repetitive. `stock/modules/build_modules.py` reads every manifest in `stock/modules/manifests/`, validates it, and writes one ZIP per manifest. It runs on the PC only and never talks to a phone.
 
 ### The manifests
 
@@ -71,7 +71,7 @@ Each `manifests/*.json` describes one module: its `module.prop` fields (`id`, `n
 - **`packages`**, for an **overlay** module: the apps it hides. Each entry names the `package`, a human `label`, and its `hidden_directory` on the phone (optionally the `apk` inside it, for information). For every package the ZIP gets an empty `system<hidden_directory>/.replace` marker, which tells Magisk to mount that directory as empty at boot, so the APK inside isn't there while the module is enabled. The builder refuses any directory outside `/product/app/`, `/product/priv-app/`, `/system_ext/app/` and `/system_ext/priv-app/`, and refuses duplicates.
 - **`scripts`**, for a **script** module: the Magisk lifecycle scripts it runs (`customize.sh`, `post-fs-data.sh`, `service.sh`, `uninstall.sh`), each a path under `stock/modules/scripts/`. An optional `sepolicy` entry names a file of `magiskpolicy` statements, packed as `sepolicy.rule`, which Magisk patches into the live SELinux policy at every boot while the module is enabled.
 
-The five overlay modules (`wifi_ota_guard`, `wifi_carrier_debloat`, `wifi_extra_debloat`, `google_debloat`, `vendor_extras_debloat`) use only `packages`; the two development modules (`dev_debuggable`, `dev_adb_tcp`) use only `scripts`, and `dev_debuggable` has a `sepolicy` rule as well. The ZIP is named after the id with dashes for underscores (`dev_debuggable` → `dev-debuggable.zip`). Each ZIP also carries its manifest as `manifest.json`, so a module found later is self-describing.
+The five overlay modules (`wifi_ota_guard`, `wifi_carrier_debloat`, `wifi_extra_debloat`, `google_debloat`, `vendor_extras_debloat`) use only `packages`; the three development modules (`dev_debuggable`, `dev_adb_tcp`, `dev_wireguard`) use only `scripts`, and `dev_debuggable` has a `sepolicy` rule as well. The ZIP is named after the id with dashes for underscores (`dev_debuggable` → `dev-debuggable.zip`). Each ZIP also carries its manifest as `manifest.json`, so a module found later is self-describing.
 
 Scripts run as root, so the builder packs them as **LF line endings, no BOM, mode 755**, whatever git or Windows did to them on checkout.
 

@@ -54,9 +54,9 @@ adb shell "su -c 'magisk --install-module /data/local/tmp/mymodule.zip'"
 adb reboot
 ```
 
-## The seven modules in this project
+## The eight modules in this project
 
-The project ships seven modules in `stock/modules/`: five that hide directories, for five different reasons, and two that set properties at boot. Each is generated from a manifest in `stock/modules/manifests/` by one builder, and you can rebuild all of them with `aosp-academy stock build` ([The Magisk modules](../device/modules.md)).
+The project ships eight modules in `stock/modules/`: five that hide directories, for five different reasons, two that set properties at boot, and one that brings up a WireGuard tunnel. Each is generated from a manifest in `stock/modules/manifests/` by one builder, and you can rebuild all of them with `aosp-academy stock build` ([The Magisk modules](../device/modules.md)).
 
 ### `wifi-ota-guard` — hide a system app by overlaying nothing
 

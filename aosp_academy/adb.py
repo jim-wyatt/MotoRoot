@@ -65,6 +65,8 @@ def assert_one_device() -> None:
             raise Failure(f"ANDROID_SERIAL is {chosen}, which isn't connected and authorized.")
         return
     if len(authorized) == 1:
+        # Remembered for the waits: a network transport has to be reconnected after a reboot.
+        os.environ["ANDROID_SERIAL"] = authorized[0]
         return
     if not authorized:
         raise Failure("No authorized device: connect the phone (USB, or adb connect over Wi-Fi or the tunnel).")
@@ -100,10 +102,14 @@ def wait_authorized() -> None:
     whose key isn't built into the image sees the phone as "unauthorized" until someone taps Allow.
     """
     told = False
+    serial = os.environ.get("ANDROID_SERIAL", "")
     while True:
         state = adb("get-state", check=False)
         if state == "device":
             return
+        if is_tcp(serial):
+            # A network transport doesn't come back by itself after a reboot: reconnect.
+            adb("connect", serial, check=False, timeout=15)
         if "unauthorized" in state and not told:
             say('  >> Tap "Allow" on the phone\'s "Allow USB debugging?" prompt (tick "Always allow from this computer"). Waiting ...', "yellow")
             told = True

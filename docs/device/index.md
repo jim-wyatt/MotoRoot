@@ -11,13 +11,13 @@ The phone goes through three states. Each one is built on the one before and lea
 ```mermaid
 %%{init: {"flowchart": {"wrappingWidth": 300}}}%%
 flowchart LR
-    F["Factory<br/>locked bootloader, stock Android 16"] -->|"the preparation walkthrough<br/>(once per phone)"| P["Prepared stock system<br/>unlocked, Magisk root, seven modules"]
+    F["Factory<br/>locked bootloader, stock Android 16"] -->|"the preparation walkthrough<br/>(once per phone)"| P["Prepared stock system<br/>unlocked, Magisk root, eight modules"]
     P -->|"aosp-academy deploy<br/>(every build)"| I["aosp-academy image<br/>Android 17, booted through DSU"]
     I -->|"aosp-academy gsi stock"| P
 ```
 
 1. **Factory.** The bootloader is locked and the phone runs only Motorola's signed build.
-2. **The prepared stock system.** The [preparation walkthrough](walkthrough.md) unlocks the bootloader, installs persistent root with Magisk, and turns the phone into a Wi-Fi-only development baseline with seven reversible [Magisk modules](modules.md). The system is still Motorola's Android 16, with nothing on the system partitions changed. This is done once per phone. [The stock system](stock.md) describes the result and how to keep it working.
+2. **The prepared stock system.** The [preparation walkthrough](walkthrough.md) unlocks the bootloader, installs persistent root with Magisk, and turns the phone into a Wi-Fi-only development baseline with eight reversible [Magisk modules](modules.md). The system is still Motorola's Android 16, with nothing on the system partitions changed. This is done once per phone. [The stock system](stock.md) describes the result and how to keep it working.
 3. **The aosp-academy image.** The project's own Android 17 system image (`aospacademy_arm64`, built from AOSP on the build node) runs on top of the stock vendor layer through **DSU** (Dynamic System Updates), Android's built-in way to boot a second system from files in `/data`. Nothing is flashed: the slots, the boot images and the stock system stay as they are. [DSU on this phone](dsu.md) explains how that works and how to move between the image and stock; [Deploying an image](../environment/deploying.md) covers the routine `aosp-academy deploy`; [The image](../apps/the-image.md) describes what the image gives an app developer.
 
 The stock system stays Android 16 throughout. Only the image runs Android 17.
@@ -28,7 +28,7 @@ The stock system stays Android 16 throughout. Only the image runs Android 17.
 | --- | --- | --- |
 | Unlocked bootloader | `lk_a` and the lock state | **Not undone.** Relocking with a modified boot chain can brick the phone; see [the stock system](stock.md#safe-and-risky). |
 | Magisk persistent root | `init_boot_a` | Restoring the original `init_boot_a` from your own backup ([the preparation walkthrough](walkthrough.md) covers the backup and the boot chain). |
-| The seven modules | `/data/adb/modules` | Disabling a module and rebooting. A factory reset removes them all. |
+| The eight modules | `/data/adb/modules` | Disabling a module and rebooting. A factory reset removes them all. |
 | Development-target settings | Android settings and one property | `aosp-academy device settings --reset`. |
 | An installed DSU image | `/data/gsi` (the image and its own userdata) | `aosp-academy gsi discard`, from the stock system. |
 | A DSU image enabled persistently | DSU's own state | `aosp-academy gsi stock`: the next boot is the stock system again, and the image stays installed. |
@@ -47,7 +47,7 @@ The preparation stages are **firmware-specific**. They have been carried out on 
 | [The preparation walkthrough](walkthrough.md) | The tested procedure from factory to the prepared stock system, with the reason behind every stage. Run once per phone. |
 | [The stock system](stock.md) | The prepared stock system as a development baseline: the modules, the development settings, the charge cap, and routine maintenance. |
 | [System helpers](helpers.md) | The two small Java programs the preparation runs with `app_process`, and how to write your own. |
-| [The Magisk modules](modules.md) | How the seven modules are described, built and verified, and how to write one. |
+| [The Magisk modules](modules.md) | How the eight modules are described, built and verified, and how to write one. |
 | [DSU on this phone](dsu.md) | Booting Google's Android 17 GSI or the aosp-academy image through DSU, going back to stock, and what to do when an image doesn't boot. |
 
 The [Android internals](../concepts/index.md) pages explain the background these pages assume: partitions, slots, the boot chain, root and modules.

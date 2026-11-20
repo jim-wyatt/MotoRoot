@@ -230,6 +230,15 @@ def deploy(args) -> int:
     if adb.gsi_running():
         step(f"The phone is in a DSU image ({adb.prop('ro.product.name')}): back to the stock system")
         gsi.stock()
+    if (WG_LOCAL / "wg0.conf").exists() and (WG_LOCAL / "wg0.env").exists():
+        # The same tunnel on the stock system (dev_wireguard), so the next deploy can reach stock
+        # without a cable. Idempotent: only what changed is pushed.
+        from . import stock
+        step("The tunnel on the stock system")
+        try:
+            stock.tunnel(quiet=False)
+        except Failure as e:
+            warn(f"stock tunnel: {e}")
     step("Discarding the installed image")
     gsi.discard()
     staged = _stage()

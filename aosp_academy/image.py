@@ -46,7 +46,10 @@ def wireguard_tools(d: Path) -> None:
     head = lambda: subprocess.run(["git", "-C", str(dest), "rev-parse", "HEAD"], capture_output=True, text=True).stdout.strip()
     if not (dest / ".git").exists() or head() != w["commit"]:
         shutil.rmtree(dest, ignore_errors=True)
-        subprocess.run(["git", "clone", "-q", "--depth", "1", "--branch", w["tag"], w["repo"], str(dest)], check=True)
+        p = subprocess.run(["git", "-c", "advice.detachedHead=false", "clone", "-q", "--depth", "1", "--branch", w["tag"], w["repo"], str(dest)],
+                           capture_output=True, text=True)
+        if p.returncode != 0:
+            raise Failure(f"git clone {w['repo']} {w['tag']} failed: {p.stderr.strip()[-300:]}")
     if head() != w["commit"]:
         raise Failure(f"wireguard-tools {w['tag']} is commit {head()[:12]}, not the pinned {w['commit'][:12]}: the tag moved upstream.")
 

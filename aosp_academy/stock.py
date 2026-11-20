@@ -4,6 +4,9 @@
                  compare them with the committed copies in stock/ (--promote copies changed ones over)
   magisk-image   make a Magisk-patched init_boot image FILE from your own init_boot_a backup
                  (walkthrough stage 5; stage 7 writes it; this never flashes anything)
+  tunnel         the WireGuard tunnel on the stock system: wg (built here from the pinned
+                 wireguard-tools with the NDK) and work/wireguard's config into
+                 /data/adb/aospacademy-wg, and the dev_wireguard module that brings it up at boot
 
 Helpers: javac --release 8, then D8 from the pinned R8. Compared byte for byte; a mismatch
 usually means another javac build changed the debug line tables, not the bytecode. Modules:
@@ -70,6 +73,83 @@ DEVICE_STAGE = "/data/local/tmp/magisk-patch-files"
 # Magisk's own patch script with the settings used on both tested units: keep verity and forced
 # encryption, leave the vbmeta flag alone, patch a normal (non-recovery) boot image.
 PATCH_ENV = "KEEPVERITY=true KEEPFORCEENCRYPT=true PATCHVBMETAFLAG=false RECOVERYMODE=false BOOTMODE=true"
+
+
+WG_BUILD = OUT.parent / "wg"
+STOCK_WG = "/data/adb/aospacademy-wg"
+
+
+def build_wg() -> Path:
+    """wg for arm64 Android from the pinned wireguard-tools, with the pinned NDK (static, so it
+    runs on the stock system and the image alike). Rebuilt when the pinned commit changes."""
+    from .image import wireguard_tools
+    w = pins()["deviceTools"]["wireguardTools"]
+    out, stamp = WG_BUILD / "wg", WG_BUILD / ".commit"
+    if out.exists() and stamp.exists() and stamp.read_text().strip() == w["commit"]:
+        return out
+    src = WORK / "device-tools"
+    wireguard_tools(src)
+    ndk = tools.pinned_dir("ndk", quiet=True)
+    if not ndk:
+        raise Failure("The pinned NDK is missing. Run: aosp-academy setup")
+    host = "windows-x86_64" if EXE else ("darwin-x86_64" if sys.platform == "darwin" else "linux-x86_64")
+    clang = ndk / "toolchains" / "llvm" / "prebuilt" / host / "bin" / f"clang{EXE}"
+    s = src / "wireguard-tools" / "src"
+    files = ["wg.c", "config.c", "curve25519.c", "encoding.c", "genkey.c", "ipc.c", "pubkey.c",
+             "set.c", "setconf.c", "show.c", "showconf.c", "terminal.c"]
+    WG_BUILD.mkdir(parents=True, exist_ok=True)
+    run([clang, "--target=aarch64-linux-android33", "-O2", "-std=gnu11", "-D_GNU_SOURCE",
+         '-DRUNSTATEDIR="/data/local/tmp"', f"-I{s / 'uapi' / 'linux'}", f"-I{s}", "-static", "-s",
+         "-o", out, *[s / f for f in files]], capture=True)
+    stamp.write_text(w["commit"] + "\n")
+    return out
+
+
+def tunnel(quiet: bool = False) -> bool:
+    """Set up the tunnel on the stock system (Magisk root). Idempotent: pushes only what changed.
+    Returns True when wg0 is up. Needs work/wireguard/wg0.conf and wg0.env (private)."""
+    conf, env = WORK / "wireguard" / "wg0.conf", WORK / "wireguard" / "wg0.env"
+    if not (conf.exists() and env.exists()):
+        if not quiet:
+            say("No work/wireguard/wg0.conf and wg0.env: no tunnel to set up.", "yellow")
+        return False
+    adb.assert_one_device()
+    if adb.gsi_running():
+        raise Failure("The phone runs the image; stock tunnel is for the stock system (aosp-academy gsi stock).")
+    if "uid=0(" not in adb.root("id"):
+        raise Failure("No root on the stock system (Magisk).")
+    changed = False
+    adb.root(f"umask 077; mkdir -p {STOCK_WG}")
+    for local, name, mode in ((build_wg(), "wg", "700"), (conf, "wg0.conf", "600"), (env, "wg0.env", "600")):
+        if adb.root(f"sha256sum {STOCK_WG}/{name} 2>/dev/null").split()[:1] == [file_hash(local)]:
+            continue
+        tmp = f"/data/local/tmp/.aa-{name}"
+        try:
+            adb.adb("push", str(local), tmp)
+            adb.root(f"umask 077; mv {tmp} {STOCK_WG}/{name} && chown root:root {STOCK_WG}/{name} && chmod {mode} {STOCK_WG}/{name}")
+        finally:
+            adb.sh(f"rm -f {tmp}")
+        changed = True
+    zp = STOCK / "modules" / "dev-wireguard.zip"
+    installed = adb.root("cat /data/adb/modules/dev_wireguard/module.prop 2>/dev/null")
+    want = zipfile.ZipFile(zp).read("module.prop").decode()
+    if installed.strip() != want.strip():
+        adb.adb("push", str(zp), "/data/local/tmp/dev-wireguard.zip")
+        out = adb.root("magisk --install-module /data/local/tmp/dev-wireguard.zip; rm -f /data/local/tmp/dev-wireguard.zip")
+        if "/data/adb/modules" not in adb.root("ls -d /data/adb/modules_update/dev_wireguard /data/adb/modules/dev_wireguard 2>/dev/null"):
+            raise Failure(f"Magisk didn't install dev_wireguard: {out[-300:]}")
+        changed = True
+    up = adb.root(f"cat {STOCK_WG}/status 2>/dev/null").startswith("up")
+    if changed or not up:
+        # Bring it up now with the module's own script; at the next boot Magisk runs it itself.
+        script = "/data/adb/modules/dev_wireguard/service.sh"
+        if not adb.root(f"ls {script} 2>/dev/null"):
+            script = "/data/adb/modules_update/dev_wireguard/service.sh"
+        adb.root(f"rm -f {STOCK_WG}/status; sh {script}")
+    status = adb.root(f"cat {STOCK_WG}/status 2>/dev/null")
+    if not quiet or not status.startswith("up"):
+        say(f"  stock tunnel: {status or 'no status'}", "green" if status.startswith("up") else "yellow")
+    return status.startswith("up")
 
 
 def magisk_image(stock_image: str) -> Path:
