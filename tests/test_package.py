@@ -44,7 +44,6 @@ class Shell(unittest.TestCase):
 class Images(unittest.TestCase):
     def test_image_state_follows_the_product(self):
         self.assertEqual(core.image_state("aospacademy_arm64"), "/data/local/aospacademy-firstboot")
-        self.assertEqual(core.image_state("vedotom_arm64"), "/data/local/vedotom-firstboot")
         self.assertTrue(core.is_image_product("aospacademy_arm64"))
         self.assertFalse(core.is_image_product("aosp_arm64"))
 

@@ -19,21 +19,18 @@ WINDOWS = os.name == "nt"
 # The image's own names: the product (ro.product.name starts with it), its property prefix and the
 # first-boot service's state directory on the phone. Kept here so a rename touches one line each.
 PRODUCT = "aospacademy"
-# Images built before the rename (build 10 and older) still use the old names. Remove once every
-# image in use is an aospacademy one.
-LEGACY_PRODUCTS = ("vedotom",)
+IMAGE_STATE = f"/data/local/{PRODUCT}-firstboot"
 
 
-def image_state(product_name: str) -> str:
-    """The first-boot service's state directory for the image whose ro.product.name is given."""
-    for p in (PRODUCT, *LEGACY_PRODUCTS):
-        if product_name.startswith(p):
-            return f"/data/local/{p}-firstboot"
-    return f"/data/local/{PRODUCT}-firstboot"
+def image_state(product_name: str = "") -> str:
+    """The first-boot service's state directory on the phone."""
+    return IMAGE_STATE
 
 
 def is_image_product(product_name: str) -> bool:
-    return product_name.startswith((PRODUCT, *LEGACY_PRODUCTS))
+    return product_name.startswith(PRODUCT)
+
+
 EXE = ".exe" if WINDOWS else ""
 
 
