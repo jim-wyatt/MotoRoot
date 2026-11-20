@@ -73,6 +73,16 @@ def load_config(args) -> dict:
     return conf
 
 
+def remote_configured(args) -> bool:
+    """Whether there is a build node to fetch from: --host on the command line, or a saved
+    work/remote-build.json with a host. Without one, this machine is its own build node."""
+    if getattr(args, "host", None):
+        return True
+    if not CONFIG.exists():
+        return False
+    return bool(json.loads(CONFIG.read_text(encoding="utf-8")).get("host"))
+
+
 def remote_hash(r: Remote) -> str:
     OWN.mkdir(parents=True, exist_ok=True)
     tmp = OWN / "remote.sha256"
