@@ -4,11 +4,11 @@
 #   wsl -- bash image/build/apply-local.sh      (sync.sh and build-image.sh run it for you)
 #
 # Three kinds of input, all kept in this repository (or pinned by it) and never only in the tree:
-#   image/product/   product definitions, copied to device/<name>/ in the tree (device/vedotom/gsi
-#                       defines the vedotom_arm64 lunch target)
+#   image/product/   product definitions, copied to device/<name>/ in the tree (device/aospacademy/gsi
+#                       defines the aospacademy_arm64 lunch target)
 #   prebuilt APKs       listed in device/<name>/gsi/prebuilt/apks.txt as "<module apk> <pinned file>";
 #                       the pinned files live in work/device-tools (downloaded and hash-checked by
-#                       Install-Workstation.ps1 against toolchain.json) and are copied into the tree's
+#                       aosp-academy image inputs against toolchain.json) and are copied into the tree's
 #                       prebuilt/ directory, never into the repository
 #   image/patches/   unified diffs against one upstream project each, named
 #                       <project-with-dashes>-NNNN-<what>.patch (frameworks-native-0001-....patch is
@@ -40,7 +40,7 @@ for list in "$HERE"/../product/*/*/prebuilt/apks.txt; do
   while read -r module pinned; do
     case "$module" in ''|'#'*) continue;; esac
     src="$TOOLS/$pinned"
-    [ -f "$src" ] || { echo "   $pinned missing from work/device-tools; run workstation\\Install-Workstation.ps1" >&2; exit 1; }
+    [ -f "$src" ] || { echo "   $pinned missing from work/device-tools; run ./aosp-academy image inputs" >&2; exit 1; }
     if ! cmp -s "$src" "$dir/$module"; then cp "$src" "$dir/$module"; fi
     echo "   $dir/$module <- $pinned"
   done < "$list"
@@ -48,10 +48,10 @@ done
 
 echo "== trusted adb keys"
 # work/adb_keys (git-ignored, never in the repository): the public keys of this project's own PCs,
-# one "<base64> user@host" line each, from %USERPROFILE%\.android\adbkey.pub. vedotom_arm64.mk
+# one "<base64> user@host" line each, from %USERPROFILE%\.android\adbkey.pub. aospacademy_arm64.mk
 # builds them in through PRODUCT_ADB_KEYS (/product/etc/security/adb_keys), so those PCs need no
 # "Allow USB debugging?" tap after a fresh DSU install. Without the file the image trusts no PC.
-keys_src="$REPO_ROOT/work/adb_keys"; keys_dst="device/vedotom/gsi/adb_keys"
+keys_src="$REPO_ROOT/work/adb_keys"; keys_dst="device/aospacademy/gsi/adb_keys"
 if [ -f "$keys_src" ]; then
   tr -d '\r' < "$keys_src" | grep -v '^[[:space:]]*$' > "$keys_dst.new"
   if grep -qv '^QAAAA[A-Za-z0-9+/=]* [^ ]*$' "$keys_dst.new" || [ ! -s "$keys_dst.new" ]; then

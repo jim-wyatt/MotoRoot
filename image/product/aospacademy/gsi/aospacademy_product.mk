@@ -1,13 +1,13 @@
 #
-# vedotom_product.mk: build/make/target/product/aosp_product.mk, minus the apps the Fossify suite
+# aospacademy_product.mk: build/make/target/product/aosp_product.mk, minus the apps the Fossify suite
 # replaces. Kept line-for-line otherwise so a diff against upstream shows exactly what changed:
-#   - handheld_product.mk  -> vedotom_handheld_product.mk (same minus Calendar, Camera2, Contacts,
+#   - handheld_product.mk  -> aospacademy_handheld_product.mk (same minus Calendar, Camera2, Contacts,
 #                             DeskClock, Gallery2, Music, QuickSearchBox)
 #   - telephony_product.mk -> inlined without Dialer (Fossify Phone is the dialer)
 #   - messaging dropped     (Fossify Messages is the SMS app)
 #
 
-$(call inherit-product, device/vedotom/gsi/vedotom_handheld_product.mk)
+$(call inherit-product, device/aospacademy/gsi/aospacademy_handheld_product.mk)
 
 # telephony_product.mk without Dialer
 PRODUCT_PACKAGES += \

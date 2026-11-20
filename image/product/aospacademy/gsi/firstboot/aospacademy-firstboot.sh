@@ -1,14 +1,14 @@
 #!/system/bin/sh
-# VedoTom first-boot service (see init.vedotom.rc). Root, after boot completes, every boot;
+# aosp-academy first-boot service (see init.aospacademy.rc). Root, after boot completes, every boot;
 # everything here checks a marker before it acts, so later boots cost nothing.
 #
 # It reports in two places that outlast the log buffers: $STATE/log gets every line with a time,
 # and $STATE/status holds one line, "running" while it works and "done failures=<n>" at the end.
-# Deploy-Image.ps1 reads both (as root: adb shell su 0 cat ...). The same lines go to logcat
-# under the tag vedotom-firstboot.
+# aosp-academy deploy reads both (as root: adb shell su 0 cat ...). The same lines go to logcat
+# under the tag aospacademy-firstboot.
 
-TAG=vedotom-firstboot
-STATE=/data/local/vedotom-firstboot
+TAG=aospacademy-firstboot
+STATE=/data/local/aospacademy-firstboot
 LOG="$STATE/log"
 STATUS="$STATE/status"
 mkdir -p "$STATE"
@@ -21,26 +21,26 @@ note() {
 }
 failed() { note "$* failed; will retry next boot"; failures=$((failures + 1)); }
 
-# Charge-limit mode (init.vedotom.rc starts it after boot and whenever the property changes):
-# write persist.vedotom.charge_limit to qpnp_adaptive_charge's upper_limit, the same single write
+# Charge-limit mode (init.aospacademy.rc starts it after boot and whenever the property changes):
+# write persist.aospacademy.charge_limit to qpnp_adaptive_charge's upper_limit, the same single write
 # Motorola's health HAL makes on stock. The module's own setter validates the value (1..100 above
 # lower_limit, which stays -1: auto mode, as on stock); this checks it too. Reading parameters of
 # the vendor charger modules in bulk has panicked this phone's kernel, so this touches two named
 # files only: it writes upper_limit and never reads it (or lower_limit) back, and it checks the
 # result through blocking, a read-only parameter with its own getter, which reports 1 while the
 # module holds charging off. The result goes to the log and to $STATE/charge-limit for
-# Deploy-Image.ps1. Verified by hand on the device first (2026-11-17): at 100% on the charger,
+# aosp-academy deploy. Verified by hand on the device first (2026-11-17): at 100% on the charger,
 # blocking went 0 -> 1 and the battery status to "Not charging", as on stock with protection on.
 #
 # init's `start` does nothing for a oneshot that is still running, so a setprop during the 30 s
 # wait would be lost. After the wait the property is read again, and a changed value is applied
 # in turn. The result file is removed first: it lives in /data and outlasts reboots, and
-# Deploy-Image.ps1 must not read the previous boot's result as this one's.
+# aosp-academy deploy must not read the previous boot's result as this one's.
 if [ "$1" = charge-limit ]; then
     mod=/sys/module/qpnp_adaptive_charge/parameters
     rm -f "$STATE/charge-limit"
     result() { note "charge limit: $*"; echo "$*" > "$STATE/charge-limit"; exit 0; }
-    v="$(getprop persist.vedotom.charge_limit)"
+    v="$(getprop persist.aospacademy.charge_limit)"
     while :; do
         case "$v" in
             ''|*[!0-9]*) result "'$v' is not a number; left unchanged" ;;
@@ -49,7 +49,7 @@ if [ "$1" = charge-limit ]; then
         [ -e "$mod/upper_limit" ] || result "qpnp_adaptive_charge not present; left unchanged"
         echo "$v" > "$mod/upper_limit" 2>/dev/null || result "writing $v to upper_limit failed"
         sleep 30    # the module re-evaluates on its next battery update
-        now="$(getprop persist.vedotom.charge_limit)"
+        now="$(getprop persist.aospacademy.charge_limit)"
         [ "$now" = "$v" ] && break
         note "charge limit: property changed to '$now' while $v was applied; applying it"
         v="$now"
@@ -73,7 +73,7 @@ if [ ! -e "$STATE/home-role" ] && pm path org.fossify.home >/dev/null 2>&1; then
     fi
 fi
 
-# 2. Development-target settings, the same values deploy\Set-DevSettings.ps1 applies on the stock
+# 2. Development-target settings, the same values 'aosp-academy device settings' applies on the stock
 #    system: no animations (UI tests expect it, screens settle at once), no verification scan of
 #    adb installs, and no expiry of an authorised PC's ADB key. Set once, as defaults: a value
 #    changed later in Developer options is kept. SettingsProvider has resource defaults for only

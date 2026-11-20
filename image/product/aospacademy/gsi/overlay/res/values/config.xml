@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- Framework defaults for the VedoTom image. Names and meanings are those of
+<!-- Framework defaults for the aosp-academy image. Names and meanings are those of
      frameworks/base/core/res/res/values/config.xml; only what we change is listed. -->
 <resources>
     <!-- Dark theme by default: 0 auto, 1 light, 2 dark (UiModeManager). -->

@@ -6,7 +6,7 @@
  * untested firmware. Android's update_engine exposes resetStatus() for exactly this case:
  * it cancels the completed update and removes its snapshots. The class is not in the public
  * SDK, so this program reaches it by reflection at runtime instead of compiling against it,
- * which is also why no SDK jar is needed to build it (see stock/Build-StockArtifacts.ps1).
+ * which is also why no SDK jar is needed to build it (see aosp-academy stock build).
  *
  * How it is run. Pushed to the device as a bare DEX and launched with app_process as root
  * (docs/device/walkthrough.md, Stage 4):

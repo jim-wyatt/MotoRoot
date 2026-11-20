@@ -1,4 +1,4 @@
-// The Soong definition of the VedoTom system image.
+// The Soong definition of the aosp-academy system image.
 //
 // Since Android 16, AOSP builds the GSI's system.img from a Soong android_system_image module whose
 // dependency list must match what the product makefiles install, or the build stops
@@ -9,16 +9,16 @@
 // when the tag moves: the diff tool will say exactly what drifted.
 
 package {
-    default_applicable_licenses: ["device_vedotom_gsi_image_license"],
+    default_applicable_licenses: ["device_aospacademy_gsi_image_license"],
 }
 
 license {
-    name: "device_vedotom_gsi_image_license",
+    name: "device_aospacademy_gsi_image_license",
     visibility: [":__subpackages__"],
     license_kinds: ["SPDX-license-identifier-MIT"],
 }
 
-vedotom_gsi_symlinks = [
+aospacademy_gsi_symlinks = [
     {
         target: "/system/system_ext",
         name: "system_ext",
@@ -40,13 +40,13 @@ vedotom_gsi_symlinks = [
 // android_gsi_defaults without Browser2 (no browser in the image), Camera2, Dialer and messaging
 // (Fossify Camera, Phone, Messages).
 android_filesystem_defaults {
-    name: "vedotom_gsi_defaults",
+    name: "aospacademy_gsi_defaults",
     defaults: [
         "system_image_defaults",
         "system_ext_image_defaults",
         "product_image_defaults",
     ],
-    symlinks: vedotom_gsi_symlinks,
+    symlinks: aospacademy_gsi_symlinks,
     dirs: ["cache"],
     deps: [
         // gsi_system_ext: handheld packages
@@ -88,7 +88,7 @@ android_filesystem_defaults {
         "android.hidl.allocator@1.0-service",
     ],
     multilib: {
-        // No lib64 com.android.compos (AVF): vedotom_arm64.mk doesn't inherit the
+        // No lib64 com.android.compos (AVF): aospacademy_arm64.mk doesn't inherit the
         // Virtualization product packages.
         both: {
             // PRODUCT_PACKAGES_SHIPPING_API_LEVEL_34
@@ -99,10 +99,10 @@ android_filesystem_defaults {
 }
 
 // aosp_system_image without Calendar, Contacts, DeskClock, Gallery2, Music and QuickSearchBox,
-// plus this project's modules (vedotom_arm64.mk installs the same set).
+// plus this project's modules (aospacademy_arm64.mk installs the same set).
 android_system_image {
-    name: "vedotom_system_image",
-    defaults: ["vedotom_gsi_defaults"],
+    name: "aospacademy_system_image",
+    defaults: ["aospacademy_gsi_defaults"],
     deps: [
         // handheld_system_ext
         "AccessibilityMenu",
@@ -113,24 +113,24 @@ android_system_image {
         "EmergencyInfo",
         "preinstalled-packages-platform-telephony-system-ext.xml", // new in android-17.0.0_r1
 
-        // handheld_product (vedotom_handheld_product.mk)
+        // handheld_product (aospacademy_handheld_product.mk)
         "preinstalled-packages-platform-handheld-product.xml",
         "SettingsIntelligence",
         "frameworks-base-overlays",
 
-        // telephony_product without Dialer (vedotom_product.mk)
+        // telephony_product without Dialer (aospacademy_product.mk)
         "ImsServiceEntitlement",
         "preinstalled-packages-platform-telephony-product.xml",
         "preinstalled-packages-telephony-system-ext.xml", // new in android-17.0.0_r1
 
-        // more AOSP packages (vedotom_product.mk), without PhotoTable
+        // more AOSP packages (aospacademy_product.mk), without PhotoTable
         "initial-package-stopped-states-aosp.xml",
         "preinstalled-packages-platform-aosp-product.xml",
         "ThemePicker",
 
-        // VedoTom (vedotom_arm64.mk)
-        "VedoTomFrameworkOverlay",
-        "VedoTomNetworkStackOverlay",
+        // aosp-academy (aospacademy_arm64.mk)
+        "AospAcademyFrameworkOverlay",
+        "AospAcademyNetworkStackOverlay",
         "FossifyLauncher",
         "FossifyGallery",
         "FossifyFileManager",
@@ -147,8 +147,8 @@ android_system_image {
         "FossifyVoiceRecorder",
         "FossifyPaint",
         "FossifyKeyboard",
-        "vedotom-firstboot",
-        "init.vedotom.rc",
+        "aospacademy-firstboot",
+        "init.aospacademy.rc",
     ] + select(product_variable("debuggable"), {
         true: ["frameworks-base-overlays-debug"],
         default: [],

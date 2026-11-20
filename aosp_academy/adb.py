@@ -17,7 +17,7 @@ FASTBOOT = WORK / "platform-tools" / f"fastboot{EXE}"
 def adb(*args, check: bool = True, timeout: float | None = None) -> str:
     """Run adb and return its output (stdout and stderr together), stripped."""
     if not ADB.exists():
-        raise Failure("platform-tools missing. Run: vedotom setup")
+        raise Failure("platform-tools missing. Run: aosp-academy setup")
     p = run([ADB, *args], check=check, capture=True, timeout=timeout)
     return p.stdout.strip()
 
@@ -74,7 +74,7 @@ def has_root() -> bool:
 def wait_authorized() -> None:
     """Wait until adb sees the phone as authorized, saying once what it waits for.
 
-    VedoTom images set ro.adb.secure=1 and every DSU install starts with empty userdata, so a PC
+    aosp-academy images set ro.adb.secure=1 and every DSU install starts with empty userdata, so a PC
     whose key isn't built into the image sees the phone as "unauthorized" until someone taps Allow.
     """
     told = False

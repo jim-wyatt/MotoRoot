@@ -4,7 +4,7 @@
 # Run inside WSL after sync.sh:  wsl -- bash image/build/build-image.sh
 # The lunch target comes from toolchain.json (deviceTools.aosp.lunch). The first build takes
 # hours and all cores; later builds are incremental. On success the system image is copied to
-# work/device-tools/gsi/own/ on the Windows side, where Install-Gsi.ps1 -Image can boot it
+# work/device-tools/gsi/own/ where 'aosp-academy gsi install --image' can boot it
 # through DSU exactly like Google's image.
 # No `set -e`/`set -u`: AOSP's envsetup.sh and lunch are not written for strict mode (they read
 # unset variables and return non-zero on the way to success). Failures are checked explicitly.
@@ -38,14 +38,14 @@ echo "== build finished $(date)"
 [ -f "$PRODUCT_OUT/system/build.prop" ] || { echo "no system/build.prop in $PRODUCT_OUT" >&2; exit 1; }
 mkdir -p "$DEST_DIR"
 # The previous build's files go first, so none of them (vbmeta.img when this build has none, say)
-# stays beside the new image, where Install-Gsi.ps1 -Image would pack it into the DSU zip.
+# stays beside the new image, where 'aosp-academy gsi install' would pack it into the DSU zip.
 rm -f "$DEST_DIR"/system.img "$DEST_DIR"/vbmeta.img "$DEST_DIR"/build.prop "$DEST_DIR"/system.img.sha256
 cp "$PRODUCT_OUT/system.img" "$DEST_DIR/system.img" || { echo "copying system.img failed" >&2; exit 1; }
 cp "$PRODUCT_OUT/system/build.prop" "$DEST_DIR/build.prop" || { echo "copying build.prop failed" >&2; exit 1; }
 if [ -f "$PRODUCT_OUT/vbmeta.img" ]; then
   cp "$PRODUCT_OUT/vbmeta.img" "$DEST_DIR/vbmeta.img" || { echo "copying vbmeta.img failed" >&2; exit 1; }
 fi
-# A checksum beside the image, so a copy on another machine can be verified (Get-RemoteImage.ps1).
+# A checksum beside the image, so a copy on another machine can be verified (aosp-academy fetch).
 (cd "$DEST_DIR" && sha256sum system.img > system.img.sha256)
 # Optional second copy for another machine to pull, e.g. a chrooted SFTP folder on WSL's own disk
 # (see "Building on one machine, installing from another" in docs/develop/aosp-build.md). Each file
@@ -53,7 +53,7 @@ fi
 # overlaps a build never sees a half-written image paired with the new checksum.
 # The image is also published in PARTS pieces (system.img.part00 ...), listed with their SHA-256
 # in system.img.parts: the VPN path to the install PC limits each connection, not the total, so
-# Get-RemoteImage.ps1 pulls the parts over parallel streams (8 streams: 1.8 GB in ~4.5 min instead
+# aosp-academy fetch pulls the parts over parallel streams (8 streams: 1.8 GB in ~4.5 min instead
 # of 13) and joins them. The full system.img stays for pullers that don't use parts.
 PARTS="${PARTS:-16}"
 if [ -n "${PUBLISH_DIR:-}" ]; then

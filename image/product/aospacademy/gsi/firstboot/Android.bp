@@ -1,0 +1,28 @@
+// The first-boot service of the aosp-academy image: a shell script init starts once the system has
+// booted, as root, to set what the image cannot from read-only partitions (the HOME role, the
+// development settings, the hidden AOSP Files icon, the Fossify icon colour). It is idempotent
+// and cheap on every later boot. init.aospacademy.rc also sets the log buffer size on every boot.
+// See aospacademy-firstboot.sh and init.aospacademy.rc.
+
+package {
+    default_applicable_licenses: ["device_aospacademy_gsi_firstboot_license"],
+}
+
+license {
+    name: "device_aospacademy_gsi_firstboot_license",
+    visibility: [":__subpackages__"],
+    license_kinds: ["SPDX-license-identifier-MIT"],
+}
+
+sh_binary {
+    name: "aospacademy-firstboot",
+    src: "aospacademy-firstboot.sh",
+    product_specific: true,
+}
+
+prebuilt_etc {
+    name: "init.aospacademy.rc",
+    src: "init.aospacademy.rc",
+    sub_dir: "init",
+    product_specific: true,
+}

@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!-- Static overlay on NetworkStack: enabled at boot, not toggleable from Settings. -->
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    package="vedotom.gsi.overlay.networkstack">
+    package="aospacademy.gsi.overlay.networkstack">
     <application android:hasCode="false" />
     <overlay
         android:targetPackage="com.android.networkstack"

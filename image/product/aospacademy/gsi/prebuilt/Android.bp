@@ -1,4 +1,4 @@
-// Prebuilt apps bundled into the product partition of the VedoTom image.
+// Prebuilt apps bundled into the product partition of the aosp-academy image.
 //
 // The APK files are not in the repository: image/build/apply-local.sh copies them here from
 // work/device-tools/, where the bootstrap downloads them against the SHA-256 and signing-
@@ -9,12 +9,12 @@
 // for the same reason.
 
 package {
-    default_applicable_licenses: ["device_vedotom_gsi_prebuilt_license"],
+    default_applicable_licenses: ["device_aospacademy_gsi_prebuilt_license"],
 }
 
 // The apps are GPL-3.0 (the Fossify suite); the declaration here covers the build glue only. Each app's own license travels inside its APK.
 license {
-    name: "device_vedotom_gsi_prebuilt_license",
+    name: "device_aospacademy_gsi_prebuilt_license",
     visibility: [":__subpackages__"],
     license_kinds: [
         "SPDX-license-identifier-GPL-3.0-only",

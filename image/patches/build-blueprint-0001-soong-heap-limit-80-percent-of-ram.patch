@@ -43,7 +43,7 @@ index e5f6862..04130b4 100644
  	if args.NoGC {
  		debug.SetGCPercent(-1)
 +	} else if limit := physicalMemoryLimit(); limit > 0 {
-+		// VedoTom: analysing a whole product needs a heap close to the RAM of a 32 GB builder, and
++		// aosp-academy: analysing a whole product needs a heap close to the RAM of a 32 GB builder, and
 +		// Go's collector lets the heap grow to twice the live data before it runs, so soong_build
 +		// swaps for an hour or is OOM-killed. A soft limit at 80% of RAM makes the collector run
 +		// earlier instead; it costs CPU only once the heap gets there.

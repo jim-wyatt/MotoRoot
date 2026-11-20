@@ -6,9 +6,9 @@ index b010612..fe3b1ae 100644
      visibility: [
          "//build/make/target/product/gsi",
          "//build/soong/fsgen",
-+        // VedoTom: our own android_system_image (device/vedotom/gsi/Android.bp) builds the
++        // aosp-academy: our own android_system_image (device/aospacademy/gsi/Android.bp) builds the
 +        // product and system_ext build.prop files the same way the GSI does.
-+        "//device/vedotom/gsi",
++        "//device/aospacademy/gsi",
      ],
  }
  
@@ -16,9 +16,9 @@ index b010612..fe3b1ae 100644
      visibility: [
          "//build/make/target/product/gsi",
          "//build/soong/fsgen",
-+        // VedoTom: our own android_system_image (device/vedotom/gsi/Android.bp) builds the
++        // aosp-academy: our own android_system_image (device/aospacademy/gsi/Android.bp) builds the
 +        // product and system_ext build.prop files the same way the GSI does.
-+        "//device/vedotom/gsi",
++        "//device/aospacademy/gsi",
          "//bootable/recovery/tests/ota",
      ],
  }

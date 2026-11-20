@@ -1,6 +1,6 @@
 """Build the project's Magisk modules from their manifests.
 
-Usage, from the repository root (stock/Build-StockArtifacts.ps1 normally drives this):
+Usage, from the repository root ('aosp-academy stock build' normally drives this):
 
     python stock/modules/build_modules.py              # every manifest in manifests/
     python stock/modules/build_modules.py --out DIR    # write the ZIPs somewhere else
@@ -47,7 +47,7 @@ is self-describing.
 
 Builds are deterministic: entry order and timestamps are fixed, so the same manifest and
 scripts always produce a byte-identical ZIP on the same platform, and the committed ZIPs can be
-verified by hash there (stock/Build-StockArtifacts.ps1). Across platforms the deflate stream can differ
+verified by hash there (aosp-academy stock build). Across platforms the deflate stream can differ
 between zlib builds while every entry is identical, so test_build_modules.py compares entries.
 
 This script runs on the PC only. It never communicates with or modifies a phone.

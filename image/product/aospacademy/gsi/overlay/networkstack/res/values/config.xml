@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- Connectivity-check endpoints for the VedoTom image. Names and meanings are those of
+<!-- Connectivity-check endpoints for the aosp-academy image. Names and meanings are those of
      packages/modules/NetworkStack/res/values/config.xml (android-17.0.0_r1, unchanged since
      android-16.0.0_r4). GrapheneOS runs these
      for any client; they answer 204 like Google's connectivitycheck.gstatic.com. -->

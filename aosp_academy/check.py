@@ -141,7 +141,7 @@ def run_checks() -> int:
         if not bash:
             raise RuntimeError("no bash on PATH (Git Bash on Windows)")
         files = [*sorted((ROOT / "image" / "build").glob("*.sh")), *sorted((ROOT / "stock" / "modules" / "scripts").rglob("*.sh")),
-                 ROOT / "image" / "product" / "vedotom" / "gsi" / "firstboot" / "vedotom-firstboot.sh", ROOT / ".githooks" / "pre-commit"]
+                 ROOT / "image" / "product" / "aospacademy" / "gsi" / "firstboot" / "aospacademy-firstboot.sh", ROOT / ".githooks" / "pre-commit"]
         files = [f for f in files if f.exists()]
         for f in files:
             if b"\r" in f.read_bytes():

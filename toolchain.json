@@ -1,5 +1,5 @@
 {
-  "_comment": "Single source of truth for the dev environment. Install-Workstation.ps1 reads this. Bump a version here, re-run the bootstrap, and commit the change.",
+  "_comment": "Single source of truth for the dev environment. aosp-academy setup reads this. Bump a version here, re-run setup, and commit the change.",
   "winget": [
     {
       "id": "Microsoft.OpenJDK.21",
@@ -66,7 +66,7 @@
       "name": "r8-8.3.37.jar",
       "url": "https://dl.google.com/dl/android/maven2/com/android/tools/r8/8.3.37/r8-8.3.37.jar",
       "sha1": "6b023243a76124fb055d66b50e2e11db9b4d9b2b",
-      "purpose": "D8 used to build stock/helpers (Build-StockArtifacts.ps1)"
+      "purpose": "D8 used to build stock/helpers (aosp-academy stock build)"
     },
     {
       "name": "apktool_3.0.3.jar",
@@ -85,7 +85,7 @@
     }
   ],
   "deviceTools": {
-    "_note": "Optional tools for the prepared device (docs/develop/instrumentation.md, docs/device/dev-setup.md). Downloaded into work/device-tools/, git-ignored. Bumping these is routine, unlike the inputs section. buildOnly entries are image-build inputs (the Fossify APKs built into vedotom_arm64): only the build machine downloads them; Install-Workstation.ps1 -InstallPc skips them.",
+    "_note": "Optional tools for the prepared device (docs/develop/instrumentation.md, docs/device/dev-setup.md). Downloaded into work/device-tools/, git-ignored. Bumping these is routine, unlike the inputs section. buildOnly entries are image-build inputs (the Fossify APKs built into aospacademy_arm64): only the build node downloads them (aosp-academy image inputs); setup skips them.",
     "downloads": [
       {
         "name": "frida-server-17.26.3-android-arm64.xz",
@@ -106,7 +106,7 @@
         "url": "https://f-droid.org/repo/org.fossify.home_16.apk",
         "sha256": "a603d3d510482feafd73d52a93a1ea9baefd2ca0aae329a14cbf0e21f43638e3",
         "signerSha256": "affdb124d3f4720c2f98dbca9eacba0514fba4306e20a2786c861c3c0d6ff292",
-        "purpose": "Fossify Launcher 1.10.0 (GPL-3.0-only), signed by Fossify, distributed by F-Droid: the home screen of the vedotom_arm64 image. Hash and signer from F-Droid's signed index-v2.",
+        "purpose": "Fossify Launcher 1.10.0 (GPL-3.0-only), signed by Fossify, distributed by F-Droid: the home screen of the aospacademy_arm64 image. Hash and signer from F-Droid's signed index-v2.",
         "buildOnly": true
       },
       {
@@ -114,7 +114,7 @@
         "url": "https://f-droid.org/repo/org.fossify.calendar_25.apk",
         "sha256": "2825816d0a972bd85eb289e556221293fadecfd3179a4a2531bde6f89c6f0238",
         "signerSha256": "affdb124d3f4720c2f98dbca9eacba0514fba4306e20a2786c861c3c0d6ff292",
-        "purpose": "Fossify Calendar 1.12.2 (GPL-3.0-only), signed by Fossify, distributed by F-Droid: part of the Fossify suite bundled into the vedotom_arm64 image. Hash and signer from F-Droid's signed index-v2.",
+        "purpose": "Fossify Calendar 1.12.2 (GPL-3.0-only), signed by Fossify, distributed by F-Droid: part of the Fossify suite bundled into the aospacademy_arm64 image. Hash and signer from F-Droid's signed index-v2.",
         "buildOnly": true
       },
       {
@@ -122,7 +122,7 @@
         "url": "https://f-droid.org/repo/org.fossify.camera_11.apk",
         "sha256": "116004fd8743f9e47bf25eb9c6049eb77d3f19d59506c3f47513f584c6138435",
         "signerSha256": "affdb124d3f4720c2f98dbca9eacba0514fba4306e20a2786c861c3c0d6ff292",
-        "purpose": "Fossify Camera Beta 1.5.0 (GPL-3.0-only), signed by Fossify, distributed by F-Droid: part of the Fossify suite bundled into the vedotom_arm64 image. Hash and signer from F-Droid's signed index-v2.",
+        "purpose": "Fossify Camera Beta 1.5.0 (GPL-3.0-only), signed by Fossify, distributed by F-Droid: part of the Fossify suite bundled into the aospacademy_arm64 image. Hash and signer from F-Droid's signed index-v2.",
         "buildOnly": true
       },
       {
@@ -130,7 +130,7 @@
         "url": "https://f-droid.org/repo/org.fossify.clock_10.apk",
         "sha256": "43cf9f0ec45f1f1ff2df47286622e5b8f3acedaeb07b7f7641b5243dbedca079",
         "signerSha256": "affdb124d3f4720c2f98dbca9eacba0514fba4306e20a2786c861c3c0d6ff292",
-        "purpose": "Fossify Clock Beta 1.6.0 (GPL-3.0-only), signed by Fossify, distributed by F-Droid: part of the Fossify suite bundled into the vedotom_arm64 image. Hash and signer from F-Droid's signed index-v2.",
+        "purpose": "Fossify Clock Beta 1.6.0 (GPL-3.0-only), signed by Fossify, distributed by F-Droid: part of the Fossify suite bundled into the aospacademy_arm64 image. Hash and signer from F-Droid's signed index-v2.",
         "buildOnly": true
       },
       {
@@ -138,7 +138,7 @@
         "url": "https://f-droid.org/repo/org.fossify.contacts_13.apk",
         "sha256": "6a89be96b5ec39f5e2b11bd61dc7031f4b88261b324ab13af5743fbc62f0cddb",
         "signerSha256": "affdb124d3f4720c2f98dbca9eacba0514fba4306e20a2786c861c3c0d6ff292",
-        "purpose": "Fossify Contacts 1.6.0 (GPL-3.0-only), signed by Fossify, distributed by F-Droid: part of the Fossify suite bundled into the vedotom_arm64 image. Hash and signer from F-Droid's signed index-v2.",
+        "purpose": "Fossify Contacts 1.6.0 (GPL-3.0-only), signed by Fossify, distributed by F-Droid: part of the Fossify suite bundled into the aospacademy_arm64 image. Hash and signer from F-Droid's signed index-v2.",
         "buildOnly": true
       },
       {
@@ -146,7 +146,7 @@
         "url": "https://f-droid.org/repo/org.fossify.documents_20.apk",
         "sha256": "ef50f14a68b6b63a263cb9681b0da9a56bbd5df1258087d0e20a841b5502b514",
         "signerSha256": "affdb124d3f4720c2f98dbca9eacba0514fba4306e20a2786c861c3c0d6ff292",
-        "purpose": "Fossify Documents Beta 1.2.1 (GPL-3.0-only), signed by Fossify, distributed by F-Droid: part of the Fossify suite bundled into the vedotom_arm64 image. Hash and signer from F-Droid's signed index-v2.",
+        "purpose": "Fossify Documents Beta 1.2.1 (GPL-3.0-only), signed by Fossify, distributed by F-Droid: part of the Fossify suite bundled into the aospacademy_arm64 image. Hash and signer from F-Droid's signed index-v2.",
         "buildOnly": true
       },
       {
@@ -154,7 +154,7 @@
         "url": "https://f-droid.org/repo/org.fossify.filemanager_16.apk",
         "sha256": "6e4656b8947966a2853681691bb0005e802ee89983fb141ec0f7186497dcd5f4",
         "signerSha256": "affdb124d3f4720c2f98dbca9eacba0514fba4306e20a2786c861c3c0d6ff292",
-        "purpose": "Fossify File Manager 1.6.4 (GPL-3.0-only), signed by Fossify, distributed by F-Droid: part of the Fossify suite bundled into the vedotom_arm64 image. Hash and signer from F-Droid's signed index-v2.",
+        "purpose": "Fossify File Manager 1.6.4 (GPL-3.0-only), signed by Fossify, distributed by F-Droid: part of the Fossify suite bundled into the aospacademy_arm64 image. Hash and signer from F-Droid's signed index-v2.",
         "buildOnly": true
       },
       {
@@ -162,7 +162,7 @@
         "url": "https://f-droid.org/repo/org.fossify.gallery_40.apk",
         "sha256": "ff3e6122ccf1873620e9e8e374b9c9dec4d7eb3a8f42559135bd82562c65f41f",
         "signerSha256": "affdb124d3f4720c2f98dbca9eacba0514fba4306e20a2786c861c3c0d6ff292",
-        "purpose": "Fossify Gallery 1.14.2 (GPL-3.0-only), signed by Fossify, distributed by F-Droid: part of the Fossify suite bundled into the vedotom_arm64 image. Hash and signer from F-Droid's signed index-v2.",
+        "purpose": "Fossify Gallery 1.14.2 (GPL-3.0-only), signed by Fossify, distributed by F-Droid: part of the Fossify suite bundled into the aospacademy_arm64 image. Hash and signer from F-Droid's signed index-v2.",
         "buildOnly": true
       },
       {
@@ -170,7 +170,7 @@
         "url": "https://f-droid.org/repo/org.fossify.keyboard_14.apk",
         "sha256": "e326885c08b68212fd9fdda9be8a4fa492d5daba7ff37bb4ff4511826f40a8d0",
         "signerSha256": "affdb124d3f4720c2f98dbca9eacba0514fba4306e20a2786c861c3c0d6ff292",
-        "purpose": "Fossify Keyboard Beta 1.9.1 (GPL-3.0-only), signed by Fossify, distributed by F-Droid: part of the Fossify suite bundled into the vedotom_arm64 image. Hash and signer from F-Droid's signed index-v2.",
+        "purpose": "Fossify Keyboard Beta 1.9.1 (GPL-3.0-only), signed by Fossify, distributed by F-Droid: part of the Fossify suite bundled into the aospacademy_arm64 image. Hash and signer from F-Droid's signed index-v2.",
         "buildOnly": true
       },
       {
@@ -178,7 +178,7 @@
         "url": "https://f-droid.org/repo/org.fossify.math_10.apk",
         "sha256": "7c5443c22d6d62c67dfe80df33ea9161ff0fa440f92590bcb45d7008b57613ed",
         "signerSha256": "affdb124d3f4720c2f98dbca9eacba0514fba4306e20a2786c861c3c0d6ff292",
-        "purpose": "Fossify Calculator Beta 1.4.0 (GPL-3.0-only), signed by Fossify, distributed by F-Droid: part of the Fossify suite bundled into the vedotom_arm64 image. Hash and signer from F-Droid's signed index-v2.",
+        "purpose": "Fossify Calculator Beta 1.4.0 (GPL-3.0-only), signed by Fossify, distributed by F-Droid: part of the Fossify suite bundled into the aospacademy_arm64 image. Hash and signer from F-Droid's signed index-v2.",
         "buildOnly": true
       },
       {
@@ -186,7 +186,7 @@
         "url": "https://f-droid.org/repo/org.fossify.messages_26.apk",
         "sha256": "7077dae6613d7a9d775841c4c10be16e255f8af8d5152bc84a5e6984740b56e1",
         "signerSha256": "affdb124d3f4720c2f98dbca9eacba0514fba4306e20a2786c861c3c0d6ff292",
-        "purpose": "Fossify Messages 1.10.2 (GPL-3.0-only), signed by Fossify, distributed by F-Droid: part of the Fossify suite bundled into the vedotom_arm64 image. Hash and signer from F-Droid's signed index-v2.",
+        "purpose": "Fossify Messages 1.10.2 (GPL-3.0-only), signed by Fossify, distributed by F-Droid: part of the Fossify suite bundled into the aospacademy_arm64 image. Hash and signer from F-Droid's signed index-v2.",
         "buildOnly": true
       },
       {
@@ -194,7 +194,7 @@
         "url": "https://f-droid.org/repo/org.fossify.musicplayer_18.apk",
         "sha256": "61fdf0bb71cb3a809960e59a5872030f16c799a0c0f285115a6f40f7fa5012c0",
         "signerSha256": "affdb124d3f4720c2f98dbca9eacba0514fba4306e20a2786c861c3c0d6ff292",
-        "purpose": "Fossify Music Player 1.8.5 (GPL-3.0-only), signed by Fossify, distributed by F-Droid: part of the Fossify suite bundled into the vedotom_arm64 image. Hash and signer from F-Droid's signed index-v2.",
+        "purpose": "Fossify Music Player 1.8.5 (GPL-3.0-only), signed by Fossify, distributed by F-Droid: part of the Fossify suite bundled into the aospacademy_arm64 image. Hash and signer from F-Droid's signed index-v2.",
         "buildOnly": true
       },
       {
@@ -202,7 +202,7 @@
         "url": "https://f-droid.org/repo/org.fossify.notes_13.apk",
         "sha256": "5a56e0e39cc488e1f3b947d3801006d3b7450ec73c67f03195c64c5fd3b6bced",
         "signerSha256": "affdb124d3f4720c2f98dbca9eacba0514fba4306e20a2786c861c3c0d6ff292",
-        "purpose": "Fossify Notes Beta 1.7.0 (GPL-3.0-only), signed by Fossify, distributed by F-Droid: part of the Fossify suite bundled into the vedotom_arm64 image. Hash and signer from F-Droid's signed index-v2.",
+        "purpose": "Fossify Notes Beta 1.7.0 (GPL-3.0-only), signed by Fossify, distributed by F-Droid: part of the Fossify suite bundled into the aospacademy_arm64 image. Hash and signer from F-Droid's signed index-v2.",
         "buildOnly": true
       },
       {
@@ -210,7 +210,7 @@
         "url": "https://f-droid.org/repo/org.fossify.paint_7.apk",
         "sha256": "b949ad0a1eafce616e9e6c6f5fa5b265e4b8ad426303a245be921a6e0c0def5e",
         "signerSha256": "affdb124d3f4720c2f98dbca9eacba0514fba4306e20a2786c861c3c0d6ff292",
-        "purpose": "Fossify Paint Beta 1.4.0 (GPL-3.0-only), signed by Fossify, distributed by F-Droid: part of the Fossify suite bundled into the vedotom_arm64 image. Hash and signer from F-Droid's signed index-v2.",
+        "purpose": "Fossify Paint Beta 1.4.0 (GPL-3.0-only), signed by Fossify, distributed by F-Droid: part of the Fossify suite bundled into the aospacademy_arm64 image. Hash and signer from F-Droid's signed index-v2.",
         "buildOnly": true
       },
       {
@@ -218,7 +218,7 @@
         "url": "https://f-droid.org/repo/org.fossify.phone_22.apk",
         "sha256": "d1ad08467034e5138a6e68f03b6e150f0bb010dfcbf490ff3d2bd4822b755728",
         "signerSha256": "affdb124d3f4720c2f98dbca9eacba0514fba4306e20a2786c861c3c0d6ff292",
-        "purpose": "Fossify Phone 1.11.1 (GPL-3.0-only), signed by Fossify, distributed by F-Droid: part of the Fossify suite bundled into the vedotom_arm64 image. Hash and signer from F-Droid's signed index-v2.",
+        "purpose": "Fossify Phone 1.11.1 (GPL-3.0-only), signed by Fossify, distributed by F-Droid: part of the Fossify suite bundled into the aospacademy_arm64 image. Hash and signer from F-Droid's signed index-v2.",
         "buildOnly": true
       },
       {
@@ -226,7 +226,7 @@
         "url": "https://f-droid.org/repo/org.fossify.voicerecorder_21.apk",
         "sha256": "1b3efb263bd152299aada8bb6ed3cca4a340425cd755472f7d799c9e0e024cc8",
         "signerSha256": "affdb124d3f4720c2f98dbca9eacba0514fba4306e20a2786c861c3c0d6ff292",
-        "purpose": "Fossify Voice Recorder Beta 1.7.4 (GPL-3.0-only), signed by Fossify, distributed by F-Droid: part of the Fossify suite bundled into the vedotom_arm64 image. Hash and signer from F-Droid's signed index-v2.",
+        "purpose": "Fossify Voice Recorder Beta 1.7.4 (GPL-3.0-only), signed by Fossify, distributed by F-Droid: part of the Fossify suite bundled into the aospacademy_arm64 image. Hash and signer from F-Droid's signed index-v2.",
         "buildOnly": true
       }
     ],
@@ -236,7 +236,7 @@
       "_note": "pip pins for work/.venv-frida: frida==version (must match the server above), frida-tools==toolsVersion"
     },
     "gsi": {
-      "_note": "Google's AOSP arm64 GSI for Android 17, the stable release of the same drop as the source tag below; booted through DSU by deploy/Install-Gsi.ps1 (docs/device/gsi.md) and run on this device on 2026-11-19 (step 0 of the tag move, docs/develop/image-backlog.md section 7). Not fetched by the bootstrap: the download is ~1 GB and behind Google's terms, which the script asks you to accept. Until 2026-11-19 this was the Android 16 GSI BP4A.251205.006 (sha256 2171cf0e...).",
+      "_note": "Google's AOSP arm64 GSI for Android 17, the stable release of the same drop as the source tag below; booted through DSU by aosp-academy gsi (docs/device/gsi.md) and run on this device on 2026-11-19 (step 0 of the tag move, docs/develop/image-backlog.md section 7). Not fetched by the bootstrap: the download is ~1 GB and behind Google's terms, which the script asks you to accept. Until 2026-11-19 this was the Android 16 GSI BP4A.251205.006 (sha256 2171cf0e...).",
       "name": "aosp_arm64-exp-CP2A.260605.012-15430684-8e545e1e.zip",
       "url": "https://dl.google.com/developers/android/cinnamonbun/images/gsi/aosp_arm64-exp-CP2A.260605.012-15430684-8e545e1e.zip",
       "sha256": "8e545e1e1e977c3b43b4e54a3af463f3e7d1c3177b120e772138334e15f48f75",
@@ -246,10 +246,10 @@
       "terms": "https://developer.android.com/topic/generic-system-image/releases"
     },
     "aosp": {
-      "_note": "Source for building your own GSI in WSL (image/build/*.sh, docs/develop/aosp-build.md). The tag is the AOSP release of the same Android 17 drop as the pinned GSI binary above (android-17.0.0_r1 is CP2A.260605.016 per source.android.com/docs/setup/reference/build-numbers; the GSI binary is CP2A.260605.012), so what you build matches what was validated. Builds 1 to 9 came from android-16.0.0_r4 (BP4A.251205.006); Android 16 was dropped on 2026-11-19. The lunch target is verified against `lunch` after the first sync. treeDir is where the scripts put the tree in WSL (AOSP_DIR overrides it).",
+      "_note": "Source for building the image on a Linux build node (image/build/*.sh, docs/develop/aosp-build.md). The tag is the AOSP release of the same Android 17 drop as the pinned GSI binary above (android-17.0.0_r1 is CP2A.260605.016 per source.android.com/docs/setup/reference/build-numbers; the GSI binary is CP2A.260605.012), so what you build matches what was validated. Builds 1 to 9 came from android-16.0.0_r4 (BP4A.251205.006); Android 16 was dropped on 2026-11-19. The lunch target is verified against `lunch` after the first sync. treeDir is where the scripts put the tree (AOSP_DIR overrides it).",
       "manifest": "https://android.googlesource.com/platform/manifest",
       "tag": "android-17.0.0_r1",
-      "lunch": "vedotom_arm64-trunk_staging-userdebug",
+      "lunch": "aospacademy_arm64-trunk_staging-userdebug",
       "treeDir": "~/aosp17"
     }
   },

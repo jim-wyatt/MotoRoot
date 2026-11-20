@@ -39,7 +39,7 @@ class CommittedModules(unittest.TestCase):
                 with self.subTest(module=built.name):
                     self.assertTrue(committed.exists(), f"{built.name} is not committed")
                     self.assertEqual(entries(built), entries(committed),
-                                     f"{built.name} is stale: rebuild with stock\\Build-StockArtifacts.ps1 -Promote")
+                                     f"{built.name} is stale: rebuild with: aosp-academy stock build --promote")
 
     def test_no_committed_zip_without_a_manifest(self):
         ids = {bm.load_manifest(m)["id"].replace("_", "-") + ".zip" for m in bm.MANIFEST_DIR.glob("*.json")}

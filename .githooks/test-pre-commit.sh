@@ -35,7 +35,7 @@ fake_serial="$(printf '%s%s' TESTSER 0000)"
 expect blocked notes.txt "IMEI: $fake_imei"
 expect blocked notes.txt "ro.serialno=$fake_serial"
 
-for p in README.md workstation/Test-Workstation.ps1 stock/modules/manifests/x.json docs/a.md adbkey.pub.md \
+for p in README.md aosp_academy/cli.py stock/modules/manifests/x.json docs/a.md adbkey.pub.md \
          stock/helpers/UpdateHelper.java image/build/build-image.sh; do
   expect allowed "$p"
 done

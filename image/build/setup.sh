@@ -34,8 +34,8 @@ if grep -q '^# AOSP builds (.*image/build/setup.sh)$' "$HOME/.profile" 2>/dev/nu
 fi
 
 echo "== git identity (repo refuses to sync without one)"
-git config --global user.name  >/dev/null 2>&1 || git config --global user.name  "VedoTom builder"
-git config --global user.email >/dev/null 2>&1 || git config --global user.email "builder@vedotom.invalid"
+git config --global user.name  >/dev/null 2>&1 || git config --global user.name  "aosp-academy builder"
+git config --global user.email >/dev/null 2>&1 || git config --global user.email "builder@aosp-academy.invalid"
 git config --global color.ui auto
 
 mkdir -p "$AOSP_DIR"
