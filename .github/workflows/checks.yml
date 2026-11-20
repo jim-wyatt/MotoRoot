@@ -1,8 +1,12 @@
 name: Checks
 
-# Fast checks that need no Android SDK, device or AOSP tree: the Magisk module builder and its
-# committed ZIPs, every shell script (syntax, ShellCheck errors, LF line endings), the aosp_academy
-# package's unit tests and its CLI. The full self-test (aosp-academy check) runs on a set-up workstation.
+# Fast checks that need no Android SDK, device or AOSP tree:
+#   checks    the Magisk module builder and its committed ZIPs, every shell script (syntax,
+#             ShellCheck errors, LF line endings), the pre-commit hook, the package's unit tests and its CLI
+#   portable  the unit tests and the launcher on Windows, macOS and Linux (the device node is Windows)
+#   patches   image/patches still apply to the pinned AOSP tag (only the patched projects are cloned)
+#   privacy   gitleaks over the whole history, and the tree scan with the project's private values
+# The full self-test (aosp-academy check) runs on a set-up workstation.
 
 on:
   push:
@@ -50,3 +54,59 @@ jobs:
 
       - name: The CLI loads and lists its commands
         run: ./aosp-academy --help
+
+  portable:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [windows-latest, macos-latest, ubuntu-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Package unit tests
+        run: python -I -m unittest discover -s tests -v
+      - name: Module builder tests (committed ZIPs rebuild byte-identically)
+        run: python -m unittest discover -s stock/modules -p "test_*.py" -v
+      - name: The launcher runs (aosp-academy.cmd)
+        if: runner.os == 'Windows'
+        shell: cmd
+        run: aosp-academy.cmd --help
+      - name: The launcher runs (aosp-academy)
+        if: runner.os != 'Windows'
+        run: ./aosp-academy --help
+
+  patches:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: image/patches apply to the pinned AOSP tag
+        run: bash image/build/check-patches.sh
+
+  privacy:
+    runs-on: ubuntu-latest
+    env:
+      GITLEAKS_VERSION: "8.30.1"
+      GITLEAKS_SHA256: "551f6fc83ea457d62a0d98237cbad105af8d557003051f41f3e7ca7b3f2470eb"
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: gitleaks over the whole history (pinned release, checksum verified)
+        run: |
+          f="gitleaks_${GITLEAKS_VERSION}_linux_x64.tar.gz"
+          curl -sSfLO "https://github.com/gitleaks/gitleaks/releases/download/v${GITLEAKS_VERSION}/$f"
+          echo "$GITLEAKS_SHA256  $f" | sha256sum -c -
+          tar -xzf "$f" gitleaks
+          ./gitleaks git --no-banner --redact --exit-code 1 .
+      - name: Tree scan with the project's private values (the AOSP_ACADEMY_PRIVATE_TERMS secret)
+        env:
+          AOSP_ACADEMY_PRIVATE_TERMS: ${{ secrets.AOSP_ACADEMY_PRIVATE_TERMS }}
+        run: |
+          [ -n "$AOSP_ACADEMY_PRIVATE_TERMS" ] || echo "::warning::AOSP_ACADEMY_PRIVATE_TERMS is not set (or this is a fork's PR): only the generic patterns are checked"
+          python -I -m unittest discover -s tests -p test_privacy.py -v
