@@ -4,16 +4,9 @@ What is still open about the image and its build, with what is known about each 
 
 The list started as the review of the first image built on the build node (2026-11-17) and has been worked down since. Nothing here affects the stock system.
 
-## Validate the first Android 17 image
+## Enrol a fingerprint on Android 17
 
-**Build 10**, the first image from `android-17.0.0_r1`, is built from `main` and still has the old `vedotom_arm64` names. It is the first image to go through `aosp-academy deploy`. It is checked against build 9 with the full [checklist](validation.md#the-checklist), plus four points the [tag move](tag-moves.md#worked-example-android-16-to-17-2026-11-19) left for the first build:
-
-- **Fingerprint HIDL 2.1.** Android 17's `generic_system.mk` no longer installs the HIDL `android.hardware.biometrics.fingerprint@2.1` package, and this phone's fingerprint HAL is HIDL `@2.1`. Google's 17 GSI still found it (`FingerprintProvider/defaultHIDL`), but our build has to show the same: enrol a finger and unlock with it.
-- **`adb_keys`.** `/product/etc/security/adb_keys` in the build output and on the phone, and a deploy with no Allow tap.
-- **`gpuservice` without the patch.** The `frameworks/native` patch was deleted because Android 17 fixes the abort upstream; check that `gpuservice` stays up with no GpuWork abort.
-- **The 17 GSI's hardware list** ([its validation row](validation.md#history)): display modes, cameras, sensors, NFC, Bluetooth, GNSS, Wi-Fi, audio, the modem, the HAL count.
-
-Then the **first `aospacademy_arm64` build** (from `restructure`) is deployed and should match build 10 apart from the names. Its build node first has to remove `device/vedotom` and revert the old `build/soong` patch ([Build the image](building.md#a-tree-that-had-the-pre-rename-product)).
+Android 17's `generic_system.mk` no longer installs the HIDL `android.hardware.biometrics.fingerprint@2.1` package, and this phone's fingerprint HAL is HIDL `@2.1`. On builds 10 to 12 the HAL is registered and `android.hardware.fingerprint` is listed ([validation](validation.md#history)), but nobody has yet enrolled a finger and unlocked with it. That needs a person at the phone and a screen lock; do it once on the current image.
 
 ## Watch the SystemUI crash
 
@@ -49,7 +42,8 @@ Android 17's Soong analysis fits a 26 GB build node only with the heap-limit pat
 
 ## Smaller items
 
-- **Delete the Android 16 tree.** `~/aosp` (135 GB) on the build node is no longer needed since the switch to Android 17, but keep build 9's `system.img` until an Android 17 image passes validation. The owner runs the `rm`.
+- **Delete the Android 16 tree.** `~/aosp` (135 GB) on the build node is no longer needed: Android 17 images have passed validation (baseline 1) and build 9's `system.img` is gone. The owner runs the `rm`.
+- **A sample app project as a fixture?** `device test` already builds, installs, launches and debugs a probe app. Whether a small Android Studio project in the repo pays for itself (a known-good Gradle build against the pinned SDK) is undecided.
 - **Patch names with dashes.** `apply-local.sh` maps every dash in a patch's project part to a slash, so a project with a dash in its path (`prebuilts/build-tools`) can't be patched. No current patch needs one; fix the naming before one does.
 - **`JOBS` from one place.** `sync.sh` and `build-image.sh` each default `JOBS` themselves (half the cores and all cores). The tree directory already comes from one place (`deviceTools.aosp.treeDir`).
 - **Fetch streams.** 8 parallel streams had not levelled off in the benchmark (1 stream 2.2 MB/s, 4 streams 5.3 MB/s, 8 streams 6.6 MB/s); `--streams 12` and `16` are untried.
