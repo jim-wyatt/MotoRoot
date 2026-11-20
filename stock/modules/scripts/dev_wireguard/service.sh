@@ -19,7 +19,7 @@ until [ "$(getprop sys.boot_completed)" = 1 ]; do sleep 2; done
 [ -x "$D/wg" ] && [ -f "$D/wg0.conf" ] && [ -f "$D/wg0.env" ] || exit 0
 umask 077
 result() { echo "$*" > "$D/status"; log -t dev_wireguard "$*"; exit 0; }
-val() { sed -n "s/^$1=//p" "$D/wg0.env" | head -n 1; }
+val() { sed -n "s/^$1=//p" "$D/wg0.env" | head -n 1 | tr -d '\r'; }   # CRLF-safe
 a4="$(val ADDRESS4)"; a6="$(val ADDRESS6)"; r4="$(val ROUTES4)"; r6="$(val ROUTES6)"
 "$IP" link del wg0 2>/dev/null
 "$IP" link add wg0 type wireguard || result "failed: the kernel refused a wireguard link"
