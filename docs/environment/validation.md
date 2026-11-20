@@ -57,7 +57,7 @@ When an image passes, the [Current image](#current-image) section below is repla
 ## Current image
 
 <!-- current-image: filled in by the device node -->
-**Build 20**, from branch `metadata-staging` at `ec56e9b`, built Fri Nov 20 17:24:09 EST 2026 (`ro.build.date`), SHA-256 `791a0a6d…2909`, validated 2026-11-20: deployed over USB, then again **entirely over the WireGuard tunnel with the cable unplugged** (stock reached over its tunnel, the image provisioned from staging, `device test` 15/15 over the tunnel).
+**Build 21**, from branch `quickstep-home` at `8f86e0c`, built Fri Nov 20 18:31:39 EST 2026 (`ro.build.date`), SHA-256 `f583da49…501a`, validated 2026-11-20: Quickstep (`com.android.launcher3`) as home, the full tunnel (`up, all traffic`) provisioned from staging, `device test` 15/15. Deploys also run entirely over the tunnel with the cable unplugged (tested on build 20).
 
 The image on the phone is the product **`aospacademy_arm64`**, Android 17 (`android-17.0.0_r1`, `CP2A.260605.016`), built from `main` and installed with `./aosp-academy deploy` alone, with no tap on the phone. The git tag `baseline-2` marks build 17, the image before it. Each `baseline-N` tag marks a validated image's commit; `git tag -n1 'baseline-*'` lists them with their image's SHA-256.
 
