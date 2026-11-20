@@ -4,7 +4,7 @@
 
 ## Purpose
 
-VedoTom is an **independent, non-commercial, educational project**. Its purpose is to teach how an Android device boots, how the platform is built and secured, and how a platform engineer studies, instruments and builds for a device they own, using one real phone as the worked example. It is published for learning and research by device owners.
+aosp-academy is an **independent, non-commercial, educational project**. Its purpose is to teach how an Android device boots, how the platform is built and secured, and how a platform engineer studies, instruments and builds for a device they own, using one real phone as the worked example. It is published for learning and research by device owners.
 
 It is not a product or a service. It sells nothing, hosts no firmware or system images (modified or otherwise), and redistributes no software belonging to Motorola, Lenovo, Google, MediaTek, any carrier or any other vendor. Every such file is downloaded by you, from its publisher, under that publisher's terms; the Project records only the hashes of the versions it was tested with. The Project's own contributions are its documentation, its tooling scripts, two small helper programs and the module manifests, all under the [MIT License](LICENSE).
 
@@ -35,7 +35,7 @@ Use the Project only on a device that **you own outright** and are legally entit
 
 ## Scope of what was tested
 
-The procedure was carried out on **two units** of one model, **XT2617V**, on one firmware build, on the dates recorded in the [validation notes](docs/device/validation.md). Two successful runs are not a guarantee of a third. A tool reporting success, a verifier reporting `VALID`, or a hash matching, is not evidence that your device will behave the same way. Other models, variants, firmware builds, security patches or kernels are untested and may be unsafe. Future manufacturer updates may close the paths the procedure uses or change the device's behaviour, and the Project may not be updated to reflect that.
+The procedure was carried out on **two units** of one model, **XT2617V**, on one firmware build, on the dates recorded in the [validation notes](docs/device/index.md#validation-record). Two successful runs are not a guarantee of a third. A tool reporting success, a verifier reporting `VALID`, or a hash matching, is not evidence that your device will behave the same way. Other models, variants, firmware builds, security patches or kernels are untested and may be unsafe. Future manufacturer updates may close the paths the procedure uses or change the device's behaviour, and the Project may not be updated to reflect that.
 
 ## Third-party software
 

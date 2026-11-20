@@ -115,7 +115,8 @@ def trace(seconds: int = 10, name: str | None = None, config: str | None = None,
     if local.exists():
         raise Failure(f"Trace already exists: {local}")
     # SELinux lets perfetto read configs only from /data/misc/perfetto-configs.
-    cfg_local = out / f"{name}.pbtxt"
+    # A staging copy with its own name, so a --config file kept in work/traces is never overwritten or deleted.
+    cfg_local = out / f".staging-{name}.pbtxt"
     cfg_local.write_text(Path(config).read_text(encoding="utf-8") if config else TRACE_CONFIG % (seconds * 1000), encoding="ascii", newline="\n")
     cfg_remote, remote = f"/data/misc/perfetto-configs/{name}.pbtxt", f"/data/misc/perfetto-traces/{name}.pftrace"
     try:

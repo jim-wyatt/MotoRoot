@@ -4,8 +4,8 @@ The phone's internal storage is divided into dozens of named **partitions**: fix
 
 On the phone they appear as block devices:
 
-```powershell
-& $adb shell ls /dev/block/by-name/
+```sh
+adb shell ls /dev/block/by-name/
 ```
 
 ## The ones you'll meet
@@ -60,8 +60,8 @@ Two consequences matter for the walkthrough:
 
 Check your slot any time:
 
-```powershell
-& $adb shell getprop ro.boot.slot_suffix      # must print _a
+```sh
+adb shell getprop ro.boot.slot_suffix      # must print _a
 ```
 
 ## How partitions are read and written
