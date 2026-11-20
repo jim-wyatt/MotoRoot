@@ -182,6 +182,22 @@ for pkg in $(pm list packages org.fossify. | sed 's/^package://'); do
     note "icon colour $ICON_ALIAS for $pkg"
 done
 
+# 5. Bluetooth off. Android turns it on at boot by default (BluetoothManagerService, SYSTEM_BOOT);
+#    a development phone on a desk has nothing to pair with. Bluetooth scanning (apps scanning
+#    for beacons while Bluetooth is off, ble_scan_always_enabled) goes off too. Done once, as a
+#    default: Android keeps the adapter's last state across reboots, so switching it on later in
+#    Settings or Quick Settings sticks.
+if [ ! -e "$STATE/bluetooth-off" ]; then
+    settings put global ble_scan_always_enabled 0 >/dev/null 2>&1
+    cmd bluetooth_manager disable >/dev/null 2>&1
+    timeout 20 cmd bluetooth_manager wait-for-state:STATE_OFF >/dev/null 2>&1
+    if [ "$(settings get global bluetooth_on 2>/dev/null)" = 0 ] && [ "$(settings get global ble_scan_always_enabled 2>/dev/null)" = 0 ]; then
+        touch "$STATE/bluetooth-off"; note "bluetooth off"
+    else
+        failed "bluetooth off"
+    fi
+fi
+
 # The launcher caches icons and its app list; restart it so the changes above show.
 [ "$restart_launcher" = 1 ] && am force-stop org.fossify.home
 

@@ -48,6 +48,8 @@ At first boot the image applies the development-target settings, the same nine t
 
 They are set once, as defaults. A value you change later in Developer options is kept.
 
+Bluetooth is **off** after a deploy (and Bluetooth scanning with it): first boot switches it off once. Turn it on in Quick Settings when an app needs it; Android keeps it on across reboots from then on.
+
 ## USB debugging and adb authorisation
 
 The image sets `ro.adb.secure=1`, as on a retail phone: a PC has to be authorised before adb works. Two cases:

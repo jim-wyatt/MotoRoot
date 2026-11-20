@@ -42,7 +42,7 @@ Compare with the [current image](#current-image) and with step 0 of the [tag mov
 | --- | --- |
 | Display | 4 modes, 120/90/60/30 Hz (`dumpsys SurfaceFlinger` `displayModes`) |
 | Wi-Fi | Validated in about 6 s (5 GHz) |
-| Bluetooth, NFC | On |
+| Bluetooth, NFC | Both work; NFC on, Bluetooth off by default (first boot switches it off; turn it on to test it) |
 | GNSS | MediaTek MNLD HAL (`@2.0`) |
 | Cameras | 2 of 3 exposed (a limit of the GSI's camera interface) |
 | Sensors | 41 hardware sensors (`dumpsys sensorservice`), including the Motorola gestures |
