@@ -57,11 +57,11 @@ When an image passes, the [Current image](#current-image) section below is repla
 ## Current image
 
 <!-- current-image: filled in by the device node -->
-**Build 18**, from branch `wireguard` at `3220eb3`, built Fri Nov 20 13:20:39 EST 2026 (`ro.build.date`), SHA-256 `54ffa195…1473`, validated 2026-11-20.
+**Build 19**, from branch `bluetooth-off` at `f61c42e`, built Fri Nov 20 16:53:56 EST 2026 (`ro.build.date`), SHA-256 `f1d63982…71e0`, validated 2026-11-20.
 
 The image on the phone is the product **`aospacademy_arm64`**, Android 17 (`android-17.0.0_r1`, `CP2A.260605.016`), built from `main` and installed with `./aosp-academy deploy` alone, with no tap on the phone. The git tag `baseline-2` marks build 17, the image before it. Each `baseline-N` tag marks a validated image's commit; `git tag -n1 'baseline-*'` lists them with their image's SHA-256.
 
-- **Report:** all green. First boot `done failures=0` with 16 icons and the development settings applied (Developer options shown, Stay awake on, brightness 64), HOME `org.fossify.home`, animations `0/0/0`, 16 MiB log buffers, `America/New_York`, probes to `connectivitycheck.grapheneos.network`, NTP from `pool.ntp.org`, `adb_keys` built in (2 keys, `/data/misc/adb` empty), charge limit `upper_limit=80, blocking=1` holding at about 86 % (battery health good, 26 C), adbd listening on TCP 5555, the WireGuard tunnel up with a fresh handshake (and back on its own after a reboot, adb answering over it), crash log, tombstones and ANRs empty.
+- **Report:** all green. First boot `done failures=0` with 16 icons and the development settings applied (Developer options shown, Stay awake on, brightness 64), HOME `org.fossify.home`, animations `0/0/0`, 16 MiB log buffers, `America/New_York`, probes to `connectivitycheck.grapheneos.network`, NTP from `pool.ntp.org`, `adb_keys` built in (2 keys, `/data/misc/adb` empty), charge limit `upper_limit=80, blocking=1` holding at about 86 % (battery health good, 26 C), adbd listening on TCP 5555, Bluetooth and Bluetooth scanning off, the WireGuard tunnel up with a fresh handshake (and back on its own after a reboot, adb answering over it), crash log, tombstones and ANRs empty.
 - **`device test`:** 15 of 15.
 - **By hand:** SELinux enforcing with vendor-only denials, no boot animation, one `GpuWork` bpf warning and no `gpuservice` abort, no vibrator amplitude errors, no Google endpoints in any log buffer, `ro.adb.secure=1`, JDWP lists the running processes, DocumentsUI handles the pickers.
 - **Hardware:** as in the table above.
