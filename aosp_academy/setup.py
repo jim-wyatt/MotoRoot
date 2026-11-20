@@ -285,6 +285,11 @@ def git_hooks() -> None:
     step("Git hooks")
     run(["git", "-C", ROOT, "config", "core.hooksPath", ".githooks"])
     ok("core.hooksPath = .githooks (blocks images, large binaries, private folders, IMEI-like numbers)")
+    if WINDOWS:
+        # NTFS has no execute bit: with filemode on, every 'git add' here would record 644 over the
+        # launcher's and scripts' 755. Off, git keeps the modes it already has.
+        run(["git", "-C", ROOT, "config", "core.filemode", "false"])
+        ok("core.filemode = false (keeps the execute bits git records)")
 
 
 def setup(args) -> int:
