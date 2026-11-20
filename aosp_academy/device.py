@@ -151,6 +151,70 @@ def try_firstboot(rerun: bool, undo: bool) -> int:
     return 0 if status == "done failures=0" else 1
 
 
+# ---------------------------------------------------------------- logs and bug reports
+LOGS = WORK / "logs"
+BUGREPORTS = WORK / "bugreports"
+
+
+def _stamp(name: str | None) -> str:
+    return datetime.now().strftime("%Y%m%d-%H%M%S") + (f"-{re.sub(r'[^A-Za-z0-9._-]', '_', name)}" if name else "")
+
+
+def package_uid(package: str) -> str:
+    """The app's Linux UID: logcat --uid follows the app across restarts, unlike a PID."""
+    m = re.search(rf"^package:{re.escape(package)} uid:(\d+)", adb.sh(f"pm list packages -U {package}"), re.M)
+    if not m:
+        raise Failure(f"{package} isn't installed on the phone.")
+    return m[1]
+
+
+def logs(package: str | None, follow: bool, clear: bool, buffers: str, name: str | None) -> Path:
+    """Logcat into work/logs/<time>[-name].txt: everything, or one app (--package); a dump of what
+    the buffers hold, or --follow to stream until Ctrl-C. work/ is git-ignored, so logs, which can
+    hold app data and identifiers, never reach a commit."""
+    adb.assert_one_device()
+    LOGS.mkdir(parents=True, exist_ok=True)
+    out = LOGS / f"{_stamp(name or package)}.txt"
+    args = ["logcat", "-v", "threadtime", "-b", buffers]
+    if package:
+        args.append(f"--uid={package_uid(package)}")
+    if clear:
+        adb.adb("logcat", "-c", "-b", buffers, check=False)
+    if not follow:
+        text = adb.adb(*args, "-d", check=False)
+        out.write_text(text + "\n", encoding="utf-8")
+        say(f"{len(text.splitlines())} lines -> {out}", "green")
+        return out
+    say(f"Streaming to {out} (Ctrl-C to stop) ...", "cyan")
+    import subprocess
+    n = 0
+    with open(out, "w", encoding="utf-8") as f, subprocess.Popen(
+            [str(adb.ADB), *args], stdout=subprocess.PIPE, text=True, encoding="utf-8", errors="replace") as p:
+        try:
+            for line in p.stdout:
+                f.write(line)
+                print(line, end="")
+                n += 1
+        except KeyboardInterrupt:
+            p.terminate()
+    say(f"\n{n} lines -> {out}", "green")
+    return out
+
+
+def bugreport(name: str | None) -> Path:
+    """A full Android bug report (adb bugreport, several minutes) into work/bugreports/. It holds
+    the whole system's state, logs and identifiers: keep it in work/, never attach it publicly."""
+    adb.assert_one_device()
+    BUGREPORTS.mkdir(parents=True, exist_ok=True)
+    out = BUGREPORTS / f"{_stamp(name)}.zip"
+    say("Taking a bug report (several minutes) ...", "cyan")
+    adb.adb("bugreport", str(out), timeout=1800)
+    if not out.exists():
+        raise Failure("adb bugreport wrote nothing.")
+    say(f"{out.stat().st_size >> 20} MB -> {out}", "green")
+    return out
+
+
 # ---------------------------------------------------------------- trace
 TRACE_CONFIG = """buffers: { size_kb: 65536 fill_policy: RING_BUFFER }
 data_sources: {

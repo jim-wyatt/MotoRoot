@@ -57,6 +57,14 @@ def parser() -> argparse.ArgumentParser:
     f = dsub.add_parser("frida", help="start or stop frida-server on the phone (root)")
     f.add_argument("action", choices=["start", "stop"])
     dsub.add_parser("report", help="what the running image sets (as at the end of deploy)")
+    lg = dsub.add_parser("logs", help="logcat into work/logs, everything or one app")
+    lg.add_argument("--package", help="only this app (by its UID, so restarts are followed)")
+    lg.add_argument("--follow", action="store_true", help="stream until Ctrl-C (default: dump what the buffers hold)")
+    lg.add_argument("--clear", action="store_true", help="clear the buffers first")
+    lg.add_argument("--buffers", default="main,system,crash", help="logcat buffers (default main,system,crash)")
+    lg.add_argument("--name", help="a label for the file name")
+    br = dsub.add_parser("bugreport", help="a full Android bug report into work/bugreports")
+    br.add_argument("--name", help="a label for the file name")
     tr = dsub.add_parser("try", help="run the repository's first-boot script on the running image, without a build")
     tr.add_argument("--rerun", action="store_true", help="clear the first-boot state and run it now, as on a fresh install")
     tr.add_argument("--undo", action="store_true", help="put the built-in script back (a reboot does too)")
@@ -119,6 +127,12 @@ def main(argv: list[str] | None = None) -> int:
                 return devtest.run_tests({s.strip() for s in args.skip.split(",") if s.strip()})
             if c == "settings":
                 return device.settings(args.reset)
+            if c == "logs":
+                device.logs(args.package, args.follow, args.clear, args.buffers, args.name)
+                return 0
+            if c == "bugreport":
+                device.bugreport(args.name)
+                return 0
             if c == "try":
                 return device.try_firstboot(args.rerun, args.undo)
             if c == "info":
