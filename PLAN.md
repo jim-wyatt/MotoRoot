@@ -88,20 +88,20 @@ The GitHub repo was renamed on 2026-11-19, at the user's request (`jim-wyatt/Ved
 
 ## Phases
 
-0. **Android 17** (in progress). Build 10 from `aosp-17` (ed7e8f4) on the build node, then the device node deploys it and verifies it against build 9, plus fingerprint HIDL 2.1, `adb_keys`, gpuservice without the patch, and the 17 GSI hardware list. Pass: merge `aosp-17` into `main`. Fail: fix on `aosp-17`, rebuild.
-1. **Plan** (this file), on branch `restructure`, cut from `aosp-17`.
+0. **Android 17** (in progress). Android 16 was dropped on 2026-11-19, and `main` is the Android 17 line. Build 10 is built from `main` on the build node (the last build with the old `vedotom_arm64` names), deployed by the device node with `aosp-academy deploy` (which still accepts pre-rename images), and checked against build 9, plus fingerprint HIDL 2.1, `adb_keys`, gpuservice without the patch, and the 17 GSI hardware list. The validation rows go on `main`.
+1. **Plan** (this file), on branch `restructure`. **Done.**
 2. **Code restructure** on `restructure`.
-   - a. The layout move (done as WIP).
-   - b. The `vedotom` package, ported script by script. The PowerShell scripts stay until their port is checked, then each is deleted. Order: the core (pins, downloads, adb) → fetch, gsi and deploy → device test, settings, info and trace → setup, env and check → stock → image.
-   - c. CI, the hook and the VS Code tasks are moved to Python too. Remove dead code: `su -c` leftovers, references to removed apps.
-   - d. The **build node builds from `restructure`**. Its scripts move and its publish path doesn't. Then the device node deploys with `vedotom deploy` and verifies that the image matches build 10: same inputs, so the same package set and settings.
-3. **Environment for app projects.** SDK platform `android-37` for Android 17 next to 36; a machine-wide setup that any project picks up (`ANDROID_HOME`, `adb` on PATH, Studio on the pinned SDK); `Test-Device` covering what an app project needs (install, debug, profile); a small sample project kept out of this repo's build, only as a test fixture if it pays for itself.
-4. **Docs rewrite** to the structure above. Every page is checked against the code it describes, `zensical build --strict` passes, and the hook and checks stay green.
-5. **Baseline.** Merge to `main`. A final build from `main`, deployed and fully validated, recorded as baseline 1 (git tag `baseline-1`). Delete this file.
+   - a. The layout move. **Done.**
+   - b. The `aosp_academy` package. **Done, except** the deploy, fetch and gsi ports: they run read-only on the device, and the first full install goes through them with build 10. Their `.ps1` files (and `workstation/VedoTom.psm1`, which they import) are deleted after that. `check` passes 41 of 42; the remaining failure is those leftover `.ps1` files. `device test` passes 15 of 15 on build 9.
+   - c. CI, the hook and the VS Code tasks use the CLI. **Done.** The SDK moved to `android-37.0` and build-tools 37.0.0, and platform-tools moved to 37.0.3 for every host OS.
+   - d. The rename to `aospacademy_arm64` in the product, patches and properties. **Done.** Next, the **build node builds from `restructure`**: it removes `device/vedotom` from its tree and reverts the old soong patch first, then runs `image/build/build-image.sh`. The device node then deploys with `aosp-academy deploy` and checks that the image matches build 10, apart from the names.
+3. **Environment for app projects.** The SDK platform for Android 17 (`android-37.0`) is the pinned platform. `ANDROID_HOME` and `JAVA_HOME` are set per user by `setup`, so any project and Android Studio pick them up. The SDK's adb is the same version as the project's (37.0.3), so the two servers don't fight. `device test` covers install, launch, debug (JDWP and `adb root`), trace, Frida and mirror. Still open: whether a sample app project pays for itself as a fixture.
+4. **Docs rewrite** to the structure above. **In progress**, by section. Every page is checked against the code it describes, `zensical build --strict` passes, and the hook and checks stay green.
+5. **Baseline.** Merge `restructure` to `main`. A final build from `main`, deployed and fully validated, is recorded as baseline 1 (git tag `baseline-1`). Then this file is deleted.
 
 ## Rules while this runs
 
 - The build node only builds and tests, the device node only deploys and verifies. Builds are requested by message, and every request names a branch and commit.
-- `main` keeps building Android 16 until phase 0 merges.
+- `main` takes only image, pin and patch changes until `restructure` merges. The build node keeps to that, and `main` is merged into `restructure` as it moves.
 - Nothing private enters the repo or messages (Wi-Fi, keys, identifiers).
 - Each deploy wipes the image's userdata. The device is a test target, not a store.
