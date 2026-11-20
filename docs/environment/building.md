@@ -69,6 +69,8 @@ For each patch, `apply-local.sh`:
 
 `build-image.sh` then sources `build/envsetup.sh`, runs `lunch` with the pinned target (`aospacademy_arm64-trunk_staging-userdebug`) and `m -j$JOBS`. If `lunch` rejects the target (release tags occasionally rename release configurations), `lunch` with no arguments in the tree lists what the tag offers, and `deviceTools.aosp.lunch` in `toolchain.json` is the one place to change it.
 
+Between `lunch` and `m`, the script deletes the generated `build.prop` files under `out/soong/.intermediates` (`system-build.prop`, `system_ext-build.prop`, `product-build.prop`), so that **every build carries its own build date**. `soong_ui` writes the current time to `out/build_date.txt` on every run, but the `build_prop` module reads that file as an order-only input, deliberately (`build/soong/android/build_prop.go`: "shouldn't depend on BUILD_DATETIME_FILE to prevent from rebuilding on every incremental build"). So an incremental build in which nothing else feeding `build.prop` changed kept the previous build's `ro.build.date`: builds 11, 12 and 14 all read *Thu Nov 19 23:22:22 EST 2026*, and only their SHA-256s told them apart. With the generated files gone, ninja runs the generator again and it reads the new date. It costs the property files, the system image staging and the image, about two minutes on a no-change build; the fingerprint stays the same, because the build number (`eng.<user>`) is written only when it changes.
+
 The script deliberately does not use `set -e` or `set -u`: `envsetup.sh` reads unset variables (`TOP`) and `lunch` returns non-zero on its way to success, so strict mode aborts the build in its first second. Every step is checked explicitly instead. The scripts must keep **LF line endings**: bash reads a `\r` at the end of a line as part of the command (`set: pipefail\r: invalid option name`). `.gitattributes` normalises them on commit, but a Windows editor or a tool that rewrites a file can produce a CRLF copy; `sed -i 's/\r$//' image/build/*.sh` repairs it, and `aosp-academy check` parses each script with `bash -n`.
 
 There is **no ccache**. Every build rule runs in AOSP's sandbox (nsjail), which mounts only `out/` and `/tmp` writable, so ccache fails with `Read-only file system` on its first write. AOSP's own notes (`build/make/core/ccache.mk`) say it adds little over incremental builds, which you get anyway.
@@ -107,7 +109,7 @@ The script ends by printing the image's size and its fingerprint (`ro.system.bui
 
 ## Incremental builds
 
-A second build after a change is incremental: minutes, not hours. Ninja rebuilds only what changed. A change of product name makes Soong re-analyse the whole tree (the switch from `aosp_arm64` to the project's own product took 15 minutes, most of it analysis); a change in one makefile or overlay is quicker. `m <module>` builds one module, `m` builds the image.
+A second build after a change is incremental: minutes, not hours. Ninja rebuilds only what changed. A change of product name makes Soong re-analyse the whole tree (the switch from `aosp_arm64` to the project's own product took 15 minutes, most of it analysis); a change in one makefile or overlay is quicker. `m <module>` builds one module, `m` builds the image. Even a build with no change produces a new image, because `build-image.sh` regenerates `build.prop` with the build's own date ([above](#lunch-and-the-build)); `ro.build.date` in the published `build.prop` therefore says when an image was built, and two builds of the same commit differ in SHA-256.
 
 ## verify-tree.sh
 
