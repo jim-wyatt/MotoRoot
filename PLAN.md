@@ -31,7 +31,7 @@ The project is renamed from VedoTom to **aosp-academy** everywhere.
 | The image product | `aospacademy_arm64`: no underscore after `aosp`, so it can't be mistaken for Google's `aosp_*` products |
 | Properties, device dirs, overlay and module names | `aospacademy` |
 
-The GitHub repo (`jim-wyatt/VedoTom` to `jim-wyatt/aosp-academy`) and its Pages site are renamed in phase 5, together with the new docs. The local folder `C:\Users\Jim\MotoDev` stays as it is. The trademark rule is the user's: no "Android", "Moto", "droid" or other marks in the name.
+The GitHub repo was renamed on 2026-11-19, at the user's request (`jim-wyatt/VedoTom` to `jim-wyatt/aosp-academy`). Git URLs redirect; the Pages site moved to jim-wyatt.github.io/aosp-academy. The local folder `C:\Users\Jim\MotoDev` stays as it is. The trademark rule is the user's: no "Android", "Moto", "droid" or other marks in the name.
 
 ## Portability (the user, 2026-11-19)
 
