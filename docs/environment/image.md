@@ -70,7 +70,7 @@ Nothing updates the apps on the device: there is no app store in the image, so a
 
 Some AOSP apps stay on purpose:
 
-- **Launcher3QuickStep**: SystemUI binds its quickstep service for gesture navigation and recents. Fossify Launcher is made the home screen by the first-boot service assigning it the HOME role. Both answer HOME with equal priority, so Android would otherwise show a chooser, and a `preferred-apps` file was tried first and was not reliably honoured.
+- **Launcher3QuickStep**: SystemUI binds its quickstep service for gesture navigation and recents. It is also the home screen: the first-boot service assigns it the HOME role. It and Fossify Launcher (which stays installed, as an alternative) answer HOME with equal priority, so without an explicit role holder Android shows a chooser; a `preferred-apps` file isn't reliably honoured.
 - **LatinIME** beside Fossify Keyboard: a working keyboard must never depend on a prebuilt.
 - **DocumentsUI**: the system file picker behind every open, get-content and save dialog, Fossify's included. Only its launcher icon is hidden.
 - **Settings**, and everything delivered as a Mainline module.
@@ -146,14 +146,14 @@ Some things can't be set from a read-only partition: a role holder, a global set
 It runs on every boot, but each step checks a marker file in its **state directory, `/data/local/aospacademy-firstboot/`**, before it acts. So each step happens once, later boots cost about a second, and a choice you make later (another launcher, another icon colour) is kept. A step that fails is logged and retried on the next boot.
 
 0. **Staged provisioning.** If `/metadata/aospacademy` exists (left by the deploy on the stock system, see [staging](deploying.md#staging-for-the-first-boot)), it joins the Wi-Fi network in `wifi.env` (`cmd wifi connect-network`; the passphrase is never logged), copies `wg0.conf` and `wg0.env` to `/data/local/aospacademy-wg` and runs the `wireguard` mode, then deletes the directory, whether or not those worked. No marker: it runs whenever the directory is there.
-1. **HOME role.** If Fossify Launcher is installed, `cmd role add-role-holder android.app.role.HOME org.fossify.home 0`, so it is the home screen without a chooser. Marker: `home-role`.
+1. **HOME role.** `cmd role add-role-holder android.app.role.HOME com.android.launcher3 0`: Quickstep is the home screen without a chooser. A launcher chosen later in Settings is kept. Marker: `home-role`.
 2. **Development settings.** The same values `aosp-academy device settings` applies on the stock system: `development_settings_enabled` 1 (Developer options shown), `stay_on_while_plugged_in` 15 (Stay awake while charging), `window_animation_scale`, `transition_animation_scale` and `animator_duration_scale` 0 (UI tests expect it, and screens settle at once), `verifier_verify_adb_installs` 0 (no verification scan of adb installs), and `adb_allowed_connection_time` 0 (an authorised PC's key never expires), and the system settings `screen_brightness_mode` 0 and `screen_brightness` 64 (manual, about 25 %, since Stay awake keeps the OLED panel on). Each is read back after it is set. SettingsProvider has resource defaults for only some of the nine in this tag, so all nine are set here, in one place. Marker: `dev-settings`.
 3. **Hidden icons.** Two AOSP launcher entries are disabled with `pm disable`, because their apps stay for what they do in the background and a Fossify app is the one to open: **Files** (`com.android.documentsui/.LauncherActivity`; DocumentsUI's picker stays) and **Keyboard** (`com.android.inputmethod.latin/.setup.SetupActivity`; LatinIME stays as the fallback, and its settings remain under Settings, System, Keyboard). Neither entry is gated on a resource in this tag, so an overlay can't do it. `pm enable` on the same component brings an icon back. Markers: `files-icon`, `keyboard-icon`.
 4. **Teal icons.** Every `org.fossify.*` app gets the teal launcher icon, to match the wallpaper. Inside the apps Fossify already follows the system's Material You colours; the icon colour is a separate per-app choice, stored as one enabled activity alias (`SplashActivity.Teal`, with `.Green` disabled) plus two preferences the app reconciles on every start (`app_icon_color` and `last_icon_color` in `shared_prefs/Prefs.xml`). The service sets all three, as the app's own Customize screen does. Markers: `<package>.icon`.
 
 5. **Bluetooth off.** Android turns Bluetooth on at boot by default; the service switches it off (`cmd bluetooth_manager disable`) together with Bluetooth scanning (`ble_scan_always_enabled` 0, which otherwise lets apps scan while Bluetooth is off). Android keeps the adapter's last state across reboots, so this is done once: switching Bluetooth on later in Settings or Quick Settings sticks. Marker: `bluetooth-off`.
 
-If anything changed in steps 3 and 4, it force-stops Fossify Launcher so the icons refresh.
+If anything changed in steps 3 and 4, it force-stops the HOME role holder so the icons refresh.
 
 It reports where the log buffers can't lose it, because the first boot's log lines can roll out of logcat within minutes:
 
