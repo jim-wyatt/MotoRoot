@@ -11,26 +11,31 @@
 # tunnel's subnets get a table of their own (1999) and a rule ahead of the per-network rules.
 # The result goes to /data/adb/aospacademy-wg/status. Disable the module and reboot to stop it.
 D=/data/adb/aospacademy-wg
+# Magisk runs module scripts in BusyBox's shell, where a bare `ip` is BusyBox's, which can't add
+# the policy-routing table and rule below (wg0 came up, but nothing could answer through it).
+# Android's own ip can.
+IP=/system/bin/ip
 until [ "$(getprop sys.boot_completed)" = 1 ]; do sleep 2; done
 [ -x "$D/wg" ] && [ -f "$D/wg0.conf" ] && [ -f "$D/wg0.env" ] || exit 0
 umask 077
 result() { echo "$*" > "$D/status"; log -t dev_wireguard "$*"; exit 0; }
 val() { sed -n "s/^$1=//p" "$D/wg0.env" | head -n 1; }
 a4="$(val ADDRESS4)"; a6="$(val ADDRESS6)"; r4="$(val ROUTES4)"; r6="$(val ROUTES6)"
-ip link del wg0 2>/dev/null
-ip link add wg0 type wireguard || result "failed: the kernel refused a wireguard link"
-"$D/wg" setconf wg0 "$D/wg0.conf" || { ip link del wg0; result "failed: wg setconf"; }
-[ -n "$a4" ] && ip addr add "$a4" dev wg0
-[ -n "$a6" ] && ip -6 addr add "$a6" dev wg0
-ip link set wg0 up || result "failed: wg0 did not come up"
+"$IP" link del wg0 2>/dev/null
+"$IP" link add wg0 type wireguard || result "failed: the kernel refused a wireguard link"
+"$D/wg" setconf wg0 "$D/wg0.conf" || { "$IP" link del wg0; result "failed: wg setconf"; }
+[ -n "$a4" ] && "$IP" addr add "$a4" dev wg0
+[ -n "$a6" ] && "$IP" -6 addr add "$a6" dev wg0
+"$IP" link set wg0 up || result "failed: wg0 did not come up"
 for r in $r4; do
-    ip route replace "$r" dev wg0 table 1999
-    ip rule del to "$r" lookup 1999 2>/dev/null
-    ip rule add to "$r" lookup 1999 priority 9000
+    "$IP" route replace "$r" dev wg0 table 1999
+    "$IP" rule del to "$r" lookup 1999 2>/dev/null
+    "$IP" rule add to "$r" lookup 1999 priority 9000
 done
 for r in $r6; do
-    ip -6 route replace "$r" dev wg0 table 1999
-    ip -6 rule del to "$r" lookup 1999 2>/dev/null
-    ip -6 rule add to "$r" lookup 1999 priority 9000
+    "$IP" -6 route replace "$r" dev wg0 table 1999
+    "$IP" -6 rule del to "$r" lookup 1999 2>/dev/null
+    "$IP" -6 rule add to "$r" lookup 1999 priority 9000
 done
+[ -z "$r4" ] || "$IP" rule | grep -q "lookup 1999" || result "failed: no routing rule for the tunnel's subnets"
 result "up ${a4%/*}"

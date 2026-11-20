@@ -21,7 +21,13 @@ def adb(*args, check: bool = True, timeout: float | None = None) -> str:
     """Run adb and return its output (stdout and stderr together), stripped."""
     if not ADB.exists():
         raise Failure("platform-tools missing. Run: aosp-academy setup")
-    p = run([ADB, *args], check=check, capture=True, timeout=timeout)
+    try:
+        p = run([ADB, *args], check=check, capture=True, timeout=timeout)
+    except subprocess.TimeoutExpired:
+        # A network transport that's down (a reboot over the tunnel) makes adb hang rather than fail.
+        if check:
+            raise Failure(f"adb {' '.join(str(a) for a in args[:2])} timed out after {timeout} s")
+        return ""
     return p.stdout.strip()
 
 
