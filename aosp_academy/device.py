@@ -12,6 +12,10 @@ from .core import WORK, Failure, say, warn
 
 # ---------------------------------------------------------------- settings
 DEV_GLOBALS = {
+    # Developer options shown in Settings, without the seven taps on the build number.
+    "development_settings_enabled": "1",
+    # Stay awake: the screen stays on while charging (AC 1 | USB 2 | wireless 4 | dock 8, as the toggle writes).
+    "stay_on_while_plugged_in": "15",
     # Animations off: UI tests (Espresso) expect it, and screens settle immediately.
     "window_animation_scale": "0",
     "transition_animation_scale": "0",

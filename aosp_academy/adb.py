@@ -7,6 +7,7 @@ can't mistake the old system's "booted" for the new one's; DSU state from gsi_to
 from __future__ import annotations
 
 import subprocess
+import time
 
 from .core import EXE, WORK, Failure, run, say, sleep
 
@@ -92,20 +93,19 @@ def wait_boot(timeout: int = 600, after_reboot: bool = False) -> int:
     """Wait for sys.boot_completed; return the seconds it took.
 
     after_reboot first waits for the old system to drop off USB, so its "booted" isn't taken for
-    the new system's.
+    the new system's. The time counts from the call, the time off USB included.
     """
+    start = time.monotonic()
     if after_reboot:
         try:
             adb("wait-for-disconnect", check=False, timeout=180)
         except subprocess.TimeoutExpired:
             pass
     wait_authorized()
-    t = 0
-    while t < timeout:
+    while time.monotonic() - start < timeout:
         if prop("sys.boot_completed") == "1":
-            return t
+            return round(time.monotonic() - start)
         sleep(5)
-        t += 5
     raise Failure(f"The phone did not finish booting within {timeout} s.")
 
 

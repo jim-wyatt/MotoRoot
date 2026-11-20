@@ -74,13 +74,14 @@ if [ ! -e "$STATE/home-role" ] && pm path org.fossify.home >/dev/null 2>&1; then
 fi
 
 # 2. Development-target settings, the same values 'aosp-academy device settings' applies on the stock
-#    system: no animations (UI tests expect it, screens settle at once), no verification scan of
-#    adb installs, and no expiry of an authorised PC's ADB key. Set once, as defaults: a value
-#    changed later in Developer options is kept. SettingsProvider has resource defaults for only
-#    two of the five in this tag, so they are all set here, in one place.
+#    system: Developer options shown, the screen kept on while charging (Stay awake: AC, USB,
+#    wireless and dock, as the toggle writes), no animations (UI tests expect it, screens settle
+#    at once), no verification scan of adb installs, and no expiry of an authorised PC's ADB key.
+#    Set once, as defaults: a value changed later in Developer options is kept. SettingsProvider
+#    has resource defaults for only some of them in this tag, so they are all set here, in one place.
 if [ ! -e "$STATE/dev-settings" ]; then
     ok=1
-    for kv in window_animation_scale=0 transition_animation_scale=0 animator_duration_scale=0 \
+    for kv in development_settings_enabled=1 stay_on_while_plugged_in=15 window_animation_scale=0 transition_animation_scale=0 animator_duration_scale=0 \
               verifier_verify_adb_installs=0 adb_allowed_connection_time=0; do
         k="${kv%%=*}"; v="${kv#*=}"
         settings put global "$k" "$v" >/dev/null 2>&1
