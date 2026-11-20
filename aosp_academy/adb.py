@@ -6,6 +6,8 @@ can't mistake the old system's "booted" for the new one's; DSU state from gsi_to
 """
 from __future__ import annotations
 
+import os
+import re
 import subprocess
 import time
 
@@ -47,10 +49,29 @@ def devices() -> list[tuple[str, str]]:
     return rows
 
 
+def is_tcp(serial: str) -> bool:
+    """A transport over the network (host:port, as adb connect lists it) rather than USB."""
+    return bool(re.fullmatch(r"(\[[0-9a-fA-F:]+\]|[\w.-]+):\d+", serial))
+
+
 def assert_one_device() -> None:
+    """Exactly one phone. The same phone on USB and over Wi-Fi or the tunnel counts once: USB is
+    used (ANDROID_SERIAL is set for every later adb call), or the network one when it's the only
+    one. An ANDROID_SERIAL already set is respected."""
     authorized = [s for s, state in devices() if state == "device"]
-    if len(authorized) != 1:
-        raise Failure(f"Connect exactly one authorized device (found {len(authorized)}).")
+    chosen = os.environ.get("ANDROID_SERIAL")
+    if chosen:
+        if chosen not in authorized:
+            raise Failure(f"ANDROID_SERIAL is {chosen}, which isn't connected and authorized.")
+        return
+    if len(authorized) == 1:
+        return
+    if not authorized:
+        raise Failure("No authorized device: connect the phone (USB, or adb connect over Wi-Fi or the tunnel).")
+    phones = {adb("-s", s, "shell", "getprop ro.serialno", check=False) for s in authorized}
+    if len(phones) != 1:
+        raise Failure(f"{len(authorized)} devices connected: leave one, or choose one with ANDROID_SERIAL.")
+    os.environ["ANDROID_SERIAL"] = next((s for s in authorized if not is_tcp(s)), authorized[0])
 
 
 def root(command: str) -> str:

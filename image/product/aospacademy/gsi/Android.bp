@@ -148,6 +148,7 @@ android_system_image {
         "FossifyPaint",
         "FossifyKeyboard",
         "aospacademy-firstboot",
+        "aospacademy_wg", // /product/bin/wg (wireguard/Android.bp)
         "init.aospacademy.rc",
     ] + select(product_variable("debuggable"), {
         true: ["frameworks-base-overlays-debug"],

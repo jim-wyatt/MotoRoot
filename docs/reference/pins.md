@@ -46,6 +46,7 @@ Optional tools for the prepared device, and the image's own inputs. Bumping thes
     - The **16 Fossify apps** built into the image. They are marked **`buildOnly`**: only the build node downloads them (`aosp-academy image inputs`), and `setup` skips them.
 - **`frida`**: `version` must equal frida-server's version above, and `toolsVersion` is the `frida-tools` release; `setup` pip-installs both into `work/.venv-frida`. The PC tools and the server must match.
 - **`gsi`**: Google's AOSP arm64 GSI for Android 17, build `CP2A.260605.012`, used by `aosp-academy gsi download`. It is not fetched by `setup`: it is about 1 GB and behind Google's terms, which you accept explicitly.
+- **`wireguardTools`**: the source of the image's `wg`: `repo`, `tag` and `commit` (wireguard-tools, GPL-2.0-only). `image inputs` clones the tag and refuses it if the commit differs, so a moved tag is caught.
 - **`aosp`**: what the build node builds. `manifest` is AOSP's manifest repository, `tag` the release (**`android-17.0.0_r1`**, build `CP2A.260605.016`, the source release of the same Android 17 drop as the pinned GSI binary, so what you build matches what was validated), `lunch` the build target (`aospacademy_arm64-trunk_staging-userdebug`) and `treeDir` the default `AOSP_DIR` (`~/aosp17`).
 
 ### `inputs`

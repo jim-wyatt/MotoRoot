@@ -57,6 +57,8 @@ The image sets `ro.adb.secure=1`, as on a retail phone: a PC has to be authorise
 
 adbd also listens on **TCP port 5555** from the first boot (`persist.adb.tcp.port=5555`), so `./aosp-academy adb-wifi` connects over Wi-Fi with no `adb tcpip` step and no pairing. The same key authorisation applies, but the port is reachable from the whole network: use it on networks you trust. `adb shell su 0 setprop persist.adb.tcp.port 0` and a reboot make the image USB only.
 
+With a WireGuard hub, the phone can also have **its own tunnel**, so adb reaches it at its tunnel address from any PC on the tunnel, whichever network the phone is on: `adb connect <tunnel address>:5555`. The device node sets it up at each deploy ([the WireGuard tunnel](../environment/deploying.md#the-wireguard-tunnel-optional)); the report's `Tunnel` row shows its state.
+
 ## Apps and default roles
 
 On top of AOSP the image carries one thing: the **Fossify** suite, 16 open-source apps (GPL-3.0, signed by Fossify, distributed by F-Droid, each pinned in `toolchain.json` by hash and signing certificate). They replace the AOSP apps one for one and fill the default roles, which matters when your app hands off to another app with an intent:

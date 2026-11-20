@@ -6,7 +6,7 @@ Everything here runs on the build node, from the repository root, through the CL
 
 | Command | Runs | What it does |
 | --- | --- | --- |
-| `./aosp-academy image inputs` | (Python) | Downloads the image's pinned inputs, the 16 Fossify APKs (`buildOnly` in `toolchain.json`), into `work/device-tools/` and checks each against its SHA-256. |
+| `./aosp-academy image inputs` | (Python) | Downloads the image's pinned inputs, the 16 Fossify APKs (`buildOnly` in `toolchain.json`), into `work/device-tools/` and checks each against its SHA-256, and clones wireguard-tools at its pinned tag, checking the commit. |
 | `./aosp-academy image setup` | `image/build/setup.sh` | Installs AOSP's build dependencies, `repo`, `git-lfs` and JDK 21 (Ubuntu packages), sets a neutral git identity if none is set (`repo` refuses to sync without one), and creates the tree's directory. Idempotent. |
 | `./aosp-academy image sync` | `image/build/sync.sh` | `repo init` at the pinned tag and `repo sync`, then `verify-tree.sh` and `apply-local.sh`. |
 | `./aosp-academy image apply` | `image/build/apply-local.sh` | Puts this repository's product, APKs, trusted keys and patches into the tree. |
@@ -42,10 +42,11 @@ To sync and build in one go and walk away, run `bash image/build/build-after-syn
 
 `apply-local.sh` puts this repository's changes into the tree. `sync.sh` and `build-image.sh` both run it, it is safe to re-run, and it exits non-zero on the first failure, which stops the build. It works in four steps:
 
-1. **Products.** Each directory under `image/product/` is copied with `rsync -a --delete` to `device/<name>/` in the tree: `image/product/aospacademy/` becomes `device/aospacademy/`, and `device/aospacademy/gsi/` defines the `aospacademy_arm64` lunch target. `--delete` keeps the tree's copy identical to the repository's, removed files included; the APKs and the keys file are the only things the tree has that the repository doesn't.
+1. **Products.** Each directory under `image/product/` is copied with `rsync -a --delete` to `device/<name>/` in the tree: `image/product/aospacademy/` becomes `device/aospacademy/`, and `device/aospacademy/gsi/` defines the `aospacademy_arm64` lunch target. `--delete` keeps the tree's copy identical to the repository's, removed files included; the APKs, the keys file and the wireguard-tools source are the only things the tree has that the repository doesn't.
 2. **Prebuilt APKs.** For each line of `prebuilt/apks.txt` (`<module APK name> <pinned file>`), the pinned file is copied from `work/device-tools/` into the tree's `prebuilt/` directory, only when it differs. A missing file stops the script with "run `./aosp-academy image inputs`".
-3. **Trusted adb keys.** If `work/adb_keys` exists (git-ignored; one `adbkey.pub` line per PC, see [What's in the image](image.md#adb-authorisation-and-the-trusted-keys)), it is stripped of CRs and blank lines, checked (every line must look like `QAAAA... user@host`), and copied to `device/aospacademy/gsi/adb_keys`. If it doesn't exist, the tree's copy is removed, and the image trusts no PC in advance.
-4. **Patches**, below.
+3. **wireguard-tools.** The pinned source in `work/device-tools/wireguard-tools` (from `image inputs`) is copied into `device/aospacademy/gsi/wireguard/src/`, its C files and licence only, for the image's `wg`. A missing copy stops the script with "run `./aosp-academy image inputs`".
+4. **Trusted adb keys.** If `work/adb_keys` exists (git-ignored; one `adbkey.pub` line per PC, see [What's in the image](image.md#adb-authorisation-and-the-trusted-keys)), it is stripped of CRs and blank lines, checked (every line must look like `QAAAA... user@host`), and copied to `device/aospacademy/gsi/adb_keys`. If it doesn't exist, the tree's copy is removed, and the image trusts no PC in advance.
+5. **Patches**, below.
 
 ### Patches
 

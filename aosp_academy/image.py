@@ -13,8 +13,10 @@ AOSP_DIR (default: deviceTools.aosp.treeDir), JOBS, PUBLISH_DIR, PARTS.
 """
 from __future__ import annotations
 
+import shutil
 import subprocess
 import sys
+from pathlib import Path
 
 from .core import ROOT, WINDOWS, WORK, Failure, get_pinned, note, pins, step
 
@@ -32,8 +34,21 @@ def inputs() -> int:
             n += 1
     # The signing certificates (signerSha256) are checked when a pin changes, by 'aosp-academy check'
     # on a workstation with build-tools; the SHA-256 above already fixes every byte.
-    note(f"{n} pinned inputs verified")
+    wireguard_tools(d)
+    note(f"{n} pinned inputs verified, and wireguard-tools at its pinned commit")
     return 0
+
+
+def wireguard_tools(d: Path) -> None:
+    """wireguard-tools at the pinned tag, its commit checked (the source of the image's wg)."""
+    w = pins()["deviceTools"]["wireguardTools"]
+    dest = d / "wireguard-tools"
+    head = lambda: subprocess.run(["git", "-C", str(dest), "rev-parse", "HEAD"], capture_output=True, text=True).stdout.strip()
+    if not (dest / ".git").exists() or head() != w["commit"]:
+        shutil.rmtree(dest, ignore_errors=True)
+        subprocess.run(["git", "clone", "-q", "--depth", "1", "--branch", w["tag"], w["repo"], str(dest)], check=True)
+    if head() != w["commit"]:
+        raise Failure(f"wireguard-tools {w['tag']} is commit {head()[:12]}, not the pinned {w['commit'][:12]}: the tag moved upstream.")
 
 
 def script(name: str) -> int:

@@ -80,6 +80,17 @@ A fresh DSU install has Wi-Fi off and no saved network, so the network checks in
 
 `security` is passed to the phone's `cmd wifi connect-network` (`wpa2` here; that command also takes `open`, `owe` and `wpa3`). The file is git-ignored and blocked by the pre-commit hook, and the passphrase goes to the phone over USB only, never into the CLI's output. Never commit it, paste it into an issue, or put its contents in a message. Without the file the deploy skips the step, and the report says so.
 
+### The WireGuard tunnel (optional)
+
+With a WireGuard hub, the phone can have a tunnel of its own, so adb reaches it from any PC on the tunnel, whatever network its Wi-Fi is on. The kernel has WireGuard built in and the image ships `wg`; what's missing on a fresh install is the tunnel's configuration, which the deploy pushes after joining Wi-Fi when the device node has two private files in **`work/wireguard/`**:
+
+- **`wg0.conf`**, in `wg setconf` format: an `[Interface]` with the phone's `PrivateKey` only (no `Address` or `DNS` lines), and the hub as `[Peer]` (`PublicKey`, `Endpoint`, `AllowedIPs`, `PersistentKeepalive = 25`, which keeps the NAT mapping open while the phone is idle).
+- **`wg0.env`**, the addresses and routes: `ADDRESS4=`, `ADDRESS6=`, `ROUTES4=` and `ROUTES6=` (routes space-separated, for example the tunnel's subnet).
+
+Make the phone's key pair on the device node (`wg genkey > work/wireguard/phone.key`, then `wg pubkey < work/wireguard/phone.key`) and give the hub only the public key. The private key goes to the phone over USB only, into a root-only directory (`/data/local/aospacademy-wg`). The deploy then starts the `aospacademy_wireguard` service, and the image brings the tunnel up again at every boot until the next deploy. Then, from a PC on the tunnel: `adb connect <the phone's tunnel address>:5555`.
+
+`work/` is git-ignored and the files never belong in the repository, an issue or a message. With the phone on USB and the tunnel at once, adb lists it twice; `aosp-academy` uses the USB connection (or set `ANDROID_SERIAL` to choose).
+
 ### The report
 
 The report reads back from the phone what the image sets. `./aosp-academy device report` prints it again at any time, for the running image (without the first-boot result, which only the deploy collects).
@@ -98,6 +109,7 @@ The report reads back from the phone what the image sets. `./aosp-academy device
 | `Network` | whether a network is validated, which hosts the captive-portal probes used, and the last NTP server | `validated; probes to connectivitycheck.grapheneos.network; NTP ntp://pool.ntp.org` |
 | `AdbKeys` | how many keys `/product/etc/security/adb_keys` holds | `built in (N keys)`, or `none (each PC needs the Allow tap)` for an image built without keys |
 | `Battery` | level, charging status, health, temperature and power source, from `dumpsys battery` | health `good`; on the cable above the limit: `not charging`, power `USB` |
+| `Tunnel` | the WireGuard tunnel's state and the age of its last handshake | `up <address>, handshake Ns ago`, or `none` without `work/wireguard` |
 | `AdbTcp` | whether adbd listens on TCP (`persist.adb.tcp.port`) | `listening on 5555` |
 | `CrashLog` | fatal entries in the crash buffer | `empty` |
 | `DataFree` | free space in `/data` | about 22 GB with the default 24 GB partition |

@@ -97,6 +97,12 @@ PRODUCT_ADB_KEYS := $(wildcard device/aospacademy/gsi/adb_keys)
 PRODUCT_PRODUCT_PROPERTIES += \
     persist.adb.tcp.port=5555
 
+# wg (wireguard/, built from the pinned wireguard-tools) for the optional tunnel: when aosp-academy
+# deploy leaves a config in /data/local/aospacademy-wg, the aospacademy_wireguard service brings
+# up wg0 at boot (kernel WireGuard; the 5.15 GKI has it built in). Without a config, nothing runs.
+PRODUCT_PACKAGES += \
+    aospacademy_wg
+
 # Our look and defaults: dark theme, gesture navigation, our wallpaper (from which Material You
 # derives the system colours), Fossify Phone and Messages as the default dialer and SMS app.
 # See overlay/ (a static framework RRO).
