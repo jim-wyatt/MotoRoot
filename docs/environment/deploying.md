@@ -108,7 +108,7 @@ The report reads back from the phone what the image sets. `./aosp-academy device
 | Row | What it shows | Expected on a good image |
 | --- | --- | --- |
 | `Fingerprint` | `ro.build.fingerprint` | `Android/aospacademy_arm64/generic_arm64:...:userdebug/test-keys` |
-| `Home` | the HOME role holder | `com.android.launcher3` (Quickstep) |
+| `Home` | the HOME role holder | `org.fossify.home` (Fossify Launcher) |
 | `FirstBoot` | the first-boot `status`, and how many icon colours it set | `done failures=0; 16 icons set` |
 | `Bluetooth` | the adapter and Bluetooth scanning | `off, scanning off` (on only if switched on since the deploy) |
 | `DevOptions` | Developer options, Stay awake and the brightness setting | `shown=1 stay_awake=15 brightness=64` |

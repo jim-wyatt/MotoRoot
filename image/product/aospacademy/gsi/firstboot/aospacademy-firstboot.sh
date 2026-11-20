@@ -179,12 +179,11 @@ if [ -d "$STAGE" ]; then
     [ -e "$STAGE" ] && failed "removing $STAGE"
 fi
 
-# 1. Quickstep (AOSP's Launcher3) as the home screen. It and Fossify Launcher answer HOME with
-#    equal priority, so without a role holder Android shows a chooser. Launcher3 stays in any case,
-#    because SystemUI binds its quickstep service for gesture navigation and recents, so making it
-#    home too means one launcher does both. Assign the HOME role once, explicitly; a launcher the
-#    user picks later (Fossify Launcher stays installed) is respected.
-HOME_PKG=com.android.launcher3
+# 1. Fossify Launcher ("Launcher") as the home screen. It and Quickstep (AOSP's Launcher3, which
+#    stays because SystemUI binds its quickstep service for gesture navigation and recents) answer
+#    HOME with equal priority, so without a role holder Android shows a chooser. Assign the HOME
+#    role once, explicitly; a launcher the user picks later (Quickstep included) is respected.
+HOME_PKG=org.fossify.home
 if [ ! -e "$STATE/home-role" ] && pm path "$HOME_PKG" >/dev/null 2>&1; then
     if cmd role add-role-holder android.app.role.HOME "$HOME_PKG" 0 >/dev/null 2>&1; then
         touch "$STATE/home-role"
