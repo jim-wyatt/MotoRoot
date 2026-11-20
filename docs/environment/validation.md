@@ -59,7 +59,7 @@ When an image passes, the [Current image](#current-image) section below is repla
 <!-- current-image: filled in by the device node -->
 **Build 17**, from `main` at `8c440a8`, built Fri Nov 20 12:13:44 EST 2026 (`ro.build.date`), SHA-256 `3b550877…408b`, validated 2026-11-20.
 
-The image on the phone is the product **`aospacademy_arm64`**, Android 17 (`android-17.0.0_r1`, `CP2A.260605.016`), built from `main` and installed with `./aosp-academy deploy` alone, with no tap on the phone. The git tag `baseline-1` marks the first validated baseline.
+The image on the phone is the product **`aospacademy_arm64`**, Android 17 (`android-17.0.0_r1`, `CP2A.260605.016`), built from `main` and installed with `./aosp-academy deploy` alone, with no tap on the phone. It is the git tag `baseline-2`. Each `baseline-N` tag marks a validated image's commit; `git tag -n1 'baseline-*'` lists them with their image's SHA-256.
 
 - **Report:** all green. First boot `done failures=0` with 16 icons and the development settings applied (Developer options shown, Stay awake on, brightness 64), HOME `org.fossify.home`, animations `0/0/0`, 16 MiB log buffers, `America/New_York`, probes to `connectivitycheck.grapheneos.network`, NTP from `pool.ntp.org`, `adb_keys` built in (2 keys, `/data/misc/adb` empty), charge limit `upper_limit=80, blocking=1` holding at about 86 % (battery health good, 26 C), adbd listening on TCP 5555, crash log, tombstones and ANRs empty.
 - **`device test`:** 15 of 15.

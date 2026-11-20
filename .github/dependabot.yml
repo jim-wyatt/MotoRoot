@@ -1,0 +1,15 @@
+# Pull requests for newer GitHub Actions versions and docs-site packages. toolchain.json pins are
+# not covered here: the Weekly workflow reports those, and they're moved by hand (docs/reference/pins.md).
+version: 2
+updates:
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+    groups:
+      actions:
+        patterns: ["*"]
+  - package-ecosystem: pip
+    directory: /docs
+    schedule:
+      interval: weekly
