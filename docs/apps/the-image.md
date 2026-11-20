@@ -4,9 +4,6 @@ The phone runs **the aosp-academy image**: an Android system built by this proje
 
 `./aosp-academy device report` prints most of what this page describes, read back from the phone: the fingerprint, the home app, animation scales, log buffer size, time zone, charge limit, network checks, built-in adb keys, the crash log and free space.
 
-!!! info "Which build these numbers come from"
-    The image moved to Android 17 on 2026-11-19. The measurements quoted below (process counts, boot times) were taken on builds 7 to 9, the last Android 16 builds, which carried the same settings under the old product name `vedotom_arm64`. The first Android 17 build is being validated as this is written; [validation](../environment/validation.md) has the current record.
-
 ## The system
 
 | | |
@@ -29,7 +26,7 @@ A `userdebug` build is the engineering build type: the same code as a retail (`u
 
 ## Debugging and profiling any process
 
-- **JDWP for every process.** The image sets `persist.debug.dalvik.vm.jdwp.enabled=1` (from build 9). Zygote, the process every app starts from, reads it once when it starts and, on a userdebug build only, opens the Java debugging protocol (JDWP) in every app process, not only in apps marked debuggable. On build 9, `adb jdwp` listed 24 processes at idle: `system_server`, SystemUI, Settings, the phone and Bluetooth processes, the network stack and every running app. Build 8 without the property listed none. The property also allows `ptrace`, so native debuggers can attach the same way. It gives nothing beyond what `adb root` already gives an authorised PC. To turn it off: `adb shell su 0 setprop persist.debug.dalvik.vm.jdwp.enabled 0` and reboot. [Debugging](debugging.md) shows how to use it.
+- **JDWP for every process.** The image sets `persist.debug.dalvik.vm.jdwp.enabled=1`. Zygote, the process every app starts from, reads it once when it starts and, on a userdebug build only, opens the Java debugging protocol (JDWP) in every app process, not only in apps marked debuggable. `adb jdwp` lists `system_server`, SystemUI, Settings, the phone and Bluetooth processes, the network stack and every running app; without the property it lists none. The property also allows `ptrace`, so native debuggers can attach the same way. It gives nothing beyond what `adb root` already gives an authorised PC. To turn it off: `adb shell su 0 setprop persist.debug.dalvik.vm.jdwp.enabled 0` and reboot. [Debugging](debugging.md) shows how to use it.
 - **Profiling other apps.** Perfetto's heap profilers and Android Studio's heap dumps work on apps that aren't debuggable or profileable on a `userdebug` build (`ro.build.type=userdebug`). This was established on the stock system with a module that makes it report userdebug; the image is a real userdebug build. See [tracing](tracing.md).
 
 ## Logs

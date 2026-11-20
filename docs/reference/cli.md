@@ -150,27 +150,3 @@ The build node's side, on any x86-64 Linux host. Every action except `inputs` re
 | `verify` | finds and resets projects that an interrupted checkout left with missing files | `verify-tree.sh` |
 
 Settings come from the environment: `AOSP_DIR` (default `deviceTools.aosp.treeDir`), `JOBS`, `PUBLISH_DIR` and `PARTS` (default 16). `image/build/build-after-sync.sh` (run with `bash`, not through the CLI) chains a sync and a build for overnight runs. [Set up a build node](../start/build-node.md) and [build the image](../environment/building.md) cover them.
-
-## Old names
-
-The PowerShell scripts these commands replaced were removed on 2026-11-19 ([decisions](decisions.md#python-replaces-powershell)). If you meet an old name in a log or an old note:
-
-| Was | Now |
-| --- | --- |
-| `Bootstrap-DevEnv.ps1`, `Install-Workstation.ps1` | `setup` |
-| `Test-DevEnv.ps1`, `Test-Workstation.ps1` | `check` |
-| `Enter-DevShell.ps1` (and `$adb`, `$fb`, `$Work`, `$Backup`, `$py`) | `shell`, or `env` |
-| the `docs`, `apktool`, `r8d8`, `adbwifi` shell functions | `docs`, `apktool`, `d8`, `adb-wifi` |
-| `Start-Frida`, `Stop-Frida` | `device frida start`, `device frida stop` |
-| `Get-RemoteImage.ps1` | `fetch` |
-| `Deploy-Image.ps1` | `deploy` |
-| `Install-Gsi.ps1 -Action ...` | `gsi ...` |
-| `Test-Device.ps1` | `device test` |
-| `Set-DevSettings.ps1` | `device settings` |
-| `Dump-DeviceInfo.ps1` | `device info` |
-| `Trace-Device.ps1` | `device trace` |
-| `scrcpy` in the dev shell | `device mirror` |
-| `Build-Device.ps1`, `Build-StockArtifacts.ps1` | `stock build` |
-| `Prepare-MagiskImage.ps1` | `stock magisk-image` |
-| `wsl -- bash dev/aosp/*.sh`, `build-gsi.sh` | `image inputs\|setup\|sync\|apply\|build\|verify`; `build-gsi.sh` is now `build-image.sh` |
-| `Invoke-RootShell` | the `su` handling built into every command (`aosp_academy/adb.py`) |

@@ -75,4 +75,4 @@ What `Java.use` returns is the real framework class in that process, so the same
 
 ## Check it
 
-`./aosp-academy device test` starts the server, runs `frida-ps -U`, passes if it sees more than 20 processes, and stops the server again. On build 8 it saw 159.
+`./aosp-academy device test` starts the server, runs `frida-ps -U`, passes if it sees more than 20 processes, and stops the server again. On the image it sees about 160.

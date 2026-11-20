@@ -20,7 +20,7 @@ Common failures and their fixes. If `aosp-academy check` passes but something st
     A different `adb` version is in `work/platform-tools`. Stop any running server (`adb kill-server`), delete `work/platform-tools/` (and `work/platform-tools.zip` if its hash doesn't match either), and run `setup` again to unpack the pinned copy.
 
 ??? failure "`check` fails on `SDK platform-tools adb = pinned adb`"
-    Android Studio, or the SDK manager, updated the SDK's platform-tools, so Studio's `adb` and the project's are different versions again, and two server versions fight over the phone. Either put the SDK's platform-tools back to the pinned version (decline the update in Studio), or move the pin deliberately ([pins](pins.md#the-platform-tools-move-3701-to-3703)).
+    Android Studio, or the SDK manager, updated the SDK's platform-tools, so Studio's `adb` and the project's are different versions again, and two server versions fight over the phone. Either put the SDK's platform-tools back to the pinned version (decline the update in Studio), or move the pin deliberately ([pins](pins.md#platform-tools-and-the-flashing-stages)).
 
 ??? failure "`check` fails on `docs site builds` with no error text, or `zensical` exits 1 silently"
     A Python virtual environment records the absolute path it was created at, and its launchers embed it. If the repository folder has been moved or renamed since `setup` ran, those launchers exit with code 1 and print nothing. Run `aosp-academy setup` again: it compares each venv's `pyvenv.cfg` with the current path and recreates a moved one. Deleting the venv folder by hand and re-running has the same effect.
@@ -114,7 +114,7 @@ Common failures and their fixes. If `aosp-academy check` passes but something st
     Confirm `fastboot getvar product` is `vegas` and you're on slot A. The unlock key must be a 20-character key generated from **your** serial. Approve the unlock prompt **on the phone** quickly: it times out.
 
 ??? failure "`su` says `Permission denied` after installing Magisk, and its Superuser tab is empty (stage 7)"
-    Magisk is rejecting Shell before it can show the Grant pop-up: `adb logcat -d | grep "request rejected"` (`Select-String` in PowerShell) shows `su: request rejected (2000)`, and nothing appears in the Superuser tab. On the unit these docs were written with, Motorola's background freezer suspended the Magisk app, so the daemon couldn't reach it and denied by default. Grant Shell by hand: Magisk → **Superuser** tab → **+** (bottom right) → tick **Shell** (`com.android.shell`). The policy is stored, so it survives reboots. Then `adb shell su -c id` should report `context=u:r:magisk:s0`. Magisk 31.1 has no "Superuser access: Apps and ADB" setting to change, so don't go looking for one.
+    Magisk is rejecting Shell before it can show the Grant pop-up: `adb logcat -d | grep "request rejected"` (`Select-String` in PowerShell) shows `su: request rejected (2000)`, and nothing appears in the Superuser tab. Motorola's background freezer can suspend the Magisk app, so the daemon can't reach it and denies by default. Grant Shell by hand: Magisk → **Superuser** tab → **+** (bottom right) → tick **Shell** (`com.android.shell`). The policy is stored, so it survives reboots. Then `adb shell su -c id` should report `context=u:r:magisk:s0`. Magisk 31.1 has no "Superuser access: Apps and ADB" setting to change, so don't go looking for one.
 
 ??? failure "The phone won't boot after writing a prepared image"
     If Fastboot is reachable, restore your backup to that slot ([the stock system](../device/stock.md)). If Fastboot won't start, there's no proven recovery for this model: this is the accepted risk of stage 6.
@@ -143,7 +143,7 @@ Common failures and their fixes. If `aosp-academy check` passes but something st
     Hold **Volume Down** while it boots: Magisk's safe mode starts with every module disabled. Then `adb shell su -c 'touch /data/adb/modules/<id>/disable'` for the module you suspect, and reboot normally. None of the project's modules has needed this on the two tested units.
 
 ??? failure "Never read `/sys/module/*/parameters` in bulk"
-    Reading sysfs runs driver code, and one of this phone's vendor charger modules has a broken parameter: on 2026-11-17 a loop over the charger modules' parameters hit a NULL dereference in `param_get_int` and panicked the kernel (boot reason `kernel_panic,null`). It is in the stock kernel too. The phone came back on its own, but read one named file at a time, only one you already know is safe.
+    Reading sysfs runs driver code, and one of this phone's vendor charger modules has a broken parameter: a loop over the charger modules' parameters hits a NULL dereference in `param_get_int` and panics the kernel (boot reason `kernel_panic,null`). It is in the stock kernel too. The phone reboots on its own, but read one named file at a time, only one you already know is safe.
 
 ## Docs site
 

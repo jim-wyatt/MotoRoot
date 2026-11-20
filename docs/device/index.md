@@ -113,43 +113,41 @@ Both runs retained stock Motorola Android: no custom ROM, no cellular network un
 - Universal app or game compatibility, Play Integrity results, or any speed difference.
 - Behaviour across future Motorola OTAs, Google Play system updates, Magisk upgrades, or a factory reset (which removes the modules and root grants; see [routine maintenance](stock.md#routine-maintenance)).
 
-### What failed along the way, and what the fix was
+### Known problems in the procedure, and what works
 
 | Problem | What worked |
 | --- | --- |
 | Test DPC's settings UI crashed (both units) | Its ADB service interface cleared device ownership cleanly |
 | Turning Wi-Fi off and disabling Smart updates did not stop an already-downloaded OTA from staging (unit 1) | `UpdateEngine.resetStatus()` via `UpdateHelper`, with `misc` temporarily writable |
-| `UpdateEngine` reset failed at first (unit 1) | DFRoot had made `misc` read-only; `blockdev --setrw` for that one partition fixed it |
+| `UpdateEngine` reset fails while `misc` is read-only (unit 1) | DFRoot makes `misc` read-only; `blockdev --setrw` for that one partition |
 | Ordinary `pm disable` / clear-data on the updater was rejected as a protected operation even as root | The `wifi_ota_guard` overlay module |
 | Fastboot rejected the Magisk image; fastbootd did not expose `init_boot` (unit 1) | Writing the verified image from rooted Android, with read-back |
 | Magisk never showed the Grant prompt; `su` from ADB was denied instantly (unit 2) | Motorola's background freezer was suspending the Magisk app. Granting Shell manually from the Superuser tab (**+**) stored the policy |
 | `pm uninstall --user 0` refused two packages as "non-disable" (unit 2) | Left alone deliberately (`com.amazon.appmanager` ships disabled; `com.motorola.ccc.devicemanagement` is protected) rather than forced through an overlay |
 
-### Stock-system tooling (unit 2, 2026-11-16 and 17)
+### Stock-system tooling (unit 2)
 
-Added after the preparation runs, all on unit 2's stock system, all reversible, as described in [The stock system](stock.md). The tools were PowerShell scripts at the time; where a row names a command, it gives the current one. Termux and Organic Maps were later removed from the phone and from the project, to keep the stock system a clean development baseline; their rows are kept as history.
+On unit 2's stock system, all reversible, as described in [The stock system](stock.md).
 
 | Item | Result |
 | --- | --- |
-| `dev_debuggable` module (`ro.debuggable=1`, `ro.build.type=userdebug`) | Installed; clean boot, no crashes, Play Store and launcher unaffected. Perfetto Java heap dump of Settings, a non-debuggable app: refused on stock (`not profileable` in logcat), a 24 MB dump with the module. With `ro.debuggable=1` alone it was still refused; `ro.build.type` is the property Perfetto checks. Not changed by either property: no JDWP for non-debuggable apps (only `adbd` on `@jdwp-control`), `run-as` still per-app, and `adb root` makes `adbd` abort (SIGABRT) and restart as `shell`. Version 1.1 made Developer options crash on open (`failed to set system property "logd.logpersistd"`: user SELinux policy denies `system_app` the `logpersistd_logging_prop` access userdebug grants); 1.2 adds that rule as `sepolicy.rule`, after which Developer options opens. 1.3 adds a `service.sh` that re-applies `persist.logd.size` after boot: with only the property set, the buffers came up at 256 KiB; with the module, 16 MiB after a reboot, and Developer options still opens. |
-| `dev_adb_tcp` module | Installed; `adbd` listening on `*:5555` after boot. A Wi-Fi connection from the PC was not exercised: the PC and phone sat on different subnets, which `aosp-academy adb-wifi` now detects and reports. |
-| Termux 0.118.3 (GitHub build, hash-pinned) | Installed over ADB; `openssh` and `proot-distro` installed in the app; Debian 13 (trixie) via `proot-distro`. SSH over the ADB forward verified from the PC: a session lands in Debian with the phone's `/data` free space available. `sshd` must be started in Termux after each reboot. **Removed** from the project on 2026-11-17 (uninstalled from the phone, pin and SSH helper dropped) to keep the phone a stock development baseline. |
-| F-Droid 2.0.3 (hash-pinned; signing certificate and PGP signature verified against f-droid.org) | Installed over ADB (`versionCode` 2000053, installer none); launched. |
-| `google_debloat` module (28 Google packages hidden; 8 Play updates removed first with `pm uninstall-system-updates`) | Installed; after the reboot none of the 28 packages is listed, Play services, GSF, WebView, Gboard, Contacts, Messages, Files, F-Droid and Termux remain, no crash in the crash log, launcher and root unaffected. Version 1.1 (27 packages) stops hiding the Play Store: after the reboot `pm path com.android.vending` resolves to the factory `/product/priv-app/Phonesky` copy, the other 27 stay hidden. Termux and Organic Maps were uninstalled at the same time to return the stock system to a clean development baseline (F-Droid kept). |
-| `vendor_extras_debloat` module (58 carrier, partner, Motorola and telemetry packages hidden) | Installed; after the reboot none of the 58 is listed (only two Battery Care resource overlays remain, which are not apps), camera, launcher, face unlock, Dolby, Moto Secure core, Play services, F-Droid and Termux remain, no crash in the crash log, root unaffected. |
-| Organic Maps 2026.09.29-32 from F-Droid (index signature, APK hash and signer verified by hand) | Installed with F-Droid as installer; all 154 United States map files (15.5 GB, data version 260928) pushed over ADB into the app's data folder and listed as downloaded. **Removed** from the stock system on 2026-11-17, with Termux. |
-| Frida 17.26.3 | Pushing and starting the server (now `aosp-academy device frida start`) worked; `frida-ps -Ua` lists the running apps. |
-| Perfetto | The trace command (now `aosp-academy device trace`) records and pulls traces. The config file must live in `/data/misc/perfetto-configs/`; `/data/local/tmp` is refused by SELinux. |
+| `dev_debuggable` module 1.3 (`ro.debuggable=1`, `ro.build.type=userdebug`) | Clean boot, no crashes, Play Store and launcher unaffected. A Perfetto Java heap dump of Settings, a non-debuggable app, works (a 24 MB dump); stock refuses it (`not profileable` in logcat), and so does `ro.debuggable=1` alone: `ro.build.type` is the property Perfetto checks. Not changed by either property: no JDWP for non-debuggable apps (only `adbd` on `@jdwp-control`), `run-as` still per-app, and `adb root` makes `adbd` abort (SIGABRT) and restart as `shell`. The module's `sepolicy.rule` lets `system_app` set `logd.logpersistd` (user SELinux policy denies it, and Developer options crashes on open without the rule), and its `service.sh` re-applies `persist.logd.size` after boot, giving 16 MiB buffers (with only the property set they come up at 256 KiB). |
+| `dev_adb_tcp` module | `adbd` listens on `*:5555` after boot. A Wi-Fi connection from the PC hasn't been exercised: the PC and phone sit on different subnets, which `aosp-academy adb-wifi` detects and reports. |
+| F-Droid 2.0.3 (hash-pinned; signing certificate and PGP signature verified against f-droid.org) | Installed over ADB (`versionCode` 2000053, installer none); launches. |
+| `google_debloat` module 1.1 (27 Google packages hidden; 8 Play updates removed first with `pm uninstall-system-updates`) | After a reboot none of the 27 packages is listed; Play services, GSF, WebView, Gboard, Contacts, Messages, Files and F-Droid remain, and the Play Store resolves to the factory `/product/priv-app/Phonesky` copy. No crash in the crash log, launcher and root unaffected. |
+| `vendor_extras_debloat` module (58 carrier, partner, Motorola and telemetry packages hidden) | After a reboot none of the 58 is listed (only two Battery Care resource overlays remain, which are not apps); camera, launcher, face unlock, Dolby, Moto Secure core, Play services and F-Droid remain, no crash in the crash log, root unaffected. |
+| Frida 17.26.3 | `aosp-academy device frida start` pushes and starts the server; `frida-ps -Ua` lists the running apps. |
+| Perfetto | `aosp-academy device trace` records and pulls traces. The config file must live in `/data/misc/perfetto-configs/`; `/data/local/tmp` is refused by SELinux. |
 | simpleperf | Unusable on this phone: no perf events (`cpu-cycles` and `cpu-clock` both "not supported on the device"). |
 | Android Virtualization Framework | Absent: no `ro.boot.hypervisor.*`, no `/dev/kvm`, no `com.android.virt` APEX, no Terminal app. |
-| SDK `adb` vs pinned `adb` | Both 37.0.1-15733141 at the time, so Android Studio and the project's shell shared one server; the self-test enforces equality. Both have since moved to 37.0.3. |
+| SDK `adb` and pinned `adb` | The same version (37.0.3), so Android Studio and the project's shell share one server; `aosp-academy check` enforces equality. |
 
 ### About the committed artifacts
 
 The helper DEX files and the module ZIPs in `stock/` are rebuilt by this project from the sources beside them, and `aosp-academy stock build` verifies that they reproduce ([helpers](helpers.md), [modules](modules.md)). Relative to the files that ran on unit 1:
 
 - **Helpers** (`UpdateHelper.dex`, `UpdaterCleanup.dex`): the Java logic is unchanged; the sources gained documentation comments, which shifts the debug line-number tables in the DEX but not the bytecode that executes.
-- **Modules**: each ZIP contains the same `module.prop` and the same set of `.replace` markers as before, now built deterministically from a manifest (fixed entry order and timestamps) and carrying that manifest as `manifest.json` instead of the earlier `carrier-manifest.json` / `extra-manifest.json` name. Magisk ignores the extra file.
+- **Modules**: each ZIP contains the same `module.prop` and the same set of `.replace` markers, built deterministically from a manifest (fixed entry order and timestamps) and carrying that manifest as `manifest.json`, which Magisk ignores.
 
 ### Reporting a result
 

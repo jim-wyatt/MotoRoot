@@ -146,7 +146,7 @@ Open the repository folder in VS Code and accept the recommended extensions. `.v
 
 ## Android Studio and the phone
 
-Android Studio uses the SDK's `adb`; every `aosp-academy` command uses the pinned copy in `work/platform-tools`. The two are the same version (37.0.3, moved there on 2026-11-19 for this reason), so Studio's ADB server and ours don't fight over the phone, and `check` fails if they ever drift apart. If Studio offers a platform-tools update, decline it, or move the pin deliberately ([pins](../reference/pins.md)).
+Android Studio uses the SDK's `adb`; every `aosp-academy` command uses the pinned copy in `work/platform-tools`. The two are the same version (37.0.3), so Studio's ADB server and ours don't fight over the phone, and `check` fails if they ever drift apart. If Studio offers a platform-tools update, decline it, or move the pin deliberately ([pins](../reference/pins.md)).
 
 During the low-level stages of the [walkthrough](../device/walkthrough.md) (backups, flashing, unlocking), keep Studio closed all the same: nothing else should be talking to the phone while those run.
 

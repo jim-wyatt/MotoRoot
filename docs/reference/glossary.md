@@ -14,7 +14,7 @@ Every term the docs use, in plain language.
 : How every change to the environment is made: edit on a branch, the build node builds, the device node deploys and verifies, merge. [Change the environment](../environment/index.md).
 
 **`aospacademy_arm64`**
-: This project's system image: AOSP's `aosp_arm64` with this project's product settings, patches and the Fossify apps on top. Images built before the rename (builds 1 to 10) were called `vedotom_arm64`. [What's in the image](../environment/image.md).
+: This project's system image: AOSP's `aosp_arm64` with this project's product settings, patches and the Fossify apps on top. [What's in the image](../environment/image.md).
 
 **Pin**
 : A download recorded with its exact URL and hash in `toolchain.json`, so it is fetched only from there, used only if it matches, and never silently replaced. [Pins](pins.md).

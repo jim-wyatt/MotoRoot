@@ -29,7 +29,7 @@ All `gsi` commands run from the repository root (`./aosp-academy`, or `.\aosp-ac
 
 ## The pinned GSI
 
-The pinned image is Google's official **AOSP arm64 GSI for Android 17**, build `CP2A.260605.012`, the stable release of the same Android 17 drop as the source tag this project builds its own image from (`deviceTools.gsi` in `toolchain.json` has the build id, URL and SHA-256). It is one generation above the stock Android 16 system and four above the Android 13 vendor layer, and it booted and ran the hardware on this phone on 2026-11-19 (the [validation page](../environment/validation.md)). Until that day the pin was the Android 16 GSI `BP4A.251205.006`; the procedure is the same.
+The pinned image is Google's official **AOSP arm64 GSI for Android 17**, build `CP2A.260605.012`, the stable release of the same Android 17 drop as the source tag this project builds its own image from (`deviceTools.gsi` in `toolchain.json` has the build id, URL and SHA-256). It is one generation above the stock Android 16 system and four above the Android 13 vendor layer, and it boots and runs the hardware on this phone ([below](#on-this-phone)).
 
 Google publishes the GSI under [its GSI terms](https://developer.android.com/topic/generic-system-image/releases). The download asks you to accept them explicitly, the same way `aosp-academy setup` does for the SDK. It is not fetched by `setup`, because it's about 1 GB and behind those terms.
 
@@ -78,25 +78,26 @@ aosp-academy gsi discard    # from the stock system: removes the image and its u
 
 `discard` runs `gsi_tool disable` and `gsi_tool wipe`, which removes the image and its userdata from `/data` (the GSI takes about 3 GB plus its userdata). It **refuses while an image is running**: run `gsi stock` first. With nothing installed, it says so.
 
-## What happened on this phone
+## On this phone
 
-Google's GSI was first tried on unit 2 on 2026-11-16, with the Android 16 GSI that was pinned then (`BP4A.251205.006`), as one-shot boots. The [validation page](../environment/validation.md) has the tables. The short version of that first run:
+The pinned Android 17 GSI runs on this phone, booted through DSU. The [validation page](../environment/validation.md) has the hardware table.
 
-- **It boots.** The DSU installer accepted the zip (the phone has no `/avb` key set; `system_gsi` still carried Google's AVB key and the install reported `READY`). The boot reached the AOSP home screen well within ten minutes, `ro.build.fingerprint` was `Android/aosp_arm64/generic_arm64:16/BP4A.251205.006/...`, and Developer options showed *DSU Loader: DSU is running*.
-- **Working:** the display in its 120 Hz mode, the Mali GPU (OpenGL ES 3.2), Wi-Fi (HAL up, 27 networks in the first scan), audio (the primary output thread exists), 53 sensors registered, the fingerprint HAL registered, USB debugging after enabling it once in the fresh userdata.
+- **It boots.** The DSU installer accepts an image it can't verify against Google's key: the phone has no `/avb` key set and the bootloader is unlocked, which is the condition DSU documents for unverified images. The boot reaches the lock screen in about 36 s, with SELinux enforcing.
+- **Working:** the display (120 Hz), Wi-Fi (validated in about 6 s), Bluetooth, NFC, GNSS, speaker output, the sensors, the fingerprint HAL, the modem (no SIM, so cellular is untested).
 - **Partly:** cameras: AOSP sees 2 of the 3 camera devices.
-- **Noisy:** `gpuservice` crashes and restarts every 30 seconds (`SIGABRT`), a mismatch between the generic image and the Mali vendor libraries. The UI doesn't depend on it, but it's a steady drip of crash logs and a little CPU.
-- **Magisk:** `magiskd` runs and `/debug_ramdisk/magisk -v` answers `31.1:MAGISK:R`, so the boot chain is intact underneath. `su` is denied, because the Magisk app and its grant database live in the stock system's `/data`, which the GSI doesn't see. Expect no Magisk root inside a GSI, and no modules applied. (The aosp-academy image is a userdebug build with AOSP's own `su`, so it has root of its own.)
+- **Noisy:** the vibrator logs `setAmplitude` errors, which the aosp-academy image patches.
+- **A user build.** Google's GSI is signed with release keys: no `adb root`, and USB debugging must be switched on by hand in its fresh data.
+- **Magisk:** the boot chain underneath stays intact, but the Magisk app and its grant database live in the stock system's `/data`, which the GSI doesn't see. Expect no Magisk root inside a GSI, and no modules applied. (The aosp-academy image is a userdebug build with AOSP's own `su`, so it has root of its own.)
 
 Things worth checking on any new system, and noting if they fail: Wi-Fi, the display at 120 Hz, audio, the cameras, the fingerprint reader, USB debugging, and whether `aosp-academy device mirror` connects. Google's AOSP image shows a persistent notification offering to **Keep** the DSU across reboots or **Discard** it; you don't need either, since the commands above do both.
 
-**Capture the session before you leave it.** Two things exist only while a DSU system runs: its boot log (which HALs registered, every SELinux denial, the `gpuservice` tombstones) and the vendor interface as the generic system negotiated it. `aosp-academy device info --label gsi --bugreport` records both, plus a full `adb bugreport`, into `work/device-info/` (private). On unit 2 that showed 17 `gpuservice` restarts in ten minutes, denials dominated by the vendor's `batt_health` domain, and the camera service registering only two devices. The drivers themselves are on the vendor partition and identical under stock, so dump those from stock, with root, when you need them.
+**Capture the session before you leave it.** Two things exist only while a DSU system runs: its boot log (which HALs registered, every SELinux denial, any tombstones) and the vendor interface as the generic system negotiated it. `aosp-academy device info --label gsi --bugreport` records both, plus a full `adb bugreport`, into `work/device-info/` (private). On this phone it shows denials dominated by the vendor's `batt_health` domain, and the camera service registering only two devices. The drivers themselves are on the vendor partition and identical under stock, so dump those from stock, with root, when you need them.
 
 ## If an image doesn't boot
 
 **A single-boot image** that never reaches the home screen: hold **Power** until the phone restarts. Because the boot was one-shot, it comes back to the stock system, and `aosp-academy gsi discard` cleans up.
 
-**Investigating why**, from the stock system: the order is the installer's log (`adb logcat -d`, looking for `dynsystem` lines), then a boot with Magisk's modules disabled (safe mode: hold **Volume Down** during the image's boot), then `gsi_tool install` with a raw image, which bypasses the installer app. None of that touches the stock system. These were the open questions before the first run: whether the DSU installer on this firmware accepts an image it can't verify against Google's key (the phone has no `/avb` key set, and the bootloader is unlocked, which is the condition DSU documents for unverified images), whether Magisk in `init_boot` is happy underneath a foreign system, and the MediaTek vendor interface itself. The first run answered the first two.
+**Investigating why**, from the stock system: the order is the installer's log (`adb logcat -d`, looking for `dynsystem` lines), then a boot with Magisk's modules disabled (safe mode: hold **Volume Down** during the image's boot), then `gsi_tool install` with a raw image, which bypasses the installer app. None of that touches the stock system.
 
 **A persistent image that boots** but misbehaves: `aosp-academy gsi stock` works from inside it as long as `adb` reaches the phone and the image has root (the aosp-academy image is a userdebug build with AOSP's `su`).
 

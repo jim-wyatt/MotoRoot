@@ -6,7 +6,7 @@ On a retail phone a debugger reaches only your own app, and only a debug build o
 
 Each app runs in its own process, in ART, Android's Java runtime. A debugger talks to ART over **JDWP**, the Java Debug Wire Protocol, the same protocol desktop Java debuggers use. The phone's adb daemon keeps a list of the processes that have JDWP open, and forwards a connection from the PC to any of them. Android Studio's debugger is a JDWP client; so is `jdb`, the command-line debugger that comes with the JDK.
 
-Which processes open JDWP is decided when Zygote, the process every app is started from, starts. Normally only apps marked `android:debuggable` (your debug builds) get it. The image sets `persist.debug.dalvik.vm.jdwp.enabled=1`, and on a `userdebug` build that makes Zygote open JDWP in **every** app process: `system_server` (the process that runs Android's system services), SystemUI, Settings, the phone and Bluetooth processes, the network stack, the Fossify apps and whatever you install. The image has done this since build 9; see [what the image gives you](the-image.md#debugging-and-profiling-any-process) for the property itself and how to turn it off.
+Which processes open JDWP is decided when Zygote, the process every app is started from, starts. Normally only apps marked `android:debuggable` (your debug builds) get it. The image sets `persist.debug.dalvik.vm.jdwp.enabled=1`, and on a `userdebug` build that makes Zygote open JDWP in **every** app process: `system_server` (the process that runs Android's system services), SystemUI, Settings, the phone and Bluetooth processes, the network stack, the Fossify apps and whatever you install. See [what the image gives you](the-image.md#debugging-and-profiling-any-process) for the property itself and how to turn it off.
 
 ## Attach to any process
 
@@ -52,7 +52,7 @@ The device test counts the processes that accept a debugger:
 ./aosp-academy device test
 ```
 
-Its `debug` area runs `adb root` and back (on a `userdebug` image), then lists `adb jdwp` for four seconds and reports the number together with the property's value. On build 9 it listed 24 processes at idle; the number follows how many apps are running. A count of 0 is what a system shows that opens JDWP only for debuggable apps: the phone's stock system, or an image with the property off.
+Its `debug` area runs `adb root` and back (on a `userdebug` image), then lists `adb jdwp` for four seconds and reports the number together with the property's value. The number follows how many apps are running (a few dozen). A count of 0 is what a system shows that opens JDWP only for debuggable apps: the phone's stock system, or an image with the property off.
 
 ## Logs
 
