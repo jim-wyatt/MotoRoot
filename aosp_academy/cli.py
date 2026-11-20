@@ -57,6 +57,9 @@ def parser() -> argparse.ArgumentParser:
     f = dsub.add_parser("frida", help="start or stop frida-server on the phone (root)")
     f.add_argument("action", choices=["start", "stop"])
     dsub.add_parser("report", help="what the running image sets (as at the end of deploy)")
+    tr = dsub.add_parser("try", help="run the repository's first-boot script on the running image, without a build")
+    tr.add_argument("--rerun", action="store_true", help="clear the first-boot state and run it now, as on a fresh install")
+    tr.add_argument("--undo", action="store_true", help="put the built-in script back (a reboot does too)")
     mi = dsub.add_parser("mirror", help="mirror and control the phone with scrcpy", add_help=False)
     mi.add_argument("rest", nargs=argparse.REMAINDER, help="passed to scrcpy")
 
@@ -110,6 +113,8 @@ def main(argv: list[str] | None = None) -> int:
                 return devtest.run_tests({s.strip() for s in args.skip.split(",") if s.strip()})
             if c == "settings":
                 return device.settings(args.reset)
+            if c == "try":
+                return device.try_firstboot(args.rerun, args.undo)
             if c == "info":
                 device.info(args.label, args.bugreport)
             elif c == "trace":

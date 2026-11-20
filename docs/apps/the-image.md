@@ -38,15 +38,16 @@ The log buffers are **16 MiB** each (main, system, crash, events, radio and kern
 
 ## Settings for a test device
 
-At first boot the image applies the development-target settings, the same seven that `aosp-academy device settings` applies on the stock system:
+At first boot the image applies the development-target settings, the same nine that `aosp-academy device settings` applies on the stock system:
 
-| Setting (global) | Value | Why |
+| Setting (global unless marked) | Value | Why |
 | --- | --- | --- |
 | `development_settings_enabled` | 1 | Developer options shown in Settings, without tapping the build number seven times |
 | `stay_on_while_plugged_in` | 15 | Stay awake: the screen stays on while the phone charges (AC, USB, wireless or dock), so it never locks under a test run |
 | `window_animation_scale`, `transition_animation_scale`, `animator_duration_scale` | 0 | Animations off: UI tests such as Espresso expect it, and screens settle at once |
 | `verifier_verify_adb_installs` | 0 | `adb install` is not sent to a package verifier first: fast, and never held up by a prompt |
 | `adb_allowed_connection_time` | 0 | An authorised PC stays authorised, instead of having to re-confirm after seven idle days |
+| `screen_brightness_mode`, `screen_brightness` (system) | 0, 64 | Manual brightness at about 25 %: with Stay awake the OLED panel is on as long as the phone is on the cable (it still dims to the minimum after the screen timeout) |
 
 They are set once, as defaults. A value you change later in Developer options is kept.
 

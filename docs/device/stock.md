@@ -150,7 +150,7 @@ Android 16 ships a built-in Linux Terminal (a Debian VM on the Android Virtualiz
 
 ## Development-target settings
 
-Seven ordinary Android settings and one property make the phone a better target for building and testing apps. `aosp-academy device settings` applies them, checks each one, and exits with the number that didn't stick; `--reset` returns every one to stock. The aosp-academy image sets the same values itself at first boot, so this command is for the stock system, or to put them back after an experiment.
+Nine ordinary Android settings and one property make the phone a better target for building and testing apps. `aosp-academy device settings` applies them, checks each one, and exits with the number that didn't stick; `--reset` returns every one to stock. The aosp-academy image sets the same values itself at first boot, so this command is for the stock system, or to put them back after an experiment.
 
 | Setting | Value | Why |
 | --- | --- | --- |
@@ -159,6 +159,7 @@ Seven ordinary Android settings and one property make the phone a better target 
 | `window_animation_scale`, `transition_animation_scale`, `animator_duration_scale` | 0 (off) | Espresso and other UI tests expect animations off, and screens settle at once |
 | `verifier_verify_adb_installs` | 0 | `adb install` no longer waits for Play Protect to verify the app first |
 | `adb_allowed_connection_time` | 0 | an authorized PC stays authorized, instead of re-confirming its key after seven days without connecting (matters for ADB over Wi-Fi) |
+| `screen_brightness_mode`, `screen_brightness` (system) | 0, 64 | Manual brightness at about 25 %: with Stay awake the OLED panel is on as long as the phone is on the cable (it still dims to the minimum after the screen timeout) |
 | `persist.logd.size` | 16M | log buffers of 16 MiB instead of the stock 256 KiB, so the log from before a crash is still there |
 
 ```sh
