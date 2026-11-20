@@ -69,6 +69,14 @@ adb logcat -d -T '11-19 14:00:00.000'               # everything since a time, t
 adb logcat -c                                       # clear the buffers before a test run
 ```
 
+To keep a log, `./aosp-academy device logs` saves it under `work/logs/` (git-ignored, so a log with app data never reaches a commit):
+
+```sh
+./aosp-academy device logs                                     # what the buffers hold now (main, system, crash)
+./aosp-academy device logs --package com.example.firstapp      # one app, by its UID, so restarts are followed
+./aosp-academy device logs --package com.example.firstapp --clear --follow --name run1   # stream a fresh test run
+```
+
 Crash details beyond the log are in `/data/tombstones` (native crashes) and `/data/anr` (app-not-responding traces), which need root to read: `adb shell su 0 ls /data/tombstones`. `adb shell dumpsys <service>` prints the state of any system service (`dumpsys activity`, `dumpsys package <pkg>`, `dumpsys meminfo <pkg>`); `adb shell dumpsys -l` lists them.
 
 ## Root: `adb root`
@@ -88,10 +96,11 @@ For your own debuggable app there is also the unprivileged way, which works on e
 A bug report is Android's full snapshot of a device's state: every log buffer, `dumpsys` of every service, tombstones, ANRs, process and memory lists. It's what you attach when a problem needs someone else's eyes, or what you keep from a run you can't repeat.
 
 ```sh
-./aosp-academy device info --bugreport --label my-crash
+./aosp-academy device bugreport --name my-crash          # the bug report alone, into work/bugreports/
+./aosp-academy device info --bugreport --label my-crash  # with the hardware and software inventory
 ```
 
-This writes a hardware and software inventory to `work/device-info/<timestamp>-my-crash/`: raw dumps (properties, packages, `dumpsys` output, the whole log and the crash buffer, the VINTF manifests, the partition table), a `summary.txt` without identifiers, and with `--bugreport` the full `bugreport.zip` (it takes several minutes). It only reads from the phone. Without the option, you get the inventory alone; `adb bugreport <file>.zip` takes just the bug report.
+This writes a hardware and software inventory to `work/device-info/<timestamp>-my-crash/`: raw dumps (properties, packages, `dumpsys` output, the whole log and the crash buffer, the VINTF manifests, the partition table), a `summary.txt` without identifiers, and with `--bugreport` the full `bugreport.zip` (it takes several minutes). It only reads from the phone. Without the option, you get the inventory alone. A bug report holds the whole system's state, logs and identifiers: keep it in `work/`, and don't attach it anywhere public.
 
 !!! warning "Bug reports and raw dumps are private"
     They contain the phone's serial number, IMEI, MAC addresses, network names and the full app list. `work/` is git-ignored, so they never reach the repository; don't post them in public issues either. `summary.txt` is the part written to be shared.

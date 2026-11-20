@@ -109,7 +109,8 @@ class Cli(unittest.TestCase):
         p = cli.parser()
         for argv in (["fetch", "--check"], ["deploy", "--no-fetch", "-y"], ["gsi", "status"], ["device", "test", "--skip", "frida"],
                      ["device", "trace", "--seconds", "2"], ["setup", "--skip-system"], ["check"], ["env", "--shell", "bash"],
-                     ["stock", "build"], ["image", "inputs"], ["new-app", "x", "--package", "com.example.x", "--test"]):
+                     ["stock", "build"], ["image", "inputs"], ["new-app", "x", "--package", "com.example.x", "--test"],
+                     ["device", "logs", "--package", "com.example.x", "--follow"], ["device", "bugreport", "--name", "crash"]):
             self.assertIsInstance(p.parse_args(argv), argparse.Namespace, argv)
 
     def test_no_powershell_left(self):

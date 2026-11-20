@@ -125,6 +125,8 @@ def report(status: str = "", log: list[str] | None = None) -> None:
         "Fingerprint": adb.prop("ro.build.fingerprint"),
         "Home": sh("cmd role get-role-holders android.app.role.HOME"),
         "FirstBoot": f"{status}; {sum(1 for l in log if l.startswith('icon colour '))} icons set",
+        "Bluetooth": f"{'on' if sh('settings get global bluetooth_on') == '1' else 'off'}, "
+                     f"scanning {'on' if sh('settings get global ble_scan_always_enabled') == '1' else 'off'}",
         "DevOptions": f"shown={sh('settings get global development_settings_enabled')} stay_awake={sh('settings get global stay_on_while_plugged_in')} "
                       f"brightness={sh('settings get system screen_brightness')} (want 1, 15, 64)",
         "Animations": f"{scales} (want 0/0/0)",
