@@ -1,5 +1,11 @@
 # aosp-academy
 
+[![Checks](https://github.com/jim-wyatt/aosp-academy/actions/workflows/checks.yml/badge.svg?branch=main)](https://github.com/jim-wyatt/aosp-academy/actions/workflows/checks.yml)
+[![Documentation](https://github.com/jim-wyatt/aosp-academy/actions/workflows/docs.yml/badge.svg?branch=main)](https://jim-wyatt.github.io/aosp-academy/)
+[![Weekly](https://github.com/jim-wyatt/aosp-academy/actions/workflows/weekly.yml/badge.svg)](https://github.com/jim-wyatt/aosp-academy/actions/workflows/weekly.yml)
+[![Android 17](https://img.shields.io/badge/image-Android%2017%20(API%2037)-3ddc84)](https://jim-wyatt.github.io/aosp-academy/environment/validation/#current-image)
+[![License: MIT](https://img.shields.io/badge/license-MIT-blue)](LICENSE)
+
 **One project that bootstraps and maintains a real phone, a Moto G Power 2026 (XT2617V), as an AOSP development device.**
 
 **aosp-academy is an independent, non-commercial, educational project.** It exists to teach how Android works on real hardware. It is not affiliated with Motorola, Lenovo, Google, MediaTek or any carrier, and it redistributes none of their software: everything vendor-made is downloaded by you, from its publisher, under its terms. The full statement is in the [disclaimer](DISCLAIMER.md).
