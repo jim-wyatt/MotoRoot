@@ -100,11 +100,24 @@ if [ "$1" = wireguard ]; then
         ep="${ep%:*}"; ep="${ep#[}"; ep="${ep%]}"
         [ -n "$ep" ] || result "failed: no Endpoint in wg0.conf"
         case "$ep" in *:*) epfam=-6 ;; *) epfam=-4 ;; esac
+        # 0. Wait for Wi-Fi's own routing table. At boot, with a saved network, this can run before
+        #    netd has created it (the table "wlan0" doesn't resolve yet), and then rules 1 and 2
+        #    fail: the tunnel's own packets to the hub go into wg0 itself, nothing ever handshakes,
+        #    and the kill switch below blocks everything, adb included. That happened on build 22's
+        #    second boot. Until the table is there, nothing has been routed into the tunnel, so
+        #    giving up leaves the phone on plain Wi-Fi.
+        t=0
+        until ip -4 route show table wlan0 2>/dev/null | grep -q '^default'; do
+            [ "$t" -ge 120 ] && result "failed: no Wi-Fi routing table (wlan0) after 120 s; not routing into the tunnel"
+            sleep 2; t=$((t + 2))
+        done
         # 1. The tunnel's own encrypted packets to the hub leave by Wi-Fi, as before.
-        ip "$epfam" rule add to "$ep" lookup wlan0 priority 8990
+        ip "$epfam" rule add to "$ep" lookup wlan0 priority 8990 \
+            || result "failed: no rule for the hub's endpoint; not routing into the tunnel"
         # 2. The Wi-Fi network's own subnet stays local (the router, DHCP, neighbour discovery):
         #    the Wi-Fi table without its default route.
-        ip -4 rule add lookup wlan0 suppress_prefixlength 0 priority 8995
+        ip -4 rule add lookup wlan0 suppress_prefixlength 0 priority 8995 \
+            || result "failed: no rule for the Wi-Fi subnet; not routing into the tunnel"
         ip -6 rule add lookup wlan0 suppress_prefixlength 0 priority 8995
         # 3. Everything else into the tunnel, ahead of Android's per-network rules. The unreachable
         #    default behind wg0's is the kill switch: if wg0 goes, its route goes with it, and
