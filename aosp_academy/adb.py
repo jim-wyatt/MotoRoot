@@ -101,16 +101,22 @@ def has_root() -> bool:
     return "uid=0(" in root("id")
 
 
-def wait_authorized() -> None:
-    """Wait until adb sees the phone as authorized, saying once what it waits for.
+def wait_authorized(timeout: float = 600) -> None:
+    """Wait until adb sees the phone as authorized, saying once what it waits for, for at most
+    timeout seconds; then fail with what adb last saw and what to check.
 
     aosp-academy images set ro.adb.secure=1 and every DSU install starts with empty userdata, so a PC
     whose key isn't built into the image sees the phone as "unauthorized" until someone taps Allow.
+    The limit matters over the network: a phone that rebooted out of reach (its tunnel down, or a
+    stock system that doesn't answer this PC) never comes back by itself, and twice a deploy
+    waited for one for ever.
     """
     told = False
     serial = os.environ.get("ANDROID_SERIAL", "")
-    while True:
-        state = adb("get-state", check=False)
+    start = time.monotonic()
+    state = ""
+    while time.monotonic() - start < timeout:
+        state = adb("get-state", check=False, timeout=20)
         if state == "device":
             return
         if is_tcp(serial):
@@ -120,6 +126,21 @@ def wait_authorized() -> None:
             say('  >> Tap "Allow" on the phone\'s "Allow USB debugging?" prompt (tick "Always allow from this computer"). Waiting ...', "yellow")
             told = True
         sleep(2)
+    raise Failure(_lost_message(serial, state, timeout))
+
+
+def _lost_message(serial: str, state: str, timeout: float) -> str:
+    """Why the phone didn't come back, and where to look, for the waits that give up."""
+    seen = state.splitlines()[-1] if state else "no answer"
+    if "unauthorized" in state:
+        return (f"The phone is connected but not authorized after {int(timeout)} s: tap Allow on it, or build this PC's "
+                "key into the image (work/adb_keys) or into the stock system's /data/misc/adb/adb_keys.")
+    if is_tcp(serial):
+        return (f"The phone hasn't answered on {serial} for {int(timeout)} s (adb: {seen}). It may be booting "
+                "slowly, or out of reach: on the stock system its tunnel must answer this PC (dev_wireguard 1.3 or "
+                "later), and on the image its tunnel needs Wi-Fi up. Connect it by USB to look "
+                "(aosp-academy device report), then run the same command again. Nothing is lost by stopping here.")
+    return f"The phone hasn't come back on USB for {int(timeout)} s (adb: {seen}). Check the cable, then run the same command again."
 
 
 def wait_boot(timeout: int = 600, after_reboot: bool = False) -> int:
@@ -134,9 +155,10 @@ def wait_boot(timeout: int = 600, after_reboot: bool = False) -> int:
             adb("wait-for-disconnect", check=False, timeout=180)
         except subprocess.TimeoutExpired:
             pass
-    wait_authorized()
+    wait_authorized(timeout=max(60, timeout - (time.monotonic() - start)))
     while time.monotonic() - start < timeout:
-        if prop("sys.boot_completed") == "1":
+        # With a timeout: on a network transport that drops, a plain shell call hangs instead of failing.
+        if adb("shell", "getprop sys.boot_completed", check=False, timeout=20) == "1":
             return round(time.monotonic() - start)
         sleep(5)
     raise Failure(f"The phone did not finish booting within {timeout} s.")

@@ -122,6 +122,31 @@ class OneMachine(unittest.TestCase):
             fetch.CONFIG = saved
 
 
+class Waits(unittest.TestCase):
+    def test_lost_phone_fails_instead_of_waiting_for_ever(self):
+        import os
+        saved = (adb.adb, adb.sleep, os.environ.get("ANDROID_SERIAL"))
+        calls = []
+        try:
+            adb.adb = lambda *a, **k: calls.append(a) or "error: device offline"
+            adb.sleep = lambda s: None
+            os.environ["ANDROID_SERIAL"] = "192.0.2.10:5555"
+            with self.assertRaises(core.Failure) as e:
+                adb.wait_authorized(timeout=0.05)
+            self.assertIn("192.0.2.10:5555", str(e.exception))
+            self.assertIn(("connect", "192.0.2.10:5555"), calls)  # a network transport is reconnected
+            adb.adb = lambda *a, **k: "unauthorized"
+            with self.assertRaises(core.Failure) as e:
+                adb.wait_authorized(timeout=0.05)
+            self.assertIn("Allow", str(e.exception))
+        finally:
+            adb.adb, adb.sleep = saved[0], saved[1]
+            if saved[2] is None:
+                os.environ.pop("ANDROID_SERIAL", None)
+            else:
+                os.environ["ANDROID_SERIAL"] = saved[2]
+
+
 class Cli(unittest.TestCase):
     def test_every_command_parses(self):
         p = cli.parser()

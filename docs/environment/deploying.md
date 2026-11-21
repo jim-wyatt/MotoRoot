@@ -22,7 +22,7 @@ That fetches the newest image, puts it on the phone, boots it, waits for it to s
 | `-y`, `--yes` | Don't ask before replacing the installed image. |
 | `--host`, `--user`, `--repo`, `--port`, `--save`, `--streams N` | As for `fetch`, below. |
 
-The exit code is 0 when everything passed, 1 when `device test` had failures (or you answered no), and 2 on an error.
+The exit code is 0 when everything passed, 1 when `device test` had failures (or you answered no), and 2 on an error. Every wait for the phone has a limit: a phone that doesn't come back within ten minutes after a reboot, or never becomes authorized, ends the run with what adb last saw and what to check. Over the network that usually means the phone rebooted out of reach. Connect it by USB to look, then run the same command again; nothing is lost by stopping there.
 
 ## Fetch
 
