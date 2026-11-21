@@ -46,6 +46,17 @@ service aospacademy_wireguard /product/bin/aospacademy-firstboot wireguard
 on property:sys.boot_completed=1
     start aospacademy_wireguard
 
+# Keeps the full tunnel's Wi-Fi bypass rules current when Wi-Fi drops and comes back (the
+# script's wireguard-watch mode). Not oneshot: init restarts it if it ever exits.
+service aospacademy_wgwatch /product/bin/aospacademy-firstboot wireguard-watch
+    user root
+    group root
+    seclabel u:r:su:s0
+    disabled
+
+on property:sys.boot_completed=1
+    start aospacademy_wgwatch
+
 service aospacademy_chargelimit /product/bin/aospacademy-firstboot charge-limit
     user root
     group root

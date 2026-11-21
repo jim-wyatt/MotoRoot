@@ -147,12 +147,22 @@ class Waits(unittest.TestCase):
                 os.environ["ANDROID_SERIAL"] = saved[2]
 
 
+class StockTrust(unittest.TestCase):
+    def test_missing_keys_compares_the_key_not_the_comment(self):
+        from aosp_academy import stock
+        have = "AAAAkeyA user@pc-a\nAAAAkeyB old-comment\n"
+        wanted = ["AAAAkeyA user@pc-a", "AAAAkeyB new-comment", "AAAAkeyC user@pc-c", "AAAAkeyC again", "", "  "]
+        self.assertEqual(stock.missing_keys(wanted, have), ["AAAAkeyC user@pc-c"])
+        self.assertEqual(stock.missing_keys(["AAAAkeyA x"], ""), ["AAAAkeyA x"])
+        self.assertEqual(stock.missing_keys([], have), [])
+
+
 class Cli(unittest.TestCase):
     def test_every_command_parses(self):
         p = cli.parser()
         for argv in (["fetch", "--check"], ["deploy", "--no-fetch", "-y"], ["gsi", "status"], ["device", "test", "--skip", "frida"],
                      ["device", "trace", "--seconds", "2"], ["setup", "--skip-system"], ["check"], ["env", "--shell", "bash"],
-                     ["stock", "build"], ["image", "inputs"], ["new-app", "x", "--package", "com.example.x", "--test"],
+                     ["stock", "build"], ["stock", "trust"], ["image", "inputs"], ["new-app", "x", "--package", "com.example.x", "--test"],
                      ["device", "logs", "--package", "com.example.x", "--follow"], ["device", "bugreport", "--name", "crash"]):
             self.assertIsInstance(p.parse_args(argv), argparse.Namespace, argv)
 

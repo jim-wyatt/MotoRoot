@@ -237,10 +237,17 @@ def deploy(args) -> int:
     if adb.gsi_running():
         step(f"The phone is in a DSU image ({adb.prop('ro.product.name')}): back to the stock system")
         gsi.stock()
+    from . import stock
+    # The stock system trusts the PCs the image trusts (work/adb_keys) and this one, so a deploy
+    # that reaches stock over the network is never refused there. Idempotent.
+    step("Trusted PCs on the stock system")
+    try:
+        stock.trust_keys()
+    except Failure as e:
+        warn(f"stock adb keys: {e}")
     if (WG_LOCAL / "wg0.conf").exists() and (WG_LOCAL / "wg0.env").exists():
         # The same tunnel on the stock system (dev_wireguard), so the next deploy can reach stock
         # without a cable. Idempotent: only what changed is pushed.
-        from . import stock
         step("The tunnel on the stock system")
         try:
             stock.tunnel(quiet=False)
