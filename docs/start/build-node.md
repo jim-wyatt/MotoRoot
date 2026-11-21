@@ -1,6 +1,6 @@
 # Set up a build node
 
-The **build node** turns this repository into a system image. It downloads the AOSP source at the pinned release, adds this project's product and patches, builds `aospacademy_arm64`, and publishes the result to a folder that the device node fetches from. It never needs the phone.
+The **build node** turns this repository into a system image. It downloads the AOSP source at the pinned release, adds this project's product and patches, builds `aospacademy_arm64`, and publishes the result to a folder that the device node fetches from. It never needs the phone, unless it is the device node too ([One machine for both](#one-machine-for-both)).
 
 Any x86-64 Linux host can be the build node: a Linux desktop, WSL2 on a Windows PC, a cloud VM, or a container on any of those. The project's own build node is a Lenovo Legion T5 desktop running the build in WSL2; nothing in the code assumes that.
 
@@ -121,6 +121,33 @@ If a later release outgrows this too, two levers are known and untried: a compre
 | A rebuild after a change | minutes (incremental); about 15 minutes when Soong has to re-analyse the tree |
 
 There is no ccache, on purpose: every build rule runs in AOSP's sandbox, which mounts only `out/` and `/tmp` writable, so ccache fails on its first write, and AOSP's own notes (`build/make/core/ccache.mk`) say it adds little over incremental builds.
+
+## One machine for both
+
+A build node that can reach the phone can also be the device node. The image then never leaves the machine: no `PUBLISH_DIR`, no SFTP account, nothing to fetch.
+
+**What makes it work.** `image build` always leaves its image, `build.prop` and `vbmeta.img` in `work/device-tools/gsi/own/`, the folder `fetch` would fill on a device node. When no build node is configured (no `work/remote-build.json`, no `--host`), `aosp-academy deploy` installs the image in that folder and says so, instead of fetching. `--no-fetch` does the same explicitly.
+
+**One checkout, two sides on Windows.** On a Windows PC with WSL2, keep a single checkout on the Windows drive. Build from WSL, and set up, deploy and work with the phone from Windows. Both sides see the same `work/` folder.
+
+```bash
+./aosp-academy image build          # in WSL, from /mnt/c/<path to the checkout>
+```
+
+```powershell
+.\aosp-academy setup                # on Windows, once: adb, the SDK and NDK, the venvs
+.\aosp-academy deploy               # installs the image WSL just built
+```
+
+Run `setup` and `check` on the Windows side only. The virtual environments in `work/` are made for the platform that ran `setup`, and the `image` commands don't use them. On a native Linux host there is only one side, and every command runs from the same shell.
+
+**What the machine needs, besides a build node's needs:**
+
+- **Its adb key built in.** Its `adbkey.pub` line goes in `work/adb_keys` before the build ([Trusted PCs](#trusted-pcs-optional)), so the phone authorises it from the first boot with no tap.
+- **The private files a device node keeps:** `work/wifi.json` and, for the tunnel, `work/wireguard/wg0.conf` and `wg0.env` ([Deploy and verify](../environment/deploying.md#wifijson)). The tunnel config holds the phone's private key. Move it only between your own machines, over a channel you trust, and delete the old copy once the new machine deploys.
+- **A network path the phone answers on.** Over USB there is nothing to arrange. Over the network, replies follow the phone's routes, not the machine's. The phone sends only the destinations in `ROUTES4` (in `wg0.env`) and its peer's `AllowedIPs` (in `wg0.conf`) into the tunnel. A machine that reaches the hub from another subnet gets no reply unless that subnet is in both, and the hub routes to it. The other way is for the machine to join the tunnel as a peer of its own.
+
+**After a deploy** the local copy of the image is deleted, as on any device node (`--keep-image` keeps it). The next `image build` writes a new one. Since every build carries its own build date, a rebuild with no change still makes a new image with a new SHA-256.
 
 ## Publishing, and how the device node reaches it
 

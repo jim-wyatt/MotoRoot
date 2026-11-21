@@ -1,6 +1,6 @@
 # Deploy and verify
 
-This page is the device node's side of the [change loop](index.md#the-change-loop): from a published image on the build node to a verified image running on the phone. It needs the workstation set up ([Set up the workstation](../start/workstation.md)), the phone on USB with root on its stock system (Magisk), and nothing else: no AOSP tree, no WSL.
+This page is the device node's side of the [change loop](index.md#the-change-loop): from a published image on the build node to a verified image running on the phone. It needs the workstation set up ([Set up the workstation](../start/workstation.md)), the phone on USB with root on its stock system (Magisk), and nothing else: no AOSP tree, no WSL. On a machine that is its own build node, the same commands install the image built there; see [One machine for both](../start/build-node.md#one-machine-for-both).
 
 Commands are shown as `./aosp-academy ...`; on Windows, run `.\aosp-academy ...`. In a shell opened with `./aosp-academy shell`, the pinned `adb` is on PATH.
 
@@ -14,7 +14,7 @@ That fetches the newest image, puts it on the phone, boots it, waits for it to s
 
 | Option | Effect |
 | --- | --- |
-| `--no-fetch` | Install the image already in `work/device-tools/gsi/own/` instead of fetching. |
+| `--no-fetch` | Install the image already in `work/device-tools/gsi/own/` instead of fetching. With no build node configured (no `work/remote-build.json`, no `--host`), `deploy` does this by itself: the image there is the one this machine built. |
 | `--single-boot` | Boot the image once only; the next reboot returns to stock. Default: persistent. |
 | `--keep-image` | Keep the local copy of the image after installing. |
 | `--skip-device-test` | Leave out `device test` at the end. |

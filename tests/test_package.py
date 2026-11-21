@@ -104,6 +104,24 @@ class Files(unittest.TestCase):
             self.assertEqual(core.first_hash(Path(d) / "missing"), "")
 
 
+class OneMachine(unittest.TestCase):
+    def test_no_build_node_means_this_machine(self):
+        from aosp_academy import fetch
+        saved = fetch.CONFIG
+        try:
+            with tempfile.TemporaryDirectory() as d:
+                fetch.CONFIG = Path(d) / "remote-build.json"
+                none = argparse.Namespace(host=None)
+                self.assertFalse(fetch.remote_configured(none))
+                self.assertTrue(fetch.remote_configured(argparse.Namespace(host="build-node")))
+                fetch.CONFIG.write_text('{"user": "u"}')
+                self.assertFalse(fetch.remote_configured(none))
+                fetch.CONFIG.write_text('{"host": "h", "user": "u", "repo": "/r"}')
+                self.assertTrue(fetch.remote_configured(none))
+        finally:
+            fetch.CONFIG = saved
+
+
 class Cli(unittest.TestCase):
     def test_every_command_parses(self):
         p = cli.parser()

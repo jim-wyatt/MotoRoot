@@ -1,6 +1,7 @@
 """aosp-academy deploy: put the newest image on the phone and check it, in one run.
 
-1. fetch: the newest verified image from the build node (--no-fetch: the one already here)
+1. fetch: the newest verified image from the build node (--no-fetch: the one already here; with
+   no build node configured, the image this machine built, as on a single machine that does both)
 2. stock: if the phone runs a DSU image, disable it and reboot to stock (DSU installs only from there)
 3. discard; stage the Wi-Fi network (work/wifi.json) and the WireGuard tunnel (work/wireguard/
    wg0.conf, wg0.env) in /metadata for the new image's first boot, when present (all private,
@@ -212,11 +213,17 @@ def report(status: str = "", log: list[str] | None = None) -> None:
 def deploy(args) -> int:
     adb.assert_one_device()
     if not args.no_fetch:
-        step("Fetching the newest image from the build node")
-        fetch.fetch(args)
+        if fetch.remote_configured(args):
+            step("Fetching the newest image from the build node")
+            fetch.fetch(args)
+        else:
+            # One machine for both jobs: 'image build' leaves its image in work/device-tools/gsi/own,
+            # the folder a fetch would fill, so the image this machine built is the one to install.
+            say("No build node configured (work/remote-build.json): installing the image built on this machine.")
     img = fetch.IMG
     if not img.exists():
-        raise Failure(f"No image at {img}.")
+        raise Failure(f"No image at {img}. Build one here (aosp-academy image build), or set up a build node "
+                      "to fetch from (aosp-academy fetch --host ... --save).")
     h = file_hash(img)
     sidecar = fetch.OWN / "system.img.sha256"
     if sidecar.exists() and first_hash(sidecar) != h:
