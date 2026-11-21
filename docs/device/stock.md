@@ -85,6 +85,8 @@ The image brings up the project's WireGuard tunnel at every boot ([the tunnel](.
 
 It builds `wg` from the pinned wireguard-tools with the pinned NDK (static arm64, into `work/build/wg`), copies it and `work/wireguard/wg0.conf` and `wg0.env` into `/data/adb/aospacademy-wg` (Magisk's root-only area: directory 700, files 600 or 700), installs the module if it isn't there or has changed, and brings the tunnel up at once; at later boots the module's `service.sh` does. It pushes only what changed, so running it again is cheap, and every deploy runs it while it's on stock. Stock's data is never wiped by a deploy, so the config stays until the stock system is reset. Without `work/wireguard`, nothing happens.
 
+Stock runs the tunnel split, never full: only `ROUTES4` and `ROUTES6` go into it, and `FULL=1` in `wg0.env` is ignored, so the stock system's own traffic keeps using Wi-Fi. Replies are the exception. Since version 1.3, traffic from the tunnel address goes back into the tunnel by a rule of its own, so stock answers any machine that reaches it over the tunnel, including a PC on a subnet the hub routes but `ROUTES4` doesn't list. With 1.2 and earlier, such a PC got no answer: a deploy from a build node on the office network lost the phone when it rebooted to stock.
+
 ### ADB over Wi-Fi
 
 With `dev_adb_tcp` installed, `aosp-academy adb-wifi` reads the phone's Wi-Fi address over USB, then connects to it:
