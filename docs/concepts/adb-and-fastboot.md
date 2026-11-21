@@ -4,7 +4,7 @@ You talk to the phone with two different tools, and they work in two different *
 
 ```mermaid
 %%{init: {"flowchart": {"wrappingWidth": 300}}}%%
-flowchart LR
+flowchart TB
     PC[Your PC] -- "adb (USB)" --> AND["Android running<br/>(normal mode)"]
     PC -- "fastboot (USB)" --> BL["Bootloader<br/>(phone shows a text menu)"]
     AND -- "adb reboot bootloader" --> BL

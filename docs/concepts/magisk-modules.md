@@ -14,7 +14,7 @@ Magisk mounts its modules **on top of** the real system at boot, using Linux bin
 
 ```mermaid
 %%{init: {"flowchart": {"wrappingWidth": 300}}}%%
-flowchart LR
+flowchart TB
     subgraph what [What an app sees at /system]
         OVER["the module's file where one exists,<br/>otherwise the original"]
     end

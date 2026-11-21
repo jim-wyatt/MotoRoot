@@ -30,7 +30,7 @@ adb pull <that path> work/gallery.apk
 
 ```mermaid
 %%{init: {"flowchart": {"wrappingWidth": 300}}}%%
-flowchart LR
+flowchart TB
     APK[app.apk] --> J["jadx<br/>DEX to readable Java"]
     APK --> A["apktool<br/>resources and manifest to XML, code to smali"]
     APK --> P["aapt2<br/>quick facts, manifest dump"]

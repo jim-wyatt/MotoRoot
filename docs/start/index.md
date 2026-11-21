@@ -17,7 +17,7 @@ This section takes you from "a PC, a phone in a box, and perhaps a Linux machine
 
 ```mermaid
 %%{init: {"flowchart": {"wrappingWidth": 300}}}%%
-flowchart LR
+flowchart TB
     W["1. Workstation<br/>aosp-academy setup, check"] --> B["2. Build node<br/>image setup, sync, build"]
     W --> P["3. Phone preparation<br/>unlock, root (stock system)"]
     B --> D["4. First deploy<br/>aosp-academy deploy"]

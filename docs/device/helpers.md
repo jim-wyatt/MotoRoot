@@ -12,7 +12,7 @@ That's what the project's helpers are: a few lines of Java, compiled to one DEX,
 
 ```mermaid
 %%{init: {"flowchart": {"wrappingWidth": 300}}}%%
-flowchart LR
+flowchart TB
     SRC["Helper.java"] -->|javac| CLS["Helper.class<br/>JVM bytecode"]
     CLS -->|"D8"| DEX["classes.dex<br/>Android bytecode"]
     DEX -->|adb push| PHONE["on the phone"]

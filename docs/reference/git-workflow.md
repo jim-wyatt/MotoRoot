@@ -25,7 +25,7 @@ Two layers stop device data reaching version control:
 
 ```mermaid
 %%{init: {"flowchart": {"wrappingWidth": 300}}}%%
-flowchart LR
+flowchart TB
     S[git commit] --> H{pre-commit hook}
     H -->|image, key, trace, IMEI-like line| X[blocked]
     H -->|clean| C[commit proceeds]
