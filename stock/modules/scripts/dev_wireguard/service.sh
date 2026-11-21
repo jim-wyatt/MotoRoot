@@ -9,6 +9,9 @@
 # ADDRESS6=, ROUTES4=, ROUTES6=). aosp-academy stock tunnel puts them there. Without them, nothing
 # happens. The kernel has WireGuard built in. Android routes by policy per network, so the
 # tunnel's subnets get a table of their own (1999) and a rule ahead of the per-network rules.
+# Traffic from the tunnel address also uses that table, which has a default route into wg0, so
+# the phone answers over the tunnel whoever reached it there, including a PC on a subnet the hub
+# routes that isn't in ROUTES4. Everything else stock sends keeps using Wi-Fi.
 # The result goes to /data/adb/aospacademy-wg/status. Disable the module and reboot to stop it.
 D=/data/adb/aospacademy-wg
 # Magisk runs module scripts in BusyBox's shell, where a bare `ip` is BusyBox's, which can't add
@@ -19,7 +22,8 @@ until [ "$(getprop sys.boot_completed)" = 1 ]; do sleep 2; done
 [ -x "$D/wg" ] && [ -f "$D/wg0.conf" ] && [ -f "$D/wg0.env" ] || exit 0
 umask 077
 result() { echo "$*" > "$D/status"; log -t dev_wireguard "$*"; exit 0; }
-val() { sed -n "s/^$1=//p" "$D/wg0.env" | head -n 1 | tr -d '\r'; }   # CRLF-safe
+# tr -d '\r': a wg0.env written on Windows has CRLF line ends.
+val() { sed -n "s/^$1=//p" "$D/wg0.env" | head -n 1 | tr -d '\r'; }
 a4="$(val ADDRESS4)"; a6="$(val ADDRESS6)"; r4="$(val ROUTES4)"; r6="$(val ROUTES6)"
 "$IP" link del wg0 2>/dev/null
 "$IP" link add wg0 type wireguard || result "failed: the kernel refused a wireguard link"
@@ -37,5 +41,16 @@ for r in $r6; do
     "$IP" -6 rule del to "$r" lookup 1999 2>/dev/null
     "$IP" -6 rule add to "$r" lookup 1999 priority 9000
 done
+# Replies: from the tunnel address, back into the tunnel (the default here is only for them).
+if [ -n "$a4" ]; then
+    "$IP" route replace default dev wg0 table 1999
+    "$IP" rule del from "${a4%/*}" lookup 1999 2>/dev/null
+    "$IP" rule add from "${a4%/*}" lookup 1999 priority 9000
+fi
+if [ -n "$a6" ]; then
+    "$IP" -6 route replace default dev wg0 table 1999
+    "$IP" -6 rule del from "${a6%/*}" lookup 1999 2>/dev/null
+    "$IP" -6 rule add from "${a6%/*}" lookup 1999 priority 9000
+fi
 [ -z "$r4" ] || "$IP" rule | grep -q "lookup 1999" || result "failed: no routing rule for the tunnel's subnets"
 result "up ${a4%/*}"
