@@ -54,13 +54,13 @@ Settings that fit this device, in the module's `build.gradle.kts`:
 
 ```mermaid
 %%{init: {"flowchart": {"wrappingWidth": 300}}}%%
-flowchart LR
+flowchart TB
     SRC["Kotlin/Java + res/"] -->|Gradle| APK["app-debug.apk"]
     APK -->|"adb install"| DEV["the phone"]
     DEV --> RUN["app starts, Logcat streams"]
 ```
 
-Installs are quick: the image doesn't send adb installs to a package verifier, and animations are off, so the app is on screen as soon as it starts. The same works without a cable: `adb tcpip 5555` over USB, then `./aosp-academy adb-wifi`, and Studio lists the Wi-Fi device too.
+Installs are quick: the image doesn't send adb installs to a package verifier, and animations are off, so the app is on screen as soon as it starts. The same works without a cable. The image listens for adb on port 5555 from its first boot, so from a PC on the WireGuard tunnel, or one the hub routes to, `adb connect <the phone's tunnel address>:5555` is enough, and Studio lists the phone as that address. On the phone's own Wi-Fi network, `./aosp-academy adb-wifi` connects to its Wi-Fi address instead. Studio and the project share one adb server only when their adb versions match: `aosp-academy setup` installs the pinned platform-tools in both places.
 
 ## The tool windows that use the device
 

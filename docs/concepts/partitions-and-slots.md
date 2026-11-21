@@ -48,7 +48,7 @@ The phone boots from one slot (the **active** slot). When a system update arrive
 
 ```mermaid
 %%{init: {"flowchart": {"wrappingWidth": 300}}}%%
-flowchart LR
+flowchart TB
     A["Slot A<br/>(active: you are here)"] -- "update writes here" --> B["Slot B<br/>(inactive)"]
     B -- "reboot switches" --> A2["Slot B becomes active"]
 ```

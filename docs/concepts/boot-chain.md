@@ -32,7 +32,7 @@ Each link is cryptographically signed, and the link before it checks that signat
 
 ```mermaid
 %%{init: {"flowchart": {"wrappingWidth": 300}}}%%
-flowchart LR
+flowchart TB
     LK -- "verifies" --> BOOT[boot_a] -- "verifies" --> SYS[system]
     VB[vbmeta_a] -. "holds the hashes" .-> LK
 ```

@@ -66,7 +66,7 @@ The aosp-academy image, booted through [DSU](../device/dsu.md) on top of the pre
 
 ```mermaid
 %%{init: {"flowchart": {"wrappingWidth": 300}}}%%
-flowchart LR
+flowchart TB
     A[Factory device<br/>no root] -->|DFRoot| B[Temporary root<br/>survives until reboot]
     B -->|back up + unlock + install Magisk| C[Persistent root<br/>managed by Magisk app]
 ```

@@ -25,7 +25,7 @@ From the **device**, running the aosp-academy image (Android 17, a `userdebug` b
 
 ```mermaid
 %%{init: {"flowchart": {"wrappingWidth": 300}}}%%
-flowchart LR
+flowchart TB
     B["Build<br/>Android Studio or Gradle"] --> I["Install<br/>Run in Studio, or adb install"]
     I --> D["Debug<br/>breakpoints, logcat, adb root"]
     D --> P["Profile<br/>Perfetto, Frida"]

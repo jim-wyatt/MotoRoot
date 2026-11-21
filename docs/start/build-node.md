@@ -169,7 +169,7 @@ On the device node, `aosp-academy fetch` pulls these over `scp` (the OpenSSH cli
 `fetch` looks for the files in `<repo>/work/device-tools/gsi/own/` on the build node, where `<repo>` is the `--repo` you give it. There are two ways to arrange that:
 
 - **Simple:** the device node logs in as your user on the build node, and `--repo` is the build node's checkout. `image build` always copies the image there. Without `PUBLISH_DIR`, though, nothing is split into parts, so `fetch` pulls the single file over one connection.
-- **Separate and read-only (recommended):** set `PUBLISH_DIR` to a folder that a dedicated, key-only, read-only SFTP account sees as `<repo>/work/device-tools/gsi/own`, and give `fetch` that `<repo>`. The project's build node does this.
+- **Separate and read-only (recommended):** set `PUBLISH_DIR` to a folder that a dedicated, key-only, read-only SFTP account sees as `<repo>/work/device-tools/gsi/own`, and give `fetch` that `<repo>`. The project's build node did this until it became its own device node ([One machine for both](#one-machine-for-both)).
 
 How the build node is reached (SSH, a VPN, a firewall rule) is that host's own setup, not part of the project, and its address and account are private to your network.
 

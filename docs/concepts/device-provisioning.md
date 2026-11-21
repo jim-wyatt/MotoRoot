@@ -36,7 +36,7 @@ When Test DPC provisions the device it becomes the **device owner** — the most
 
 ```mermaid
 %%{init: {"flowchart": {"wrappingWidth": 300}}}%%
-flowchart LR
+flowchart TB
     A[Setup wizard] -->|provision| B[Test DPC = device owner]
     B -->|clear-device-owner + uninstall| C[Normal device, no owner]
 ```

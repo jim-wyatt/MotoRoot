@@ -26,7 +26,7 @@ The image is an AOSP system image called `aospacademy_arm64`. It runs on top of 
 
 ```mermaid
 %%{init: {"flowchart": {"wrappingWidth": 300}}}%%
-flowchart LR
+flowchart TB
     E["Edit on a branch<br/>image/product, image/patches, toolchain.json"]
     subgraph B ["Build node (x86-64 Linux)"]
         S["aosp-academy image sync<br/>the pinned AOSP release"] --> BU["aosp-academy image build<br/>build and publish"]

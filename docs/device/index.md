@@ -10,7 +10,7 @@ The phone goes through three states. Each one is built on the one before and lea
 
 ```mermaid
 %%{init: {"flowchart": {"wrappingWidth": 300}}}%%
-flowchart LR
+flowchart TB
     F["Factory<br/>locked bootloader, stock Android 16"] -->|"the preparation walkthrough<br/>(once per phone)"| P["Prepared stock system<br/>unlocked, Magisk root, eight modules"]
     P -->|"aosp-academy deploy<br/>(every build)"| I["aosp-academy image<br/>Android 17, booted through DSU"]
     I -->|"aosp-academy gsi stock"| P
