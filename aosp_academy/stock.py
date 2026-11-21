@@ -14,6 +14,7 @@ stock/modules/build_modules.py, deterministic (fixed timestamps), compared by ha
 """
 from __future__ import annotations
 
+import hashlib
 import shutil
 import sys
 import zipfile
@@ -131,21 +132,32 @@ def tunnel(quiet: bool = False) -> bool:
             adb.sh(f"rm -f {tmp}")
         changed = True
     zp = STOCK / "modules" / "dev-wireguard.zip"
-    installed = adb.root("cat /data/adb/modules/dev_wireguard/module.prop 2>/dev/null")
-    want = zipfile.ZipFile(zp).read("module.prop").decode()
-    if installed.strip() != want.strip():
+    with zipfile.ZipFile(zp) as z:
+        want_prop = z.read("module.prop").decode().strip()
+        want_script = hashlib.sha256(z.read("service.sh")).hexdigest()
+
+    def live() -> str:
+        # Magisk installs into modules_update and moves it into modules at the next boot, so until
+        # then the modules_update copy is the current one; modules/ still holds the previous version.
+        upd = "/data/adb/modules_update/dev_wireguard"
+        return upd if adb.root(f"ls -d {upd} 2>/dev/null") else "/data/adb/modules/dev_wireguard"
+
+    d = live()
+    # The script's hash as well as module.prop: a module once carried version 1.2 with the 1.1
+    # script (built before the script changed), and comparing module.prop alone kept it.
+    have_prop = adb.root(f"cat {d}/module.prop 2>/dev/null").strip()
+    have_script = adb.root(f"sha256sum {d}/service.sh 2>/dev/null").split()[:1]
+    if have_prop != want_prop or have_script != [want_script]:
         adb.adb("push", str(zp), "/data/local/tmp/dev-wireguard.zip")
         out = adb.root("magisk --install-module /data/local/tmp/dev-wireguard.zip; rm -f /data/local/tmp/dev-wireguard.zip")
-        if "/data/adb/modules" not in adb.root("ls -d /data/adb/modules_update/dev_wireguard /data/adb/modules/dev_wireguard 2>/dev/null"):
+        d = live()
+        if adb.root(f"sha256sum {d}/service.sh 2>/dev/null").split()[:1] != [want_script]:
             raise Failure(f"Magisk didn't install dev_wireguard: {out[-300:]}")
         changed = True
     up = adb.root(f"cat {STOCK_WG}/status 2>/dev/null").startswith("up")
     if changed or not up:
-        # Bring it up now with the module's own script; at the next boot Magisk runs it itself.
-        script = "/data/adb/modules/dev_wireguard/service.sh"
-        if not adb.root(f"ls {script} 2>/dev/null"):
-            script = "/data/adb/modules_update/dev_wireguard/service.sh"
-        adb.root(f"rm -f {STOCK_WG}/status; sh {script}")
+        # Bring it up now with the module's current script; at the next boot Magisk runs it itself.
+        adb.root(f"rm -f {STOCK_WG}/status; sh {d}/service.sh")
     status = adb.root(f"cat {STOCK_WG}/status 2>/dev/null")
     if not quiet or not status.startswith("up"):
         say(f"  stock tunnel: {status or 'no status'}", "green" if status.startswith("up") else "yellow")
