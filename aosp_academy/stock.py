@@ -15,8 +15,10 @@ stock/modules/build_modules.py, deterministic (fixed timestamps), compared by ha
 from __future__ import annotations
 
 import hashlib
+import os
 import shutil
 import sys
+import time
 import zipfile
 from pathlib import Path
 
@@ -157,7 +159,20 @@ def tunnel(quiet: bool = False) -> bool:
     up = adb.root(f"cat {STOCK_WG}/status 2>/dev/null").startswith("up")
     if changed or not up:
         # Bring it up now with the module's current script; at the next boot Magisk runs it itself.
-        adb.root(f"rm -f {STOCK_WG}/status; sh {d}/service.sh")
+        # The script deletes and recreates wg0, which cuts an adb connection that runs over the
+        # tunnel (a deploy from a build node did exactly that, and stopped at "device offline").
+        # So it runs detached, and adb reconnects before reading the result.
+        adb.root(f"rm -f {STOCK_WG}/status; nohup sh {d}/service.sh >/dev/null 2>&1 &")
+        serial = os.environ.get("ANDROID_SERIAL", "")
+        for _ in range(30):
+            time.sleep(2)
+            if adb.is_tcp(serial):
+                adb.adb("connect", serial, check=False, timeout=15)
+            # adb returns its own errors as output ("device offline"), so only a real status counts.
+            got = adb.adb("shell", f"su -c 'cat {STOCK_WG}/status 2>/dev/null'", check=False, timeout=20)
+            if got.startswith(("up", "failed")):
+                break
+        adb.wait_authorized()
     status = adb.root(f"cat {STOCK_WG}/status 2>/dev/null")
     if not quiet or not status.startswith("up"):
         say(f"  stock tunnel: {status or 'no status'}", "green" if status.startswith("up") else "yellow")
