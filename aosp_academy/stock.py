@@ -108,6 +108,62 @@ def build_wg() -> Path:
     return out
 
 
+STOCK_ADB_KEYS = "/data/misc/adb/adb_keys"
+
+
+def missing_keys(wanted: list[str], have: str) -> list[str]:
+    """The adbkey.pub lines in wanted whose key isn't in have (an adb_keys file's text), in order,
+    each once. Keys are compared by their base64 blob, not the comment after it."""
+    present = {line.split()[0] for line in have.splitlines() if line.split()}
+    out, seen = [], set()
+    for line in wanted:
+        parts = line.split()
+        if parts and parts[0] not in present and parts[0] not in seen:
+            seen.add(parts[0])
+            out.append(line.strip())
+    return out
+
+
+def trust_keys(quiet: bool = False) -> int:
+    """Make the stock system trust the PCs the image trusts, and this PC.
+
+    The image builds work/adb_keys in, so every PC listed there gets adb on it with no tap. The
+    stock system keeps its own list (/data/misc/adb/adb_keys, filled by tapping Allow), so a build
+    node that only ever reached the phone over the network was refused on stock until its key was
+    added by hand. This appends the missing keys (work/adb_keys and this PC's ~/.android/adbkey.pub),
+    keeps the ones already there, and sets the owner, mode and label adbd expects. adbd reads the
+    file at each new connection, so nothing restarts. Needs root on stock (Magisk). Returns the
+    number of keys added."""
+    wanted = []
+    listed = WORK / "adb_keys"
+    if listed.exists():
+        wanted += listed.read_text(encoding="utf-8").splitlines()
+    own = Path.home() / ".android" / "adbkey.pub"
+    if own.exists():
+        wanted.append(own.read_text(encoding="utf-8").strip())
+    add = missing_keys(wanted, adb.root(f"cat {STOCK_ADB_KEYS} 2>/dev/null"))
+    if not add:
+        if not quiet:
+            say("  stock adb keys: all trusted already", "green")
+        return 0
+    tmp_local = WORK / "build" / "adb_keys.add"
+    tmp_local.parent.mkdir(parents=True, exist_ok=True)
+    tmp_local.write_text("\n".join(add) + "\n", encoding="utf-8", newline="\n")
+    tmp = "/data/local/tmp/.aa-adb_keys.add"
+    try:
+        adb.adb("push", str(tmp_local), tmp)
+        adb.root(f"touch {STOCK_ADB_KEYS} && cat {tmp} >> {STOCK_ADB_KEYS} && chown system:shell {STOCK_ADB_KEYS} "
+                 f"&& chmod 640 {STOCK_ADB_KEYS} && restorecon {STOCK_ADB_KEYS}")
+    finally:
+        adb.sh(f"rm -f {tmp}")
+        tmp_local.unlink(missing_ok=True)
+    left = missing_keys(add, adb.root(f"cat {STOCK_ADB_KEYS} 2>/dev/null"))
+    if left:
+        raise Failure(f"{len(left)} key(s) did not reach {STOCK_ADB_KEYS} on the stock system.")
+    say(f"  stock adb keys: {len(add)} added ({', '.join(l.split()[1] if len(l.split()) > 1 else 'no comment' for l in add)})", "green")
+    return len(add)
+
+
 def tunnel(quiet: bool = False) -> bool:
     """Set up the tunnel on the stock system (Magisk root). Idempotent: pushes only what changed.
     Returns True when wg0 is up. Needs work/wireguard/wg0.conf and wg0.env (private)."""

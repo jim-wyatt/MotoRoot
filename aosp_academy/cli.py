@@ -101,6 +101,7 @@ def parser() -> argparse.ArgumentParser:
     m = ssub.add_parser("magisk-image", help="make a Magisk-patched init_boot image file (never flashes)")
     m.add_argument("stock_image", help="your own init_boot_a backup (work/private-backups/...)")
     ssub.add_parser("tunnel", help="the WireGuard tunnel on the stock system (wg, config, dev_wireguard module)")
+    ssub.add_parser("trust", help="make the stock system trust the PCs in work/adb_keys and this PC (adb keys)")
 
     p = sub.add_parser("image", help="build node: inputs, setup, sync, apply, build (Linux)")
     p.add_argument("action", choices=["inputs", "setup", "sync", "apply", "build", "verify", "after-sync"])
@@ -173,12 +174,18 @@ def main(argv: list[str] | None = None) -> int:
                 return env.adb_wifi()
             return env.java_tool(args.command, args.rest)
         if args.command == "stock":
-            from . import stock
+            from . import adb, stock
             if args.stock_command == "build":
                 r = stock.build(args.promote)
                 return 0 if args.promote else sum(1 for x in r if not x[1])
             if args.stock_command == "tunnel":
                 return 0 if stock.tunnel() else 1
+            if args.stock_command == "trust":
+                adb.assert_one_device()
+                if adb.gsi_running():
+                    raise Failure("The phone runs the image, which has the keys built in; stock trust is for the stock system.")
+                stock.trust_keys()
+                return 0
             stock.magisk_image(args.stock_image)
             return 0
         if args.command == "image":

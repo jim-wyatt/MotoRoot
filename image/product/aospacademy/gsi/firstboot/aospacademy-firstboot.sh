@@ -159,6 +159,39 @@ if [ "$1" = wireguard ]; then
     result "up ${a4%/*}"
 fi
 
+# WireGuard watch mode (init.aospacademy.rc keeps it running after boot): the full tunnel's two
+# bypass rules point at Wi-Fi's routing table, and that table can come and go under them. When
+# Wi-Fi drops and comes back, or comes up only after the boot-time setup gave up waiting for it,
+# the rules are missing or name a table number that no longer resolves to wlan0 (ip rule then
+# shows the number instead of the name). This checks both rules and wg0 whenever the routing
+# rules or routes change, and runs the wireguard mode again if any is wrong. It is driven by
+# `ip monitor`, not a timer: an idle phone suspends, and a sleep doesn't advance while it is
+# suspended, but a route change wakes the reader at once. It waits for the boot-time run to finish
+# first (its status file), so the two never overlap, and checks once before the first event.
+if [ "$1" = wireguard-watch ]; then
+    WG_DIR=/data/local/aospacademy-wg
+    until [ -f "$WG_DIR/status" ]; do sleep 10; done
+    check() {
+        [ -f "$WG_DIR/wg0.conf" ] && [ -f "$WG_DIR/wg0.env" ] || return 0
+        [ "$(sed -n 's/^FULL=//p' "$WG_DIR/wg0.env" | head -n 1 | tr -d '\r')" = 1 ] || return 0
+        # No Wi-Fi: nothing to repair yet, and nothing reaches the hub anyway.
+        ip -4 route show table wlan0 2>/dev/null | grep -q '^default' || return 0
+        rules="$(ip -4 rule 2>/dev/null)"
+        echo "$rules" | grep -q '^8990:.*lookup wlan0' && echo "$rules" | grep -q '^8995:.*lookup wlan0' \
+            && ip link show wg0 >/dev/null 2>&1 && return 0
+        note "wireguard-watch: Wi-Fi changed under the tunnel; setting it up again"
+        "$0" wireguard
+    }
+    check
+    # A check per event line, with no debounce: a read -t or sleep is a timer, and timers stand
+    # still while the phone is suspended. The check costs three ip calls, and once the setup has
+    # run, the events it caused itself all pass it.
+    ip monitor rule route 2>/dev/null | while read -r _; do
+        check
+    done
+    exit 0   # the monitor ended; init restarts the service
+fi
+
 echo running > "$STATUS"
 note "start"
 
