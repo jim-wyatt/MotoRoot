@@ -71,14 +71,68 @@ if [ "$1" = wireguard ]; then
     wg=/product/bin/wg
     [ -x "$wg" ] || wg="$WG_DIR/wg"   # a wg pushed by hand, for trying this on an image without one
     [ -x "$wg" ] || result "failed: no wg binary"
-    val() { sed -n "s/^$1=//p" "$WG_DIR/wg0.env" | head -n 1; }
+    # tr -d '\r': a file written on Windows has CRLF line ends, and "1\r" is not "1" (a CRLF
+    # wg0.env once left the tunnel without routes, and the phone unreachable).
+    val() { sed -n "s/^$1=//p" "$WG_DIR/wg0.env" | head -n 1 | tr -d '\r'; }
     a4="$(val ADDRESS4)"; a6="$(val ADDRESS6)"; r4="$(val ROUTES4)"; r6="$(val ROUTES6)"
+    full="$(val FULL)"; mtu="$(val MTU)"; dns4="$(val DNS4)"; dns6="$(val DNS6)"
+    # Start from nothing: remove what an earlier run set (split or full), so every run ends in
+    # exactly the state its wg0.env describes, and a run with the old files undoes a new one.
+    for fam in -4 -6; do
+        for prio in 8990 8995 9000; do
+            while ip "$fam" rule del priority "$prio" 2>/dev/null; do :; done
+        done
+        ip "$fam" route flush table 1999 2>/dev/null
+    done
+    iptables -t nat -D OUTPUT -j aa_dns 2>/dev/null; iptables -t nat -F aa_dns 2>/dev/null; iptables -t nat -X aa_dns 2>/dev/null
+    iptables -t nat -D POSTROUTING -j aa_snat 2>/dev/null; iptables -t nat -F aa_snat 2>/dev/null; iptables -t nat -X aa_snat 2>/dev/null
+    ip6tables -D OUTPUT -j aa_dns6 2>/dev/null; ip6tables -F aa_dns6 2>/dev/null; ip6tables -X aa_dns6 2>/dev/null
     ip link del wg0 2>/dev/null
     ip link add wg0 type wireguard || result "failed: the kernel refused a wireguard link"
     "$wg" setconf wg0 "$WG_DIR/wg0.conf" || { ip link del wg0; result "failed: wg setconf"; }
     [ -n "$a4" ] && ip addr add "$a4" dev wg0
     [ -n "$a6" ] && ip -6 addr add "$a6" dev wg0
+    [ -n "$mtu" ] && ip link set wg0 mtu "$mtu"
     ip link set wg0 up || result "failed: wg0 did not come up"
+    if [ "$full" = 1 ]; then
+        # All traffic through the tunnel (FULL=1). wg0.conf's AllowedIPs must be 0.0.0.0/0, ::/0.
+        ep="$(sed -n 's/^Endpoint *= *//p' "$WG_DIR/wg0.conf" | head -n 1 | tr -d '\r ')"
+        ep="${ep%:*}"; ep="${ep#[}"; ep="${ep%]}"
+        [ -n "$ep" ] || result "failed: no Endpoint in wg0.conf"
+        case "$ep" in *:*) epfam=-6 ;; *) epfam=-4 ;; esac
+        # 1. The tunnel's own encrypted packets to the hub leave by Wi-Fi, as before.
+        ip "$epfam" rule add to "$ep" lookup wlan0 priority 8990
+        # 2. The Wi-Fi network's own subnet stays local (the router, DHCP, neighbour discovery):
+        #    the Wi-Fi table without its default route.
+        ip -4 rule add lookup wlan0 suppress_prefixlength 0 priority 8995
+        ip -6 rule add lookup wlan0 suppress_prefixlength 0 priority 8995
+        # 3. Everything else into the tunnel, ahead of Android's per-network rules. The unreachable
+        #    default behind wg0's is the kill switch: if wg0 goes, its route goes with it, and
+        #    nothing falls back to Wi-Fi.
+        for fam in -4 -6; do
+            ip "$fam" route replace default dev wg0 table 1999
+            ip "$fam" route add unreachable default metric 9999 table 1999
+            ip "$fam" rule add from all lookup 1999 priority 9000
+        done
+        # 4. Anything leaving through wg0 gets the tunnel address as its source. A socket can pick
+        #    its source before a DNAT below moves it into the tunnel (a query to the Wi-Fi router's
+        #    DNS starts as 192.168.x), and the hub drops packets from this peer with any other source.
+        iptables -t nat -N aa_snat && iptables -t nat -A aa_snat -o wg0 -j MASQUERADE \
+            && iptables -t nat -I POSTROUTING -j aa_snat
+        # 5. DNS: every plain IPv4 query goes to the hub's resolver (the hub drops port 53 to
+        #    anywhere else), whichever server the Wi-Fi network hands out. This kernel has no IPv6
+        #    nat table, so IPv6 queries to any other server are rejected instead, and Android's
+        #    resolver falls back to IPv4. Private DNS (DoT) would bypass the hub, so it goes off.
+        [ -n "$dns4" ] && iptables -t nat -N aa_dns && iptables -t nat -I OUTPUT -j aa_dns \
+            && iptables -t nat -A aa_dns -p udp --dport 53 -j DNAT --to-destination "$dns4" \
+            && iptables -t nat -A aa_dns -p tcp --dport 53 -j DNAT --to-destination "$dns4"
+        ip6tables -N aa_dns6 && ip6tables -I OUTPUT -j aa_dns6 \
+            && ip6tables -A aa_dns6 -p udp --dport 53 ${dns6:+! -d "$dns6"} -j REJECT \
+            && ip6tables -A aa_dns6 -p tcp --dport 53 ${dns6:+! -d "$dns6"} -j REJECT
+        settings put global private_dns_mode off >/dev/null 2>&1
+        ip rule | grep -q "lookup 1999" || result "failed: no routing rule for the tunnel"
+        result "up ${a4%/*}, all traffic"
+    fi
     for r in $r4; do
         ip route replace "$r" dev wg0 table 1999
         ip rule del to "$r" lookup 1999 2>/dev/null
@@ -104,7 +158,7 @@ note "start"
 STAGE=/metadata/aospacademy
 if [ -d "$STAGE" ]; then
     if [ -f "$STAGE/wifi.env" ]; then
-        sval() { sed -n "s/^$1=//p" "$STAGE/wifi.env" | head -n 1; }
+        sval() { sed -n "s/^$1=//p" "$STAGE/wifi.env" | head -n 1 | tr -d '\r'; }
         cmd wifi set-wifi-enabled enabled >/dev/null 2>&1
         sleep 3
         if cmd wifi connect-network "$(sval SSID)" "$(sval SECURITY)" "$(sval PASSPHRASE)" >/dev/null 2>&1; then
@@ -125,14 +179,16 @@ if [ -d "$STAGE" ]; then
     [ -e "$STAGE" ] && failed "removing $STAGE"
 fi
 
-# 1. Fossify Launcher as the home screen. It and AOSP's Launcher3 (which stays for SystemUI's
-#    gesture navigation and recents) answer HOME with equal priority, so the role controller's
-#    fallback picks neither and Android shows a chooser. Assign the HOME role once, explicitly; a
-#    launcher the user picks later is respected.
-if [ ! -e "$STATE/home-role" ] && pm path org.fossify.home >/dev/null 2>&1; then
-    if cmd role add-role-holder android.app.role.HOME org.fossify.home 0 >/dev/null 2>&1; then
+# 1. Quickstep (AOSP's Launcher3) as the home screen. It and Fossify Launcher answer HOME with
+#    equal priority, so without a role holder Android shows a chooser. Launcher3 stays in any case,
+#    because SystemUI binds its quickstep service for gesture navigation and recents, so making it
+#    home too means one launcher does both. Assign the HOME role once, explicitly; a launcher the
+#    user picks later (Fossify Launcher stays installed) is respected.
+HOME_PKG=com.android.launcher3
+if [ ! -e "$STATE/home-role" ] && pm path "$HOME_PKG" >/dev/null 2>&1; then
+    if cmd role add-role-holder android.app.role.HOME "$HOME_PKG" 0 >/dev/null 2>&1; then
         touch "$STATE/home-role"
-        note "HOME role -> org.fossify.home"
+        note "HOME role -> $HOME_PKG"
     else
         failed "HOME role assignment"
     fi
@@ -229,7 +285,10 @@ if [ ! -e "$STATE/bluetooth-off" ]; then
 fi
 
 # The launcher caches icons and its app list; restart it so the changes above show.
-[ "$restart_launcher" = 1 ] && am force-stop org.fossify.home
+if [ "$restart_launcher" = 1 ]; then
+    home="$(cmd role get-role-holders android.app.role.HOME 2>/dev/null)"
+    [ -n "$home" ] && am force-stop "$home"
+fi
 
 note "done failures=$failures"
 echo "done failures=$failures" > "$STATUS"

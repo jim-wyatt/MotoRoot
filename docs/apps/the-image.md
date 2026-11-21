@@ -67,13 +67,13 @@ On top of AOSP the image carries one thing: the **Fossify** suite, 16 open-sourc
 
 | Role or job | App | Package |
 | --- | --- | --- |
-| Home screen (HOME) | Fossify Launcher | `org.fossify.home` |
+| Home screen (HOME) | Quickstep (AOSP's Launcher3) | `com.android.launcher3` |
 | Phone (DIALER) | Fossify Phone | `org.fossify.phone` |
 | SMS | Fossify Messages | `org.fossify.messages` |
 | Contacts, calendar, gallery, camera, clock, calculator | Fossify Contacts, Calendar, Gallery, Camera, Clock, Calculator | `org.fossify.contacts`, `.calendar`, `.gallery`, `.camera`, `.clock`, `.math` |
 | Files, documents, notes, music, voice recorder, paint, keyboard | Fossify File Manager, Documents, Notes, Music Player, Voice Recorder, Paint, Keyboard | `org.fossify.filemanager`, `.documents`, `.notes`, `.musicplayer`, `.voicerecorder`, `.paint`, `.keyboard` |
 
-The dialer and SMS defaults come from the image's framework overlay; the first-boot service gives Fossify Launcher the HOME role. Some AOSP apps stay on purpose:
+The dialer and SMS defaults come from the image's framework overlay; the first-boot service gives Quickstep, AOSP's Launcher3, the HOME role. Launcher3 is also what runs gesture navigation and recents, so one launcher does both and Android never asks which home app to use. Fossify Launcher stays installed: choose it in Settings, Apps, Default apps, Home app if you prefer it, and that choice is kept. Some AOSP apps stay on purpose:
 
 - **DocumentsUI** is the system file picker behind every `ACTION_OPEN_DOCUMENT`, `ACTION_GET_CONTENT` and `ACTION_CREATE_DOCUMENT`, so your app's pickers work as on any phone. Only its *Files* icon is hidden from the app drawer (`pm enable com.android.documentsui/.LauncherActivity` brings it back).
 - **LatinIME**, the AOSP keyboard, stays as the fallback keyboard; its app-drawer icon is hidden too. Its settings are under Settings, System, Keyboard.
